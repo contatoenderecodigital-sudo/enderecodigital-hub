@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listHubs, listNegocios } from "@/lib/data";
 import { criarClienteAction } from "./actions";
 
@@ -42,12 +43,17 @@ export default async function ClientesPage() {
                 </td>
                 <td className="muted">{c.health_score}%</td>
                 <td style={{ textAlign: "right" }}>
-                  <form action="/api/impersonar" method="post">
-                    <input type="hidden" name="negocio_id" value={c.id} />
-                    <button className="btn btn-ghost btn-sm" type="submit">
-                      Abrir workspace
-                    </button>
-                  </form>
+                  <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
+                    <Link className="btn btn-ghost btn-sm" href={`/owner/clientes/${c.id}`}>
+                      Ver
+                    </Link>
+                    <form action="/api/impersonar" method="post">
+                      <input type="hidden" name="negocio_id" value={c.id} />
+                      <button className="btn btn-ghost btn-sm" type="submit">
+                        Abrir workspace
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

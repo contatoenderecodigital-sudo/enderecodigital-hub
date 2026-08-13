@@ -339,6 +339,50 @@ export async function criarLeadPorToken(
   return true;
 }
 
+// ---------------- RESUMOS (owner: detalhe do cliente) ----------------
+export async function leadsResumo(
+  negocioId: string
+): Promise<{ total: number; ganhos: number }> {
+  const r = await query<{ total: string; ganhos: string }>(
+    `SELECT
+       count(*) AS total,
+       count(*) FILTER (WHERE e.nome = 'Ganho') AS ganhos
+     FROM leads l LEFT JOIN funil_etapas e ON e.id = l.etapa_id
+     WHERE l.negocio_id = $1`,
+    [negocioId]
+  );
+  return { total: Number(r.rows[0]?.total ?? 0), ganhos: Number(r.rows[0]?.ganhos ?? 0) };
+}
+
+export async function usoResumo(
+  negocioId: string
+): Promise<{ interacoes: number; tokens_in: number; tokens_out: number; custo_cent: number }> {
+  const r = await query<{ interacoes: string; ti: string; to: string; cc: string }>(
+    `SELECT count(*) AS interacoes,
+            COALESCE(sum(tokens_in),0) AS ti,
+            COALESCE(sum(tokens_out),0) AS to,
+            COALESCE(sum(custo_cent),0) AS cc
+     FROM uso_ia WHERE negocio_id = $1`,
+    [negocioId]
+  );
+  const row = r.rows[0];
+  return {
+    interacoes: Number(row?.interacoes ?? 0),
+    tokens_in: Number(row?.ti ?? 0),
+    tokens_out: Number(row?.to ?? 0),
+    custo_cent: Number(row?.cc ?? 0),
+  };
+}
+
+export async function listUsuariosDoNegocio(negocioId: string): Promise<Usuario[]> {
+  return (
+    await query<Usuario>(
+      "SELECT * FROM usuarios WHERE negocio_id = $1 ORDER BY criado_em ASC",
+      [negocioId]
+    )
+  ).rows;
+}
+
 // ---------------- USO DE IA (medicao por tenant) ----------------
 export async function registrarUso(
   negocioId: string,
