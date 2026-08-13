@@ -6,6 +6,7 @@ import {
   IcoPlus,
   IcoX,
   IcoHub,
+  IcoGrid,
   IcoGlobe,
   IcoInstagram,
   IcoActivity,
@@ -130,11 +131,33 @@ function Mock({ f }: { f: F }) {
   );
 }
 
-export default function NovoHubModal({ hubs = [] }: { hubs?: Hub[] }) {
+export default function NovoHubModal({
+  hubs = [],
+  base,
+  label,
+  variant,
+}: {
+  hubs?: Hub[];
+  base?: Hub;
+  label?: string;
+  variant?: "ghost";
+}) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [manualSlug, setManualSlug] = useState(false);
-  const [f, setF] = useState<F>(INICIAL);
+  const [f, setF] = useState<F>(
+    base
+      ? {
+          ...INICIAL,
+          cor_destaque: base.cor_destaque || INICIAL.cor_destaque,
+          cor_apoio: base.cor_apoio || INICIAL.cor_apoio,
+          cor_fundo: base.cor_fundo || INICIAL.cor_fundo,
+          cor_texto: base.cor_texto || INICIAL.cor_texto,
+          tema_modo: base.tema_modo || INICIAL.tema_modo,
+          tipografia: base.tipografia || INICIAL.tipografia,
+        }
+      : INICIAL
+  );
   const set = <K extends keyof F>(k: K, v: F[K]) => setF((p) => ({ ...p, [k]: v }));
 
   function setNome(v: string) {
@@ -158,8 +181,13 @@ export default function NovoHubModal({ hubs = [] }: { hubs?: Hub[] }) {
 
   return (
     <>
-      <button className="btn" onClick={() => setOpen(true)}>
-        <IcoPlus width={16} height={16} /> Criar hub
+      <button
+        className={variant === "ghost" ? "btn btn-ghost btn-sm" : "btn"}
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        {variant === "ghost" ? <IcoGrid width={15} height={15} /> : <IcoPlus width={16} height={16} />}
+        {label || "Criar hub"}
       </button>
 
       {open && (

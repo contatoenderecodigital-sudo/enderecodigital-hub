@@ -1,5 +1,6 @@
 import PageHead from "@/components/page-head";
 import NovoHubModal from "@/components/novo-hub-modal";
+import ModulosHubModal from "@/components/modulos-hub-modal";
 import { listHubs, listNegocios } from "@/lib/data";
 import { IcoHub } from "@/components/icons";
 
@@ -14,6 +15,16 @@ export default async function HubsPage({
   const [hubs, clientes] = await Promise.all([listHubs(), listNegocios()]);
   const contaPorHub = new Map<string, number>();
   clientes.forEach((c) => contaPorHub.set(c.hub_id, (contaPorHub.get(c.hub_id) || 0) + 1));
+  const hubsMin = hubs.map((h) => ({
+    id: h.id,
+    nome: h.nome,
+    cor_destaque: h.cor_destaque,
+    cor_apoio: h.cor_apoio,
+    cor_fundo: h.cor_fundo,
+    cor_texto: h.cor_texto,
+    tema_modo: h.tema_modo,
+    tipografia: h.tipografia,
+  }));
 
   return (
     <>
@@ -21,20 +32,7 @@ export default async function HubsPage({
         eyebrow="Plataforma"
         titulo="Hubs"
         sub="Cada hub é uma marca white-label completa. Crie um por nicho ou empresa."
-        acao={
-          <NovoHubModal
-            hubs={hubs.map((h) => ({
-              id: h.id,
-              nome: h.nome,
-              cor_destaque: h.cor_destaque,
-              cor_apoio: h.cor_apoio,
-              cor_fundo: h.cor_fundo,
-              cor_texto: h.cor_texto,
-              tema_modo: h.tema_modo,
-              tipografia: h.tipografia,
-            }))}
-          />
-        }
+        acao={<NovoHubModal hubs={hubsMin} />}
       />
 
       {ok && (
@@ -76,6 +74,10 @@ export default async function HubsPage({
               <div className="spread" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                 <span className="muted" style={{ fontSize: 12.5 }}>{contaPorHub.get(h.id) || 0} cliente(s)</span>
                 {h.dominio && <span className="muted" style={{ fontSize: 12.5 }}>{h.dominio}</span>}
+              </div>
+              <div className="row" style={{ gap: 8, marginTop: 12 }}>
+                <ModulosHubModal hub={h} />
+                <NovoHubModal hubs={hubsMin} base={h} label="Usar como base" variant="ghost" />
               </div>
             </div>
           );

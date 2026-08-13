@@ -9,6 +9,15 @@ export async function listHubs(): Promise<Hub[]> {
 export async function getHub(id: string): Promise<Hub | null> {
   return (await query<Hub>("SELECT * FROM hubs WHERE id = $1", [id])).rows[0] ?? null;
 }
+export async function updateModulosHub(
+  hubId: string,
+  m: { site: boolean; instagram: boolean; financeiro: boolean; crm: boolean }
+): Promise<void> {
+  await query(
+    "UPDATE hubs SET mod_site = $1, mod_instagram = $2, mod_financeiro = $3, mod_crm = $4 WHERE id = $5",
+    [m.site, m.instagram, m.financeiro, m.crm, hubId]
+  );
+}
 export async function createHub(input: {
   nome: string;
   slug: string;

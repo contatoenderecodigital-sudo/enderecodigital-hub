@@ -3,12 +3,27 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
-import { createHub } from "@/lib/data";
+import { createHub, updateModulosHub } from "@/lib/data";
 import { slugify, sufixoCurto } from "@/lib/util";
 
 function ou(v: FormDataEntryValue | null): string | null {
   const s = String(v || "").trim();
   return s ? s : null;
+}
+
+export async function salvarModulosHubAction(formData: FormData) {
+  const s = await getSession();
+  if (!s || s.papel !== "owner_plataforma") redirect("/login");
+  const hubId = String(formData.get("hub_id") || "");
+  if (!hubId) redirect("/owner/hubs");
+  await updateModulosHub(hubId, {
+    site: formData.get("mod_site") === "on",
+    instagram: formData.get("mod_instagram") === "on",
+    financeiro: formData.get("mod_financeiro") === "on",
+    crm: formData.get("mod_crm") === "on",
+  });
+  revalidatePath("/owner/hubs");
+  redirect("/owner/hubs?ok=mods");
 }
 
 export async function criarHubAction(formData: FormData) {
