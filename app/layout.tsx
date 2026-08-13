@@ -10,7 +10,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Endereço Digital Hub",
+  title: "EnderecoDigital Hub",
   description: "Plataforma white-label da Endereço Digital.",
 };
 

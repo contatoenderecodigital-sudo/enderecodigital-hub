@@ -102,7 +102,7 @@ export default function OwnerShell({
       <aside className="side">
         <div className="side-logo">
           <div className="avatar">ED</div>
-          <b>Endereço Digital</b>
+          <b>EnderecoDigital Hub</b>
         </div>
         {NAV.map((g) => (
           <div key={g.grupo}>
@@ -135,7 +135,7 @@ export default function OwnerShell({
             <IcoMenu />
           </button>
           <div className="crumb">
-            <span>Endereço Digital</span>
+            <span>EnderecoDigital Hub</span>
             <IcoChevronRight width={14} height={14} />
             <b>{titulo}</b>
           </div>
@@ -152,7 +152,7 @@ export default function OwnerShell({
         </div>
         <div className="content">{children}</div>
         <div className="footer">
-          <span>© 2026 Endereço Digital · Plataforma v1.0</span>
+          <span>© 2026 EnderecoDigital Hub · v1.0</span>
           <span className="row" style={{ gap: 8 }}>
             <span className="badge ok">Operacional</span>
           </span>
