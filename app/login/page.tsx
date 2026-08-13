@@ -15,10 +15,14 @@ export default async function LoginPage({
   return (
     <div className="login-wrap">
       <div className="card login-card">
-        <div className="kpi-label gold">Plataforma</div>
-        <h1>{nome}</h1>
+        <div className="row" style={{ gap: 12, marginBottom: 18 }}>
+          <div className="avatar">{(nome || "ED").slice(0, 2).toUpperCase()}</div>
+          <b style={{ fontSize: 16 }}>{nome}</b>
+        </div>
+        <div className="eyebrow">Plataforma</div>
+        <h1 style={{ marginTop: 6 }}>Acesse o seu painel</h1>
         <p className="muted" style={{ marginTop: 4 }}>
-          Acesse o seu painel.
+          Entre com o seu e-mail e senha.
         </p>
 
         <form action="/api/login" method="post">

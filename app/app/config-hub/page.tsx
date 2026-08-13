@@ -68,7 +68,7 @@ export default async function ConfigHubPage({
       )}
       {erro && ERROS[erro] && <div className="err">{ERROS[erro]}</div>}
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start", marginTop: 16 }}>
+      <div className="cols-2" style={{ alignItems: "start", marginTop: 16 }}>
         {/* Identidade */}
         <div className="card">
           <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>Identidade</h2>
@@ -199,7 +199,7 @@ export default async function ConfigHubPage({
           </div>
         ) : (
           <form action={salvarWhatsApp}>
-            <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <div className="cols-2">
               <div>
                 <label htmlFor="phone_number_id">Phone Number ID</label>
                 <input id="phone_number_id" name="phone_number_id" />

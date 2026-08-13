@@ -10,7 +10,7 @@ export default async function HubsPage() {
       <div className="kpi-label gold">Plataforma</div>
       <h1 style={{ margin: "4px 0 18px" }}>Hubs</h1>
 
-      <div className="grid" style={{ gridTemplateColumns: "1.4fr 1fr", alignItems: "start" }}>
+      <div className="cols-side">
         <div className="card">
           <table>
             <thead>

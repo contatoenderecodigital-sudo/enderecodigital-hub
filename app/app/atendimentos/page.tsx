@@ -35,7 +35,7 @@ export default async function AtendimentosPage({
           </p>
         </div>
       ) : (
-        <div className="grid" style={{ gridTemplateColumns: "300px 1fr", alignItems: "start", marginTop: 16 }}>
+        <div className="cols-inbox" style={{ marginTop: 16 }}>
           {/* Lista de conversas */}
           <div className="card" style={{ padding: 8 }}>
             {conversas.map((cv) => (

@@ -59,17 +59,17 @@ export default async function ClienteDetalhe({
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "repeat(4,1fr)", marginTop: 18 }}>
+      <div className="cols-4" style={{ marginTop: 18 }}>
         <div className="card"><div className="kpi">{leads.total}</div><div className="kpi-label">Leads</div></div>
         <div className="card"><div className="kpi">{leads.ganhos}</div><div className="kpi-label">Ganhos</div></div>
         <div className="card"><div className="kpi">{uso.interacoes}</div><div className="kpi-label">Interações IA</div></div>
         <div className="card"><div className="kpi">{negocio.health_score}%</div><div className="kpi-label">Saúde</div></div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start", marginTop: 16 }}>
+      <div className="cols-2" style={{ alignItems: "start", marginTop: 16 }}>
         <div className="card">
           <h2 style={{ margin: "0 0 12px", fontSize: 17 }}>Dados</h2>
-          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="cols-2" style={{ gap: 12 }}>
             <Item label="Razão social" valor={negocio.nome} />
             <Item label="Segmento" valor={negocio.segmento || ""} />
             <Item label="Responsável" valor={negocio.resp_nome || ""} />
@@ -90,7 +90,7 @@ export default async function ClienteDetalhe({
             {mods.financeiro && <span className="badge ok">Financeiro</span>}
             <span className="badge ok">WhatsApp</span>
           </div>
-          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
+          <div className="cols-2" style={{ gap: 12, marginTop: 14 }}>
             <Item label="IA" valor={negocio.ia_habilitada ? "habilitada" : "desligada"} />
             <Item label="Modelo do chat" valor={negocio.ia_modelo_chat || "padrão (Haiku)"} />
             <Item label="Tokens (entrada/saída)" valor={`${uso.tokens_in} / ${uso.tokens_out}`} />
