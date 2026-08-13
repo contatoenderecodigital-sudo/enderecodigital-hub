@@ -43,6 +43,7 @@ export default async function AppLayout({
         {mods.instagram && <Link href="/app/instagram">Instagram</Link>}
         {mods.crm && <Link href="/app/crm">CRM</Link>}
         <Link href="/app/whatsapp">WhatsApp</Link>
+        <Link href="/app/atendimentos">Atendimentos</Link>
         {mods.financeiro && <Link href="/app/financeiro">Financeiro</Link>}
         <Link href="/app/assistente">Assistente</Link>
         <Link href="/app/config">Configurações</Link>

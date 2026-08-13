@@ -465,6 +465,40 @@ export async function historicoRecente(
     .map((m) => ({ role: m.direcao === "entrada" ? "user" : "assistant", content: m.texto }));
 }
 
+// ---------------- ATENDIMENTOS (inbox de conversas) ----------------
+export interface ResumoConversa {
+  contato: string;
+  ultima: string;
+  qtd: number;
+  ultimo_texto: string;
+}
+
+export async function listConversas(negocioId: string): Promise<ResumoConversa[]> {
+  return (
+    await query<ResumoConversa>(
+      `SELECT de_numero AS contato,
+              max(criado_em) AS ultima,
+              count(*)::int AS qtd,
+              (array_agg(texto ORDER BY criado_em DESC))[1] AS ultimo_texto
+       FROM mensagens WHERE negocio_id = $1
+       GROUP BY de_numero ORDER BY ultima DESC`,
+      [negocioId]
+    )
+  ).rows;
+}
+
+export async function mensagensDoContato(
+  negocioId: string,
+  contato: string
+): Promise<{ id: string; direcao: string; texto: string; criado_em: string }[]> {
+  return (
+    await query<{ id: string; direcao: string; texto: string; criado_em: string }>(
+      "SELECT id, direcao, texto, criado_em FROM mensagens WHERE negocio_id = $1 AND de_numero = $2 ORDER BY criado_em ASC",
+      [negocioId, contato]
+    )
+  ).rows;
+}
+
 // ---------------- USO DE IA (medicao por tenant) ----------------
 export async function registrarUso(
   negocioId: string,
