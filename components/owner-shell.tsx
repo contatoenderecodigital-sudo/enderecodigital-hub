@@ -36,6 +36,7 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
   {
     grupo: "Agência · GROOW OS",
     itens: [
+      { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
       { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
       { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
       { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
