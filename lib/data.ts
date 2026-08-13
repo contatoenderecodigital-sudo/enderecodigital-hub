@@ -234,3 +234,17 @@ export async function getUsuario(id: string): Promise<Usuario | null> {
 export async function updateSenhaUsuario(id: string, senhaHash: string): Promise<void> {
   await query("UPDATE usuarios SET senha_hash = $1 WHERE id = $2", [senhaHash, id]);
 }
+
+// ---------------- USO DE IA (medicao por tenant) ----------------
+export async function registrarUso(
+  negocioId: string,
+  origem: string,
+  modelo: string,
+  tokensIn: number,
+  tokensOut: number
+): Promise<void> {
+  await query(
+    "INSERT INTO uso_ia (negocio_id, origem, modelo, tokens_in, tokens_out) VALUES ($1,$2,$3,$4,$5)",
+    [negocioId, origem, modelo, tokensIn, tokensOut]
+  );
+}
