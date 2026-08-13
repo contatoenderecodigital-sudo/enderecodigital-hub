@@ -305,6 +305,33 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
 
 @media (max-width: 560px) { .modal-body { padding: 16px; } .modal-head { padding: 16px; } }
 
+/* ============ toolbar (busca + filtro) ============ */
+.toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.search-box { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 9px;
+  background: rgba(0, 0, 0, 0.22); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--muted); }
+.search-box input { border: none; background: transparent; padding: 0; }
+.search-box input:focus { box-shadow: none; }
+.filter-select { width: auto; min-width: 190px; }
+
+/* ============ dropdown "..." ============ */
+.dropdown { position: relative; display: inline-block; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 190px;
+  background: linear-gradient(165deg, rgba(18, 28, 50, 0.97), rgba(11, 19, 36, 0.97));
+  backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--line); border-top: 1px solid var(--line-top); border-radius: 13px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5); padding: 6px; }
+.menu a, .menu button { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  padding: 9px 11px; border-radius: 9px; background: transparent; border: none; color: var(--text);
+  font-size: 13.5px; cursor: pointer; font-family: inherit; }
+.menu a:hover, .menu button:hover { background: rgba(255, 255, 255, 0.06); }
+.menu a svg, .menu button svg { color: var(--muted); flex: none; }
+.menu .sep { height: 1px; background: var(--line); margin: 5px 4px; }
+.menu .danger { color: var(--danger); }
+.menu .danger svg { color: var(--danger); }
+.dots-btn { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); color: var(--muted-2); cursor: pointer; }
+.dots-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.1); }
+
 /* ============ chat / pills ============ */
 .pill { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); color: var(--muted-2);
   padding: 8px 13px; border-radius: 999px; font-size: 13px; cursor: pointer; }

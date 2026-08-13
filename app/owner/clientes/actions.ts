@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSession, setSession, hashPassword } from "@/lib/auth";
-import { createNegocio, criarUsuarioCliente } from "@/lib/data";
+import { createNegocio, criarUsuarioCliente, setStatusNegocio } from "@/lib/data";
 import { slugify, sufixoCurto } from "@/lib/util";
 
 function ou(v: FormDataEntryValue | null): string | null {
@@ -82,6 +82,19 @@ export async function criarClienteAction(formData: FormData) {
 
   revalidatePath("/owner/clientes");
   redirect("/owner/clientes?ok=1");
+}
+
+export async function mudarStatusClienteAction(formData: FormData) {
+  const s = await getSession();
+  if (!s || s.papel !== "owner_plataforma") redirect("/login");
+  const negocioId = String(formData.get("negocio_id") || "");
+  const statusRaw = String(formData.get("status") || "");
+  const status = (["ativo", "em_configuracao", "arquivado"].includes(statusRaw)
+    ? statusRaw
+    : "ativo") as "ativo" | "em_configuracao" | "arquivado";
+  if (negocioId) await setStatusNegocio(negocioId, status);
+  revalidatePath("/owner/clientes");
+  redirect("/owner/clientes");
 }
 
 // Owner "abre" o workspace de um cliente (impersonacao auditavel).
