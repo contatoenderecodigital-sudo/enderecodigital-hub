@@ -383,6 +383,88 @@ export async function listUsuariosDoNegocio(negocioId: string): Promise<Usuario[
   ).rows;
 }
 
+// ---------------- WHATSAPP (Cloud API, multi-tenant) ----------------
+export interface WaConexao {
+  id: string;
+  negocio_id: string;
+  waba_id: string;
+  phone_number_id: string;
+  access_token: string;
+  status: string;
+}
+
+export async function getWaConexao(negocioId: string): Promise<WaConexao | null> {
+  return (
+    await query<WaConexao>("SELECT * FROM wa_conexoes WHERE negocio_id = $1 LIMIT 1", [negocioId])
+  ).rows[0] ?? null;
+}
+
+export async function upsertWaConexao(input: {
+  negocio_id: string;
+  waba_id: string;
+  phone_number_id: string;
+  access_token: string;
+}): Promise<void> {
+  // phone_number_id e UNIQUE global (chave de roteamento do webhook).
+  await query(
+    `INSERT INTO wa_conexoes (negocio_id, waba_id, phone_number_id, access_token, status)
+     VALUES ($1,$2,$3,$4,'conectado')
+     ON CONFLICT (phone_number_id)
+     DO UPDATE SET negocio_id = EXCLUDED.negocio_id, waba_id = EXCLUDED.waba_id,
+                   access_token = EXCLUDED.access_token, status = 'conectado'`,
+    [input.negocio_id, input.waba_id, input.phone_number_id, input.access_token]
+  );
+}
+
+export async function removerWaConexao(negocioId: string): Promise<void> {
+  await query("DELETE FROM wa_conexoes WHERE negocio_id = $1", [negocioId]);
+}
+
+// Resolve o tenant pelo phone_number_id (o webhook usa isto). Nunca "adivinha".
+export async function resolverTenantPorPhoneNumberId(
+  phoneNumberId: string
+): Promise<{ negocio_id: string; phone_number_id: string; access_token: string } | null> {
+  const c = (
+    await query<WaConexao>(
+      "SELECT * FROM wa_conexoes WHERE phone_number_id = $1 AND status = 'conectado' LIMIT 1",
+      [phoneNumberId]
+    )
+  ).rows[0];
+  if (!c) return null;
+  return { negocio_id: c.negocio_id, phone_number_id: c.phone_number_id, access_token: c.access_token };
+}
+
+// ---------------- MENSAGENS (historico do WhatsApp / chat) ----------------
+export async function registrarMensagem(
+  negocioId: string,
+  contato: string,
+  direcao: "entrada" | "saida",
+  texto: string,
+  wamid: string | null
+): Promise<void> {
+  await query(
+    "INSERT INTO mensagens (negocio_id, direcao, de_numero, texto, wamid) VALUES ($1,$2,$3,$4,$5)",
+    [negocioId, direcao, contato, texto, wamid]
+  );
+}
+
+// Ultimas mensagens de um contato, ja no formato de chat (entrada=user, saida=assistant).
+export async function historicoRecente(
+  negocioId: string,
+  contato: string,
+  limite = 10
+): Promise<{ role: "user" | "assistant"; content: string }[]> {
+  const r = await query<{ direcao: string; texto: string }>(
+    `SELECT direcao, texto FROM mensagens
+     WHERE negocio_id = $1 AND de_numero = $2
+     ORDER BY criado_em DESC LIMIT $3`,
+    [negocioId, contato, limite]
+  );
+  return r.rows
+    .reverse()
+    .map((m) => ({ role: m.direcao === "entrada" ? "user" : "assistant", content: m.texto }));
+}
+
 // ---------------- USO DE IA (medicao por tenant) ----------------
 export async function registrarUso(
   negocioId: string,

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getSession } from "@/lib/auth";
 import { activeNegocioId, ehOwner } from "@/lib/tenant";
-import { getNegocio, getHub, getCerebro } from "@/lib/data";
+import { getNegocio, getHub, getCerebro, getWaConexao } from "@/lib/data";
 import { modulosEfetivos } from "@/lib/types";
 import {
   salvarIdentidade,
@@ -10,6 +11,8 @@ import {
   salvarCerebro,
   resetarSenhaCliente,
   definirStatus,
+  salvarWhatsApp,
+  removerWhatsApp,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +24,13 @@ const MENSAGENS: Record<string, string> = {
   cerebro: "Base de conhecimento salva.",
   senha: "Senha do cliente redefinida.",
   status: "Status atualizado.",
+  whatsapp: "WhatsApp conectado.",
+  whatsapp_off: "WhatsApp desconectado.",
 };
 const ERROS: Record<string, string> = {
   senha: "A senha precisa de ao menos 6 caracteres.",
   sem_dono: "Este cliente ainda não tem usuário de login.",
+  wa: "Preencha WABA ID, Phone Number ID e token de acesso.",
 };
 
 export default async function ConfigHubPage({
@@ -42,6 +48,9 @@ export default async function ConfigHubPage({
   if (!negocio) redirect("/owner/clientes");
   const hub = await getHub(negocio.hub_id);
   const cerebro = await getCerebro(neg);
+  const wa = await getWaConexao(neg);
+  const host = (await headers()).get("host") || "seu-dominio";
+  const webhookUrl = `https://${host}/api/whatsapp/webhook`;
   const mods = hub
     ? modulosEfetivos(negocio, hub)
     : { site: false, instagram: false, financeiro: false, crm: false };
@@ -146,6 +155,67 @@ export default async function ConfigHubPage({
             </button>
           </form>
         </div>
+      </div>
+
+      {/* WhatsApp oficial */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="spread">
+          <h2 style={{ margin: 0, fontSize: 17 }}>WhatsApp oficial (Cloud API)</h2>
+          {wa ? (
+            <span className="badge ok">conectado</span>
+          ) : (
+            <span className="badge warn">não conectado</span>
+          )}
+        </div>
+        <p className="muted" style={{ marginTop: 6 }}>
+          No app da Meta, configure o webhook para esta URL e assine o campo <strong>messages</strong>:
+        </p>
+        <pre
+          style={{
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid var(--cor-borda)",
+            borderRadius: 10,
+            padding: "10px 14px",
+            overflowX: "auto",
+            fontSize: 12.5,
+            margin: "0 0 12px",
+          }}
+        >
+          {webhookUrl}
+        </pre>
+        {wa ? (
+          <div className="row" style={{ gap: 14, flexWrap: "wrap" }}>
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Phone Number ID</div>
+              <div>{wa.phone_number_id}</div>
+            </div>
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>WABA ID</div>
+              <div>{wa.waba_id}</div>
+            </div>
+            <form action={removerWhatsApp} style={{ marginLeft: "auto" }}>
+              <button className="btn btn-ghost btn-sm" type="submit">Desconectar</button>
+            </form>
+          </div>
+        ) : (
+          <form action={salvarWhatsApp}>
+            <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <div>
+                <label htmlFor="phone_number_id">Phone Number ID</label>
+                <input id="phone_number_id" name="phone_number_id" />
+              </div>
+              <div>
+                <label htmlFor="waba_id">WABA ID</label>
+                <input id="waba_id" name="waba_id" />
+              </div>
+            </div>
+            <label htmlFor="access_token">Token de acesso (do número)</label>
+            <input id="access_token" name="access_token" />
+            <button className="btn" type="submit" style={{ marginTop: 14 }}>
+              Conectar WhatsApp
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Cerebro */}

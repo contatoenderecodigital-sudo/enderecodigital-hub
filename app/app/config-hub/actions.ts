@@ -11,6 +11,8 @@ import {
   setCerebro,
   resetSenhaDono,
   setStatusNegocio,
+  upsertWaConexao,
+  removerWaConexao,
 } from "@/lib/data";
 
 function str(v: FormDataEntryValue | null): string | null {
@@ -77,6 +79,29 @@ export async function resetarSenhaCliente(formData: FormData) {
   const hash = await hashPassword(nova);
   const ok = await resetSenhaDono(neg, hash);
   redirect(ok ? "/app/config-hub?ok=senha" : "/app/config-hub?erro=sem_dono");
+}
+
+export async function salvarWhatsApp(formData: FormData) {
+  const neg = await guard();
+  const waba_id = str(formData.get("waba_id"));
+  const phone_number_id = str(formData.get("phone_number_id"));
+  const access_token = str(formData.get("access_token"));
+  if (!waba_id || !phone_number_id || !access_token) {
+    redirect("/app/config-hub?erro=wa");
+  }
+  await upsertWaConexao({
+    negocio_id: neg,
+    waba_id: waba_id as string,
+    phone_number_id: phone_number_id as string,
+    access_token: access_token as string,
+  });
+  redirect("/app/config-hub?ok=whatsapp");
+}
+
+export async function removerWhatsApp() {
+  const neg = await guard();
+  await removerWaConexao(neg);
+  redirect("/app/config-hub?ok=whatsapp_off");
 }
 
 export async function definirStatus(formData: FormData) {
