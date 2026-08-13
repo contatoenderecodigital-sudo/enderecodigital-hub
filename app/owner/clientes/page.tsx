@@ -1,6 +1,7 @@
 import Link from "@/components/link";
 import { listHubs, listNegocios } from "@/lib/data";
 import { criarClienteAction } from "./actions";
+import { IcoActivity } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -10,71 +11,93 @@ export default async function ClientesPage() {
 
   return (
     <>
-      <div className="kpi-label gold">Plataforma</div>
-      <h1 style={{ margin: "4px 0 18px" }}>Clientes</h1>
-
-      <div className="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Empresa</th>
-              <th>Hub</th>
-              <th>Segmento</th>
-              <th>Status</th>
-              <th>Saúde</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {clientes.map((c) => (
-              <tr key={c.id}>
-                <td>
-                  <strong>{c.nome_fantasia || c.nome}</strong>
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    /{c.slug}
-                  </div>
-                </td>
-                <td className="muted">{hubNome.get(c.hub_id) || "—"}</td>
-                <td className="muted">{c.segmento || "—"}</td>
-                <td>
-                  <span className={"badge " + (c.status === "ativo" ? "ok" : "warn")}>
-                    {c.status}
-                  </span>
-                </td>
-                <td className="muted">{c.health_score}%</td>
-                <td style={{ textAlign: "right" }}>
-                  <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
-                    <Link className="btn btn-ghost btn-sm" href={`/owner/clientes/${c.id}`}>
-                      Ver
-                    </Link>
-                    <form action="/api/impersonar" method="post">
-                      <input type="hidden" name="negocio_id" value={c.id} />
-                      <button className="btn btn-ghost btn-sm" type="submit">
-                        Abrir workspace
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {clientes.length === 0 && (
-              <tr>
-                <td colSpan={6} className="muted">
-                  Nenhum cliente ainda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Gestão</div>
+          <h1>Clientes</h1>
+          <p className="muted">O ecossistema de empresas da plataforma.</p>
+        </div>
+        <a className="btn" href="#novo-cliente">
+          Novo cliente
+        </a>
       </div>
 
-      <div className="card" style={{ marginTop: 20 }}>
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style={{ paddingLeft: 20 }}>Empresa</th>
+                <th>Hub</th>
+                <th>Segmento</th>
+                <th>Status</th>
+                <th>Saúde</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {clientes.map((c) => (
+                <tr key={c.id}>
+                  <td style={{ paddingLeft: 20 }}>
+                    <div className="row" style={{ gap: 11 }}>
+                      <div className="avatar" style={{ background: c.marca_cor || "#C9A961" }}>
+                        {(c.nome_fantasia || c.nome).slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <strong>{c.nome_fantasia || c.nome}</strong>
+                        <div className="muted" style={{ fontSize: 12 }}>
+                          /{c.slug}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="muted">{hubNome.get(c.hub_id) || "—"}</td>
+                  <td className="muted">{c.segmento || "—"}</td>
+                  <td>
+                    <span className={"badge " + (c.status === "ativo" ? "ok" : "warn")}>
+                      {c.status}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="row" style={{ gap: 6 }}>
+                      <IcoActivity width={14} height={14} />
+                      {c.health_score}%
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right", paddingRight: 20 }}>
+                    <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
+                      <Link className="btn btn-ghost btn-sm" href={`/owner/clientes/${c.id}`}>
+                        Ver
+                      </Link>
+                      <form action="/api/impersonar" method="post">
+                        <input type="hidden" name="negocio_id" value={c.id} />
+                        <button className="btn btn-ghost btn-sm" type="submit">
+                          Abrir workspace
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {clientes.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="muted" style={{ paddingLeft: 20 }}>
+                    Nenhum cliente ainda.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 20 }} id="novo-cliente">
         <h2 style={{ margin: "0 0 6px", fontSize: 17 }}>Novo cliente</h2>
         <p className="muted" style={{ marginTop: 0 }}>
           Nasce como um workspace dentro do hub escolhido.
         </p>
         <form action={criarClienteAction}>
-          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <div className="cols-2">
             <div>
               <label htmlFor="hub_id">Hub</label>
               <select id="hub_id" name="hub_id" required defaultValue={hubs[0]?.id || ""}>
@@ -123,15 +146,9 @@ export default async function ClientesPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: 16,
-              paddingTop: 14,
-              borderTop: "1px solid var(--cor-borda)",
-            }}
-          >
-            <div className="kpi-label">Acesso do cliente</div>
-            <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 8 }}>
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+            <div className="eyebrow">Acesso do cliente</div>
+            <div className="cols-2" style={{ marginTop: 10 }}>
               <div>
                 <label htmlFor="email">E-mail de login</label>
                 <input id="email" name="email" type="email" />
