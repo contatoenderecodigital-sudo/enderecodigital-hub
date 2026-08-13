@@ -6,7 +6,8 @@ import {
   criarOpsLead, moverOpsLeadStatus, excluirOpsLead,
   criarOpsCliente, setOpsClienteStatus, marcarPago,
   criarOpsTarefa, toggleOpsTarefa, excluirOpsTarefa,
-  registrarInvestimento, setBlogStatus, descartarIdeia,
+  registrarInvestimento, setBlogStatus, descartarIdeia, setConteudoStatus,
+  addSenha, excluirSenha,
 } from "@/lib/ops";
 
 // ---- LEADS ----
@@ -116,4 +117,34 @@ export async function descartarIdeiaAction(fd: FormData) {
   const id = Number(fd.get("id"));
   if (id) await descartarIdeia(id);
   revalidatePath("/owner/ops/social");
+}
+
+export async function conteudoStatusAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  const status = String(fd.get("status") || "");
+  if (id && status) await setConteudoStatus(id, status);
+  revalidatePath("/owner/ops/aprovacoes");
+  revalidatePath("/owner/ops/social");
+}
+
+// ---- SENHAS ----
+export async function novaSenhaAction(fd: FormData) {
+  const servico = String(fd.get("servico") || "").trim();
+  const senha = String(fd.get("senha") || "");
+  if (!servico || !senha) redirect("/owner/ops/senhas?erro=campos");
+  await addSenha({
+    cliente: String(fd.get("cliente") || ""),
+    servico,
+    url: String(fd.get("url") || ""),
+    usuario: String(fd.get("usuario") || ""),
+    senha,
+    notas: String(fd.get("notas") || ""),
+  });
+  revalidatePath("/owner/ops/senhas");
+  redirect("/owner/ops/senhas?ok=1");
+}
+export async function excluirSenhaAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  if (id) await excluirSenha(id);
+  revalidatePath("/owner/ops/senhas");
 }

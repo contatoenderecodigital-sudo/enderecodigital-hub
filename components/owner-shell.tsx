@@ -46,9 +46,12 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
       { href: "/owner/ops/social", label: "Conteúdo Social", Icon: IcoInstagram },
       { href: "/owner/ops/blog", label: "Blog SEO", Icon: IcoGlobe },
       { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
+      { href: "/owner/ops/pipeline", label: "Pipeline", Icon: IcoGrid },
+      { href: "/owner/ops/aprovacoes", label: "Aprovações", Icon: IcoShield },
       { href: "/owner/ops/ia", label: "IA & Custos", Icon: IcoSparkles },
       { href: "/owner/ops/relatorios", label: "Relatórios", Icon: IcoActivity },
       { href: "/owner/ops/cardapios", label: "Cardápios", Icon: IcoGrid },
+      { href: "/owner/ops/senhas", label: "Senhas", Icon: IcoLock },
     ],
   },
   {

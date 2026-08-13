@@ -391,3 +391,54 @@ export async function listRelatorios() {
   return (await query<{ id: number; cliente: string; periodo: string; token: string; created_at: string; updated_at: string }>(
     `SELECT id, cliente, periodo, token, created_at, updated_at FROM ops_relatorios ORDER BY created_at DESC LIMIT 100`)).rows;
 }
+
+// ---------- APROVAÇÕES (central do que espera OK) ----------
+export async function aprovacoesPendentes() {
+  const { rows: blog } = await query<{ id: number; titulo: string; keyword_foco: string }>(
+    `SELECT id, titulo, keyword_foco FROM ops_blog_posts WHERE status='rascunho' ORDER BY created_at DESC LIMIT 50`);
+  const { rows: social } = await query<{ id: number; titulo: string; tipo: string }>(
+    `SELECT id, titulo, tipo FROM ops_social_conteudos WHERE status='rascunho' ORDER BY created_at DESC LIMIT 50`);
+  const { rows: campanhas } = await query<{ id: number; nome: string; total: string }>(
+    `SELECT c.id, c.nome, (SELECT count(*) FROM ops_wa_campanha_destinatarios d WHERE d.campanha_id=c.id) total
+     FROM ops_wa_campanhas c WHERE c.status IN ('rascunho','agendada') ORDER BY c.created_at DESC LIMIT 50`);
+  return { blog, social, campanhas };
+}
+
+// ---------- PIPELINE (kanban) ----------
+export async function pipelinePorEtapa() {
+  const { rows } = await query<{ id: number; nome: string; empresa: string | null; whatsapp: string | null; status: string; origem: string | null }>(
+    `SELECT id, nome, empresa, whatsapp, status, origem FROM ops_leads
+     WHERE status NOT IN ('perdido') ORDER BY created_at DESC LIMIT 300`);
+  return rows;
+}
+
+export async function setConteudoStatus(id: number, status: string) {
+  if (!["rascunho", "aprovado", "publicado"].includes(status)) return;
+  await query(`UPDATE ops_social_conteudos SET status = $1 WHERE id = $2`, [status, id]);
+}
+
+// ---------- COFRE DE SENHAS ----------
+import { cifrar, decifrar } from "@/lib/cofre";
+
+export interface SenhaMeta {
+  id: number; cliente: string; servico: string; url: string; usuario: string; notas: string;
+}
+export async function listSenhas(): Promise<SenhaMeta[]> {
+  return (await query<SenhaMeta>(
+    `SELECT id, cliente, servico, url, usuario, notas FROM ops_senhas_cofre ORDER BY cliente, servico LIMIT 500`)).rows;
+}
+export async function addSenha(d: { cliente?: string; servico: string; url?: string; usuario?: string; senha: string; notas?: string }) {
+  await query(
+    `INSERT INTO ops_senhas_cofre (cliente, servico, url, usuario, segredo, notas)
+     VALUES ($1,$2,$3,$4,$5,$6)`,
+    [d.cliente || "", d.servico, d.url || "", d.usuario || "", cifrar(d.senha), d.notas || ""]
+  );
+}
+export async function revelarSenha(id: number): Promise<string | null> {
+  const { rows } = await query<{ segredo: string }>(`SELECT segredo FROM ops_senhas_cofre WHERE id = $1`, [id]);
+  if (!rows[0]) return null;
+  try { return decifrar(rows[0].segredo); } catch { return null; }
+}
+export async function excluirSenha(id: number) {
+  await query(`DELETE FROM ops_senhas_cofre WHERE id = $1`, [id]);
+}
