@@ -15,8 +15,12 @@ export async function POST(req: Request) {
   const negocioId = String(form.get("negocio_id") || "");
   if (!negocioId) return redir("/owner/clientes");
 
+  // destino opcional (ex.: /app/config-hub pra "Editar workspace"); só rotas /app.
+  const dRaw = String(form.get("destino") || "/app");
+  const destino = dRaw.startsWith("/app") ? dRaw : "/app";
+
   const token = await signSession({ ...s, imp: negocioId });
-  const res = redir("/app");
+  const res = redir(destino);
   res.cookies.set(SESSION_COOKIE, token, cookieOptions());
   return res;
 }

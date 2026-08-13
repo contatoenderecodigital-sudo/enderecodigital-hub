@@ -18,6 +18,9 @@ export async function createHub(input: {
   cor_fundo: string;
   cor_texto: string;
   tipografia: "moderna" | "classica" | "mono";
+  versao: string;
+  logo_url: string | null;
+  favicon_url: string | null;
   descricao: string | null;
   dominio: string | null;
   login_titulo: string;
@@ -31,9 +34,9 @@ export async function createHub(input: {
     await query<Hub>(
       `INSERT INTO hubs
          (nome, slug, tema_modo, cor_destaque, cor_apoio, cor_fundo, cor_texto, tipografia,
-          descricao, dominio, login_titulo, login_botao,
+          versao, logo_url, favicon_url, descricao, dominio, login_titulo, login_botao,
           mod_site, mod_instagram, mod_financeiro, mod_crm)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
        RETURNING *`,
       [
         input.nome,
@@ -44,6 +47,9 @@ export async function createHub(input: {
         input.cor_fundo,
         input.cor_texto,
         input.tipografia,
+        input.versao,
+        input.logo_url,
+        input.favicon_url,
         input.descricao,
         input.dominio,
         input.login_titulo,
@@ -248,6 +254,11 @@ export async function updateIA(
     "UPDATE negocios SET ia_habilitada = $1, ia_modelo_chat = $2, ia_limite_tokens = $3 WHERE id = $4",
     [input.ia_habilitada, input.ia_modelo_chat, input.ia_limite_tokens, negocioId]
   );
+}
+
+export async function excluirCliente(negocioId: string): Promise<void> {
+  // ON DELETE CASCADE limpa leads, mensagens, wa_conexoes, usuarios, uso_ia, etc.
+  await query("DELETE FROM negocios WHERE id = $1", [negocioId]);
 }
 
 export async function setStatusNegocio(

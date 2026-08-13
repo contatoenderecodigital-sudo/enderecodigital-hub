@@ -25,15 +25,19 @@ export async function criarHubAction(formData: FormData) {
     | "classica"
     | "mono";
 
+  const slugInput = ou(formData.get("slug"));
   const input = {
     nome,
-    slug: slugify(nome),
+    slug: slugInput ? slugify(slugInput) : slugify(nome),
     tema_modo: tema as "escuro" | "claro",
     cor_destaque: String(formData.get("cor_destaque") || "#C9A961"),
     cor_apoio: String(formData.get("cor_apoio") || "#1B2A4A"),
     cor_fundo: String(formData.get("cor_fundo") || (tema === "claro" ? "#F5F3EE" : "#0B1838")),
     cor_texto: String(formData.get("cor_texto") || (tema === "claro" ? "#0B1838" : "#F5F3EE")),
     tipografia,
+    versao: String(formData.get("versao") || "1.0.0").trim() || "1.0.0",
+    logo_url: ou(formData.get("logo_url")),
+    favicon_url: ou(formData.get("favicon_url")),
     descricao: ou(formData.get("descricao")),
     dominio: ou(formData.get("dominio")),
     login_titulo: String(formData.get("login_titulo") || nome).trim() || nome,

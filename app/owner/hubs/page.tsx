@@ -21,7 +21,20 @@ export default async function HubsPage({
         eyebrow="Plataforma"
         titulo="Hubs"
         sub="Cada hub é uma marca white-label completa. Crie um por nicho ou empresa."
-        acao={<NovoHubModal />}
+        acao={
+          <NovoHubModal
+            hubs={hubs.map((h) => ({
+              id: h.id,
+              nome: h.nome,
+              cor_destaque: h.cor_destaque,
+              cor_apoio: h.cor_apoio,
+              cor_fundo: h.cor_fundo,
+              cor_texto: h.cor_texto,
+              tema_modo: h.tema_modo,
+              tipografia: h.tipografia,
+            }))}
+          />
+        }
       />
 
       {ok && (
@@ -44,6 +57,9 @@ export default async function HubsPage({
               <div className="row" style={{ gap: 8, marginBottom: 14 }}>
                 <span style={{ width: 26, height: 26, borderRadius: 8, background: h.cor_destaque || "#C9A961", border: "1px solid var(--line)" }} />
                 <span style={{ width: 26, height: 26, borderRadius: 8, background: h.cor_fundo || "#0B1838", border: "1px solid var(--line)" }} />
+                {h.slug === "endereco-digital" && (
+                  <span className="badge gold" style={{ fontSize: 10, padding: "2px 8px" }}>NATIVO</span>
+                )}
                 <span className="badge" style={{ marginLeft: "auto" }}>{h.tema_modo}</span>
               </div>
               <div className="row" style={{ gap: 10 }}>

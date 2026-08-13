@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "@/components/link";
-import { mudarStatusClienteAction } from "@/app/owner/clientes/actions";
-import { IcoSearch, IcoGlobe, IcoEye, IcoExternal, IcoArchive, IcoDots } from "@/components/icons";
+import { mudarStatusClienteAction, excluirClienteAction } from "@/app/owner/clientes/actions";
+import { IcoSearch, IcoGlobe, IcoUsers, IcoSettings, IcoArchive, IcoTrash, IcoDots } from "@/components/icons";
 
 export interface WsRow {
   id: string;
@@ -123,19 +123,24 @@ export default function WorkspacesTable({ items }: { items: WsRow[] }) {
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 25 }} onClick={() => setMenu(null)} />
           <div className="menu" style={{ position: "fixed", top: menu.top, left: menu.left, right: "auto" }}>
-            <Link href={`/owner/clientes/${alvo.id}`}><IcoEye width={16} height={16} /> Ver detalhe</Link>
             <form action="/api/impersonar" method="post">
               <input type="hidden" name="negocio_id" value={alvo.id} />
-              <button type="submit"><IcoExternal width={16} height={16} /> Abrir workspace</button>
+              <input type="hidden" name="destino" value="/app/config-hub" />
+              <button type="submit"><IcoSettings width={16} height={16} /> Editar Workspace</button>
             </form>
+            <Link href={`/owner/clientes/${alvo.id}`}><IcoUsers width={16} height={16} /> Ver Cliente</Link>
             <div className="sep" />
             <form action={mudarStatusClienteAction}>
               <input type="hidden" name="negocio_id" value={alvo.id} />
               <input type="hidden" name="status" value={alvo.status === "arquivado" ? "ativo" : "arquivado"} />
-              <button type="submit" className={alvo.status === "arquivado" ? "" : "danger"}>
+              <button type="submit">
                 <IcoArchive width={16} height={16} />
                 {alvo.status === "arquivado" ? "Reativar" : "Arquivar"}
               </button>
+            </form>
+            <form action={excluirClienteAction} onSubmit={(e) => { if (!confirm("Excluir permanentemente este workspace e todos os dados? Não dá pra desfazer.")) e.preventDefault(); }}>
+              <input type="hidden" name="negocio_id" value={alvo.id} />
+              <button type="submit" className="danger"><IcoTrash width={16} height={16} /> Excluir permanentemente</button>
             </form>
           </div>
         </>
