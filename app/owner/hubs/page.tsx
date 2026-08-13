@@ -7,7 +7,7 @@ export default async function HubsPage() {
   const hubs = await listHubs();
   return (
     <>
-      <div className="kpi-label gold">Plataforma</div>
+      <div className="eyebrow">Plataforma</div>
       <h1 style={{ margin: "4px 0 18px" }}>Hubs</h1>
 
       <div className="cols-side">

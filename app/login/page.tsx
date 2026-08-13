@@ -16,7 +16,7 @@ export default async function LoginPage({
     <div className="login-wrap">
       <div className="card login-card">
         <div className="row" style={{ gap: 12, marginBottom: 18 }}>
-          <div className="avatar">{(nome || "ED").slice(0, 2).toUpperCase()}</div>
+          <div className="avatar">ED</div>
           <b style={{ fontSize: 16 }}>{nome}</b>
         </div>
         <div className="eyebrow">Plataforma</div>

@@ -17,7 +17,7 @@ export default async function SitePage() {
     <>
       <div className="spread">
         <div>
-          <div className="kpi-label gold">Módulo</div>
+          <div className="eyebrow">Módulo</div>
           <h1 style={{ margin: "4px 0 0" }}>Meu site</h1>
         </div>
         {url && (

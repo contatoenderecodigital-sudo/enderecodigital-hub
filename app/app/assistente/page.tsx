@@ -16,7 +16,7 @@ export default async function AssistentePage() {
 
   return (
     <>
-      <div className="kpi-label gold">Módulo</div>
+      <div className="eyebrow">Módulo</div>
       <h1 style={{ margin: "4px 0 0" }}>Assistente</h1>
       <p className="muted">
         A IA que conhece o seu negócio. Motor: API Anthropic, com custo medido por cliente.

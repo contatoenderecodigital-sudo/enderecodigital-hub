@@ -47,7 +47,7 @@ function edLead(f){
     <>
       <div className="spread">
         <div>
-          <div className="kpi-label gold">Módulo</div>
+          <div className="eyebrow">Módulo</div>
           <h1 style={{ margin: "4px 0 0" }}>CRM · Funil</h1>
           <p className="muted" style={{ margin: 0 }}>
             {leads.length} lead{leads.length === 1 ? "" : "s"} no funil.

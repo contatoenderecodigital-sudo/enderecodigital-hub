@@ -44,7 +44,7 @@ export default async function ClienteDetalhe({
     <>
       <div className="spread">
         <div>
-          <div className="kpi-label gold">{hub?.nome || "Cliente"}</div>
+          <div className="eyebrow">{hub?.nome || "Cliente"}</div>
           <h1 style={{ margin: "4px 0 0" }}>{negocio.nome_fantasia || negocio.nome}</h1>
           <p className="muted" style={{ margin: 0 }}>
             /{negocio.slug} · <span className={"badge " + (negocio.status === "ativo" ? "ok" : "warn")}>{negocio.status}</span>

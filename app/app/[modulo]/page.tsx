@@ -51,7 +51,7 @@ export default async function ModuloPage({
 
   return (
     <>
-      <div className="kpi-label gold">Módulo</div>
+      <div className="eyebrow">Módulo</div>
       <h1 style={{ margin: "4px 0 0" }}>{m.titulo}</h1>
       <p className="muted" style={{ maxWidth: 620 }}>
         {m.desc}

@@ -57,7 +57,7 @@ export default async function ConfigHubPage({
 
   return (
     <>
-      <div className="kpi-label gold">Visível só pro administrador</div>
+      <div className="eyebrow">Visível só pro administrador</div>
       <h1 style={{ margin: "4px 0 0" }}>Configurações · {negocio.nome_fantasia || negocio.nome}</h1>
       <p className="muted">O cliente não vê esta aba.</p>
 

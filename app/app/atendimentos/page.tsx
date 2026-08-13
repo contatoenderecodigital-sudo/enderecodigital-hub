@@ -24,7 +24,7 @@ export default async function AtendimentosPage({
 
   return (
     <>
-      <div className="kpi-label gold">Módulo</div>
+      <div className="eyebrow">Módulo</div>
       <h1 style={{ margin: "4px 0 0" }}>Atendimentos</h1>
       <p className="muted">As conversas do WhatsApp — humanas e as respondidas pela IA.</p>
 

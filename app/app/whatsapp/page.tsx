@@ -15,7 +15,7 @@ export default async function WhatsAppPage() {
 
   return (
     <>
-      <div className="kpi-label gold">Módulo · diferencial</div>
+      <div className="eyebrow">Módulo · diferencial</div>
       <h1 style={{ margin: "4px 0 0" }}>WhatsApp oficial</h1>
       <p className="muted" style={{ maxWidth: 620 }}>
         Atendimento com IA no seu número, pela Cloud API oficial da Meta. Sem QR, sem risco de

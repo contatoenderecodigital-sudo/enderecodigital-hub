@@ -17,7 +17,7 @@ export default async function ConfigPage({
 
   return (
     <>
-      <div className="kpi-label gold">Sua conta</div>
+      <div className="eyebrow">Sua conta</div>
       <h1 style={{ margin: "4px 0 0" }}>Configurações</h1>
       <p className="muted">Perfil e senha de acesso.</p>
 
