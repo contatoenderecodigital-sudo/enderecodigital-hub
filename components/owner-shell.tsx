@@ -46,7 +46,6 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
   {
     grupo: "Plataforma",
     itens: [
-      { href: "/owner/hubs", label: "Hubs", Icon: IcoHub },
       { href: "/owner/sites", label: "Sites", Icon: IcoGlobe },
       { href: "/owner/modelos", label: "Modelos", Icon: IcoGrid },
       { href: "/owner/contas-claude", label: "Contas Claude", Icon: IcoSparkles },
