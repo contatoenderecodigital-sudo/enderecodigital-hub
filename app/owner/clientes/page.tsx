@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { listHubs, listNegocios } from "@/lib/data";
 import { criarClienteAction } from "./actions";
 

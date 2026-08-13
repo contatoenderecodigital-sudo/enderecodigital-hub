@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/link";
 import { contagens, listHubs } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
