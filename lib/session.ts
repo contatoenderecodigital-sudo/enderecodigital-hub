@@ -48,8 +48,10 @@ export const SESSION_MAX_AGE = MAX_AGE;
 export function cookieOptions(maxAge: number = MAX_AGE) {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: true,
+    // "none" garante que o cookie vai em TODA requisicao — inclusive os prefetch
+    // do Next (que com "lax" nao carregavam a sessao e quebravam a navegacao).
+    sameSite: "none" as const,
     path: "/",
     maxAge,
   };
