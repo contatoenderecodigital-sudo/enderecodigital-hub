@@ -52,6 +52,10 @@ export interface Negocio {
   observacoes: string | null;
   ia_habilitada: boolean;
   ia_modo: "api_plataforma" | "claude_cliente" | "sem_ia";
+  conta_claude_id: string | null;
+  ia_modelo_chat: string | null;
+  ia_modelo_gerador: string | null;
+  ia_limite_tokens: number;
   status: "ativo" | "em_configuracao" | "arquivado";
   ativo: boolean;
   criado_em: string;

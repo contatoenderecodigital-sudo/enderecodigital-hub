@@ -46,6 +46,7 @@ export default async function AppLayout({
         {mods.financeiro && <Link href="/app/financeiro">Financeiro</Link>}
         <Link href="/app/assistente">Assistente</Link>
         <Link href="/app/config">Configurações</Link>
+        {impersonando && <Link href="/app/config-hub">Config. do cliente</Link>}
         <div style={{ flex: 1 }} />
         {impersonando ? (
           <Link href="/sair-modo-owner">Voltar ao console</Link>
