@@ -13,6 +13,7 @@ import {
   IcoSparkles,
   IcoKey,
   IcoActivity,
+  IcoFunnel,
   IcoHelp,
   IcoShield,
   IcoLock,
@@ -31,6 +32,14 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
   {
     grupo: "Operação",
     itens: [{ href: "/owner", label: "Dashboard", Icon: IcoDashboard, exact: true }],
+  },
+  {
+    grupo: "Agência · GROOW OS",
+    itens: [
+      { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
+      { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
+      { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
+    ],
   },
   {
     grupo: "Usuários",
