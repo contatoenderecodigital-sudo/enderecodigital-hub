@@ -499,6 +499,58 @@ export async function mensagensDoContato(
   ).rows;
 }
 
+// ---------------- OWNER: WORKSPACES / TOKENS / CONTAS / AUDITORIA ----------------
+export async function listWorkspaces(): Promise<
+  (Negocio & { hub_nome: string; leads: number; interacoes: number })[]
+> {
+  return (
+    await query<Negocio & { hub_nome: string; leads: number; interacoes: number }>(
+      `SELECT n.*, h.nome AS hub_nome,
+              (SELECT count(*)::int FROM leads l WHERE l.negocio_id = n.id) AS leads,
+              (SELECT count(*)::int FROM uso_ia u WHERE u.negocio_id = n.id) AS interacoes
+       FROM negocios n JOIN hubs h ON h.id = n.hub_id
+       ORDER BY n.criado_em DESC`
+    )
+  ).rows;
+}
+
+export async function usoPorCliente(): Promise<
+  { negocio_id: string; nome: string; interacoes: number; tokens_in: number; tokens_out: number; custo_cent: number }[]
+> {
+  return (
+    await query<{ negocio_id: string; nome: string; interacoes: number; tokens_in: number; tokens_out: number; custo_cent: number }>(
+      `SELECT n.id AS negocio_id, COALESCE(n.nome_fantasia, n.nome) AS nome,
+              count(u.id)::int AS interacoes,
+              COALESCE(sum(u.tokens_in),0)::bigint AS tokens_in,
+              COALESCE(sum(u.tokens_out),0)::bigint AS tokens_out,
+              COALESCE(sum(u.custo_cent),0)::int AS custo_cent
+       FROM negocios n LEFT JOIN uso_ia u ON u.negocio_id = n.id
+       GROUP BY n.id, nome ORDER BY interacoes DESC`
+    )
+  ).rows;
+}
+
+export async function listContasClaude(): Promise<
+  { id: string; nome: string; tipo: string; plano: string | null; status: string }[]
+> {
+  return (
+    await query<{ id: string; nome: string; tipo: string; plano: string | null; status: string }>(
+      "SELECT id, nome, tipo, plano, status FROM contas_claude ORDER BY criado_em DESC"
+    )
+  ).rows;
+}
+
+export async function listAuditoria(
+  limite = 50
+): Promise<{ id: string; ator_usuario_id: string; acao: string; detalhe: string | null; criado_em: string }[]> {
+  return (
+    await query<{ id: string; ator_usuario_id: string; acao: string; detalhe: string | null; criado_em: string }>(
+      "SELECT id, ator_usuario_id, acao, detalhe, criado_em FROM auditoria ORDER BY criado_em DESC LIMIT $1",
+      [limite]
+    )
+  ).rows;
+}
+
 // ---------------- USO DE IA (medicao por tenant) ----------------
 export async function registrarUso(
   negocioId: string,

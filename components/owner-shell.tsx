@@ -7,6 +7,18 @@ import {
   IcoDashboard,
   IcoUsers,
   IcoHub,
+  IcoBuilding,
+  IcoGlobe,
+  IcoGrid,
+  IcoSparkles,
+  IcoKey,
+  IcoActivity,
+  IcoHelp,
+  IcoShield,
+  IcoLock,
+  IcoAlert,
+  IcoFlag,
+  IcoSettings,
   IcoLogout,
   IcoSearch,
   IcoBell,
@@ -18,21 +30,55 @@ type NavItem = { href: string; label: string; Icon: typeof IcoDashboard; exact?:
 const NAV: { grupo: string; itens: NavItem[] }[] = [
   {
     grupo: "Operação",
-    itens: [{ href: "/owner", label: "Visão geral", Icon: IcoDashboard, exact: true }],
+    itens: [{ href: "/owner", label: "Dashboard", Icon: IcoDashboard, exact: true }],
   },
   {
-    grupo: "Gestão",
+    grupo: "Usuários",
     itens: [
       { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
+      { href: "/owner/workspaces", label: "Workspaces", Icon: IcoBuilding },
+    ],
+  },
+  {
+    grupo: "Plataforma",
+    itens: [
       { href: "/owner/hubs", label: "Hubs", Icon: IcoHub },
+      { href: "/owner/sites", label: "Sites", Icon: IcoGlobe },
+      { href: "/owner/modelos", label: "Modelos", Icon: IcoGrid },
+      { href: "/owner/contas-claude", label: "Contas Claude", Icon: IcoSparkles },
+      { href: "/owner/assentos", label: "Assentos Claude", Icon: IcoKey },
+      { href: "/owner/tokens", label: "Tokens", Icon: IcoActivity },
+      { href: "/owner/suporte", label: "Suporte", Icon: IcoHelp },
+    ],
+  },
+  {
+    grupo: "Sistema",
+    itens: [
+      { href: "/owner/auditoria", label: "Auditoria", Icon: IcoShield },
+      { href: "/owner/seguranca", label: "Segurança", Icon: IcoLock },
+      { href: "/owner/alertas", label: "Alertas", Icon: IcoAlert },
+      { href: "/owner/flags", label: "Feature Flags", Icon: IcoFlag },
+      { href: "/owner/config", label: "Configurações", Icon: IcoSettings },
     ],
   },
 ];
 
 const TITULOS: [string, string][] = [
   ["/owner/clientes", "Clientes"],
+  ["/owner/workspaces", "Workspaces"],
   ["/owner/hubs", "Hubs"],
-  ["/owner", "Visão geral"],
+  ["/owner/sites", "Sites"],
+  ["/owner/modelos", "Modelos"],
+  ["/owner/contas-claude", "Contas Claude"],
+  ["/owner/assentos", "Assentos Claude"],
+  ["/owner/tokens", "Tokens"],
+  ["/owner/suporte", "Suporte"],
+  ["/owner/auditoria", "Auditoria"],
+  ["/owner/seguranca", "Segurança"],
+  ["/owner/alertas", "Alertas"],
+  ["/owner/flags", "Feature Flags"],
+  ["/owner/config", "Configurações"],
+  ["/owner", "Dashboard"],
 ];
 
 export default function OwnerShell({
