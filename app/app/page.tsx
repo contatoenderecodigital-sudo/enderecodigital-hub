@@ -2,59 +2,57 @@ import Link from "@/components/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { activeNegocioId } from "@/lib/tenant";
-import { getNegocio, getHub, leadsResumo, usoResumo, listLeads } from "@/lib/data";
+import { getNegocio, getHub, leadsResumo, usoResumo, getWaConexao } from "@/lib/data";
 import { modulosEfetivos } from "@/lib/types";
+import LiveClock from "@/components/live-clock";
 import {
   IcoSparkles,
   IcoWhatsapp,
-  IcoFunnel,
   IcoGlobe,
   IcoInstagram,
   IcoActivity,
+  IcoSend,
 } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
-function Kpi({ n, label }: { n: number | string; label: string }) {
-  return (
-    <div className="card">
-      <div className="kpi">{n}</div>
-      <div className="kpi-label">{label}</div>
-    </div>
-  );
-}
-
-function ModCard({
-  href,
+function StatusCard({
   Icon,
   label,
   titulo,
-  desc,
-  status,
-  destaque,
+  sub,
+  estado,
+  href,
 }: {
-  href: string;
-  Icon: typeof IcoWhatsapp;
+  Icon: typeof IcoGlobe;
   label: string;
   titulo: string;
-  desc: string;
-  status: string;
-  destaque?: boolean;
+  sub: string;
+  estado: "ativo" | "vazio";
+  href: string;
 }) {
   return (
-    <Link href={href} className="mod-card" style={destaque ? { borderColor: "var(--gold-tint-2)" } : undefined}>
+    <Link href={href} className="card" style={{ display: "block" }}>
       <div className="spread">
         <div className="icon-box">
           <Icon width={20} height={20} />
         </div>
-        <span className={"badge " + (destaque ? "gold" : "")}>{status}</span>
+        <span className={"badge " + (estado === "ativo" ? "gold" : "")}>
+          {estado === "ativo" ? "ativo" : "vazio"}
+        </span>
       </div>
-      <div className="m-label">{label}</div>
-      <div className="m-title">{titulo}</div>
-      <div className="m-desc">{desc}</div>
+      <div className="eyebrow" style={{ marginTop: 14 }}>{label}</div>
+      <div style={{ fontWeight: 700, fontSize: 16, marginTop: 3 }}>{titulo}</div>
+      <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{sub}</div>
     </Link>
   );
 }
+
+const SUGESTOES = [
+  "O que você sabe sobre a minha empresa?",
+  "Resuma minha presença digital atual",
+  "Que conteúdo devo postar essa semana?",
+];
 
 export default async function VisaoGeral() {
   const s = await getSession();
@@ -66,11 +64,12 @@ export default async function VisaoGeral() {
   const mods = hub
     ? modulosEfetivos(negocio, hub)
     : { site: false, instagram: false, financeiro: false, crm: false };
-  const [leads, uso, recentes] = await Promise.all([
+  const [leads, uso, wa] = await Promise.all([
     leadsResumo(negId),
     usoResumo(negId),
-    listLeads(negId),
+    getWaConexao(negId),
   ]);
+  const waAtivo = !!(wa && (wa as { phone_number_id?: string }).phone_number_id);
 
   return (
     <>
@@ -79,82 +78,78 @@ export default async function VisaoGeral() {
       </div>
       <h1 style={{ marginTop: 8 }}>{negocio.nome_fantasia || negocio.nome}</h1>
       <p className="muted" style={{ marginTop: 4 }}>
-        Tudo da sua presença digital, num acesso só.
+        Tudo da sua presença digital, em tempo real.
       </p>
 
       <div className="cols-4" style={{ marginTop: 20 }}>
-        <Kpi n={leads.total} label="Leads" />
-        <Kpi n={leads.ganhos} label="Ganhos" />
-        <Kpi n={uso.interacoes} label="Conversas IA" />
-        <Kpi n={`${negocio.health_score}%`} label="Saúde" />
-      </div>
-
-      <div className="cols-3" style={{ marginTop: 18 }}>
-        <ModCard
-          href="/app/whatsapp"
+        <StatusCard
           Icon={IcoWhatsapp}
           label="Diferencial"
           titulo="WhatsApp oficial"
-          desc="Atendimento com IA no seu número, pela API oficial da Meta."
-          status="oficial"
-          destaque
+          sub={waAtivo ? "Número conectado" : "Aguardando conexão"}
+          estado={waAtivo ? "ativo" : "vazio"}
+          href="/app/whatsapp"
         />
-        <ModCard
+        <StatusCard
+          Icon={IcoGlobe}
+          label="Meu site"
+          titulo={mods.site && negocio.site_url ? "Site ativo" : "Sem site"}
+          sub={negocio.site_url || "Adicione a URL no cadastro"}
+          estado={mods.site && negocio.site_url ? "ativo" : "vazio"}
+          href="/app/site"
+        />
+        <StatusCard
+          Icon={IcoInstagram}
+          label="Instagram"
+          titulo={negocio.instagram_url ? "Conectado" : "Não conectado"}
+          sub={negocio.instagram_url ? "Perfil vinculado — veja a aba" : "Vincule na aba Instagram"}
+          estado={negocio.instagram_url ? "ativo" : "vazio"}
+          href="/app/instagram"
+        />
+        <StatusCard
+          Icon={IcoActivity}
+          label="Assistente · IA"
+          titulo={uso.interacoes > 0 ? `${uso.interacoes} conversas` : "Sem contexto ainda"}
+          sub={negocio.ia_habilitada ? "IA habilitada" : "Aguardando ativação"}
+          estado={negocio.ia_habilitada ? "ativo" : "vazio"}
           href="/app/assistente"
-          Icon={IcoSparkles}
-          label="Inteligência"
-          titulo="Assistente"
-          desc="Converse com a IA que conhece o seu negócio."
-          status="pronto"
         />
-        {mods.crm && (
-          <ModCard
-            href="/app/crm"
-            Icon={IcoFunnel}
-            label="Vendas"
-            titulo="CRM · Funil"
-            desc="Leads do WhatsApp e do site, num funil visual."
-            status="pronto"
-          />
-        )}
-        {mods.site && (
-          <ModCard href="/app/site" Icon={IcoGlobe} label="Presença" titulo="Meu site" desc="Seu site e as visitas." status="pronto" />
-        )}
-        {mods.instagram && (
-          <ModCard href="/app/instagram" Icon={IcoInstagram} label="Social" titulo="Instagram" desc="Perfil, métricas e gerador de posts." status="em breve" />
-        )}
-        {mods.financeiro && (
-          <ModCard href="/app/financeiro" Icon={IcoActivity} label="Gestão" titulo="Financeiro" desc="Caixa, contas e metas." status="em breve" />
-        )}
       </div>
 
-      {mods.crm && recentes.length > 0 && (
-        <div className="card" style={{ marginTop: 18 }}>
-          <div className="spread">
-            <h2 style={{ margin: 0, fontSize: 17 }}>Últimos leads</h2>
-            <Link className="btn btn-ghost btn-sm" href="/app/crm">
-              Ver funil
-            </Link>
+      <LiveClock />
+
+      <div className="ws-chat" style={{ marginTop: 18 }}>
+        <div className="ws-chat-empty">
+          <div className="icon-box" style={{ width: 52, height: 52, margin: "0 auto 14px" }}>
+            <IcoSparkles width={24} height={24} />
           </div>
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
-              <tbody>
-                {recentes.slice(0, 5).map((l) => (
-                  <tr key={l.id}>
-                    <td>
-                      <strong>{l.nome}</strong>
-                    </td>
-                    <td className="muted">{l.telefone || l.email || "—"}</td>
-                    <td style={{ textAlign: "right" }}>
-                      {l.origem && <span className="badge">{l.origem}</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Converse com o Claude</h2>
+          <p className="muted" style={{ margin: "6px auto 0", maxWidth: 440, fontSize: 13.5 }}>
+            Ela conhece os arquivos e os dados da sua empresa. Pergunte o que quiser —
+            ou arraste arquivos aqui pra incluir.
+          </p>
         </div>
-      )}
+
+        <div className="chat-suggest">
+          {SUGESTOES.map((q) => (
+            <Link key={q} href={"/app/assistente?q=" + encodeURIComponent(q)} style={{ display: "block" }}>
+              <button type="button">{q}</button>
+            </Link>
+          ))}
+        </div>
+
+        <Link href="/app/assistente" style={{ display: "block", textDecoration: "none" }}>
+          <div className="chat-input">
+            <input placeholder="Peça algo ao Claude… (cole prints aqui)" readOnly />
+            <button className="btn" style={{ padding: "8px 12px" }} tabIndex={-1}>
+              <IcoSend width={16} height={16} />
+            </button>
+          </div>
+        </Link>
+        <p className="muted" style={{ textAlign: "center", fontSize: 11.5, marginTop: 10 }}>
+          {leads.total} leads · {negocio.health_score}% de saúde · motor de IA por API Anthropic, custo medido.
+        </p>
+      </div>
     </>
   );
 }
