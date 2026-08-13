@@ -26,6 +26,17 @@ export async function middleware(req: NextRequest) {
   const session = token ? await verifySession(token) : null;
 
   if (!session) {
+    // Prefetch do Next e credential-less (Chrome nao manda o cookie). Se a gente
+    // redirecionar o prefetch pro /login, o router CACHEIA esse redirect e o clique
+    // real vai parar no /login. Entao: nao redireciona prefetch, responde 204 vazio.
+    const ehPrefetch =
+      req.headers.get("next-router-prefetch") === "1" ||
+      req.headers.get("next-router-segment-prefetch") !== null ||
+      req.headers.get("purpose") === "prefetch" ||
+      req.headers.get("x-purpose") === "prefetch";
+    if (ehPrefetch) {
+      return new NextResponse(null, { status: 204 });
+    }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
