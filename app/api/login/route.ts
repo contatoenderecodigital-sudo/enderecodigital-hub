@@ -3,17 +3,18 @@ import { findUsuariosByEmail } from "@/lib/data";
 import { verifyPassword } from "@/lib/auth";
 import { signSession, SESSION_COOKIE, cookieOptions } from "@/lib/session";
 
-// Login como Route Handler: seta o cookie NO PROPRIO Response do redirect.
-// (Server Action com cookies().set()+redirect() nao persiste o cookie no Next.)
+// Redirect com Location RELATIVO: o navegador resolve contra a URL publica.
+// (req.url aqui reflete o host interno 0.0.0.0:3000 atras do proxy.)
+function redir(path: string): NextResponse {
+  return new NextResponse(null, { status: 303, headers: { Location: path } });
+}
+
 export async function POST(req: Request) {
-  const base = new URL(req.url);
   const form = await req.formData();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const senha = String(form.get("senha") || "");
 
-  if (!email || !senha) {
-    return NextResponse.redirect(new URL("/login?erro=1", base), 303);
-  }
+  if (!email || !senha) return redir("/login?erro=1");
 
   const usuarios = await findUsuariosByEmail(email);
   for (const u of usuarios) {
@@ -26,12 +27,11 @@ export async function POST(req: Request) {
         hub_id: u.hub_id,
         imp: null,
       });
-      const destino = u.papel === "owner_plataforma" ? "/owner" : "/app";
-      const res = NextResponse.redirect(new URL(destino, base), 303);
+      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/app");
       res.cookies.set(SESSION_COOKIE, token, cookieOptions());
       return res;
     }
   }
 
-  return NextResponse.redirect(new URL("/login?erro=1", base), 303);
+  return redir("/login?erro=1");
 }
