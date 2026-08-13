@@ -38,8 +38,11 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
     itens: [
       { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
       { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
+      { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
       { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
       { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
+      { href: "/owner/ops/trafego", label: "Tráfego & ROAS", Icon: IcoActivity },
+      { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
     ],
   },
   {

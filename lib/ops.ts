@@ -181,3 +181,121 @@ export async function marcarPago(clienteId: number, ym: string, valor: number, d
     [clienteId, descricao || `Mensalidade ${ym}`, valor, `${ym}-01`]
   );
 }
+
+// ---------- TAREFAS ----------
+export interface OpsTarefa {
+  id: number;
+  titulo: string;
+  descricao: string | null;
+  lead_id: number | null;
+  cliente_id: number | null;
+  prioridade: string;
+  status: string;
+  due_date: string | null;
+  feita_em: string | null;
+  created_at: string;
+}
+
+export async function listOpsTarefas(status?: string): Promise<OpsTarefa[]> {
+  const where = status === "pendente" || status === "feita" ? `WHERE status = $1` : "";
+  const params = where ? [status] : [];
+  return (
+    await query<OpsTarefa>(
+      `SELECT * FROM ops_tarefas ${where}
+       ORDER BY (status='pendente') DESC,
+                CASE prioridade WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END,
+                due_date NULLS LAST, created_at DESC
+       LIMIT 300`,
+      params
+    )
+  ).rows;
+}
+
+export async function tarefasResumo() {
+  const { rows } = await query<{ pendentes: string; feitas: string; atrasadas: string; alta: string }>(
+    `SELECT
+       count(*) FILTER (WHERE status='pendente')                                        AS pendentes,
+       count(*) FILTER (WHERE status='feita')                                           AS feitas,
+       count(*) FILTER (WHERE status='pendente' AND due_date IS NOT NULL AND due_date < CURRENT_DATE) AS atrasadas,
+       count(*) FILTER (WHERE status='pendente' AND prioridade='alta')                  AS alta
+     FROM ops_tarefas`
+  );
+  const r = rows[0] || { pendentes: "0", feitas: "0", atrasadas: "0", alta: "0" };
+  return { pendentes: +r.pendentes, feitas: +r.feitas, atrasadas: +r.atrasadas, alta: +r.alta };
+}
+
+export async function criarOpsTarefa(d: { titulo: string; prioridade?: string; due_date?: string }) {
+  await query(
+    `INSERT INTO ops_tarefas (titulo, prioridade, status, due_date) VALUES ($1,$2,'pendente',$3)`,
+    [d.titulo, d.prioridade || "media", d.due_date || null]
+  );
+}
+export async function toggleOpsTarefa(id: number) {
+  await query(
+    `UPDATE ops_tarefas SET status = CASE WHEN status='feita' THEN 'pendente' ELSE 'feita' END,
+       feita_em = CASE WHEN status='feita' THEN NULL ELSE now() END
+     WHERE id = $1`,
+    [id]
+  );
+}
+export async function excluirOpsTarefa(id: number) {
+  await query(`DELETE FROM ops_tarefas WHERE id = $1`, [id]);
+}
+
+// ---------- FUNIL (leads por etapa/origem) ----------
+export async function funilResumo() {
+  const ordem = ["novo", "contatado", "diagnostico", "proposta", "fechado"];
+  const { rows: porStatus } = await query<{ status: string; n: string }>(
+    `SELECT status, count(*) n FROM ops_leads GROUP BY status`
+  );
+  const mapS = new Map(porStatus.map((r) => [r.status, +r.n]));
+  const total = porStatus.reduce((a, r) => a + +r.n, 0);
+  const etapas = ordem.map((s) => ({ status: s, n: mapS.get(s) || 0 }));
+  const fechados = mapS.get("fechado") || 0;
+  const perdidos = mapS.get("perdido") || 0;
+
+  const { rows: porOrigem } = await query<{ origem: string | null; n: string; fechados: string }>(
+    `SELECT origem, count(*) n, count(*) FILTER (WHERE status='fechado') fechados
+     FROM ops_leads GROUP BY origem ORDER BY count(*) DESC`
+  );
+  return {
+    total,
+    fechados,
+    perdidos,
+    conversao: total > 0 ? Math.round((fechados / total) * 100) : 0,
+    etapas,
+    porOrigem: porOrigem.map((o) => ({ origem: o.origem || "—", n: +o.n, fechados: +o.fechados })),
+  };
+}
+
+// ---------- TRÁFEGO / ROAS ----------
+export async function trafegoResumo() {
+  // leads por fonte de tráfego + investimento por canal + receita atribuída (clientes vindos de leads)
+  const { rows: leadsPorFonte } = await query<{ fonte: string | null; leads: string; fechados: string }>(
+    `SELECT fonte_trafego fonte, count(*) leads, count(*) FILTER (WHERE status='fechado') fechados
+     FROM ops_leads GROUP BY fonte_trafego`
+  );
+  const { rows: invest } = await query<{ canal: string; total: string }>(
+    `SELECT canal, COALESCE(sum(valor),0) total FROM ops_trafego_investimentos GROUP BY canal`
+  );
+  const investMap = new Map(invest.map((i) => [i.canal, +i.total]));
+  const canais = new Set<string>([...leadsPorFonte.map((l) => l.fonte || "direto"), ...invest.map((i) => i.canal)]);
+  const linhas = [...canais].map((canal) => {
+    const lf = leadsPorFonte.find((l) => (l.fonte || "direto") === canal);
+    const investido = investMap.get(canal) || 0;
+    const leads = lf ? +lf.leads : 0;
+    const fechados = lf ? +lf.fechados : 0;
+    return { canal, investido, leads, fechados, cpl: leads > 0 ? investido / leads : 0 };
+  }).sort((a, b) => b.leads - a.leads);
+  const totalInvest = linhas.reduce((a, l) => a + l.investido, 0);
+  const totalLeads = linhas.reduce((a, l) => a + l.leads, 0);
+  return { linhas, totalInvest, totalLeads };
+}
+
+export async function registrarInvestimento(canal: string, mes: string, valor: number) {
+  await query(
+    `INSERT INTO ops_trafego_investimentos (canal, mes, valor) VALUES ($1,$2,$3)
+     ON CONFLICT (canal, mes) DO UPDATE SET valor = EXCLUDED.valor, updated_at = now()`,
+    [canal, mes, valor]
+  );
+}

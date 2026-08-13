@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import {
   criarOpsLead, moverOpsLeadStatus, excluirOpsLead,
   criarOpsCliente, setOpsClienteStatus, marcarPago,
+  criarOpsTarefa, toggleOpsTarefa, excluirOpsTarefa,
+  registrarInvestimento,
 } from "@/lib/ops";
 
 // ---- LEADS ----
@@ -69,4 +71,36 @@ export async function marcarPagoAction(fd: FormData) {
   const valor = Number(fd.get("valor") || 0);
   if (clienteId && ym) await marcarPago(clienteId, ym, valor);
   revalidatePath("/owner/ops/cobrancas");
+}
+
+// ---- TAREFAS ----
+export async function novaTarefaAction(fd: FormData) {
+  const titulo = String(fd.get("titulo") || "").trim();
+  if (!titulo) redirect("/owner/ops/tarefas?erro=titulo");
+  await criarOpsTarefa({
+    titulo,
+    prioridade: String(fd.get("prioridade") || "media"),
+    due_date: String(fd.get("due_date") || "") || undefined,
+  });
+  revalidatePath("/owner/ops/tarefas");
+  redirect("/owner/ops/tarefas?ok=1");
+}
+export async function toggleTarefaAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  if (id) await toggleOpsTarefa(id);
+  revalidatePath("/owner/ops/tarefas");
+}
+export async function excluirTarefaAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  if (id) await excluirOpsTarefa(id);
+  revalidatePath("/owner/ops/tarefas");
+}
+
+// ---- TRÁFEGO ----
+export async function investimentoAction(fd: FormData) {
+  const canal = String(fd.get("canal") || "").trim();
+  const mes = String(fd.get("mes") || "").trim();
+  const valor = Number(String(fd.get("valor") || "0").replace(",", ".")) || 0;
+  if (canal && /^\d{4}-\d{2}$/.test(mes)) await registrarInvestimento(canal, mes, valor);
+  revalidatePath("/owner/ops/trafego");
 }
