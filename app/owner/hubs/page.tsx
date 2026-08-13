@@ -1,101 +1,72 @@
-import { listHubs } from "@/lib/data";
-import { criarHubAction } from "./actions";
+import PageHead from "@/components/page-head";
+import NovoHubModal from "@/components/novo-hub-modal";
+import { listHubs, listNegocios } from "@/lib/data";
+import { IcoHub } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
-export default async function HubsPage() {
-  const hubs = await listHubs();
+export default async function HubsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string }>;
+}) {
+  const { ok } = await searchParams;
+  const [hubs, clientes] = await Promise.all([listHubs(), listNegocios()]);
+  const contaPorHub = new Map<string, number>();
+  clientes.forEach((c) => contaPorHub.set(c.hub_id, (contaPorHub.get(c.hub_id) || 0) + 1));
+
   return (
     <>
-      <div className="eyebrow">Plataforma</div>
-      <h1 style={{ margin: "4px 0 18px" }}>Hubs</h1>
+      <PageHead
+        eyebrow="Plataforma"
+        titulo="Hubs"
+        sub="Cada hub é uma marca white-label completa. Crie um por nicho ou empresa."
+        acao={<NovoHubModal />}
+      />
 
-      <div className="cols-side">
-        <div className="card">
-          <table>
-            <thead>
-              <tr>
-                <th>Hub</th>
-                <th>Slug</th>
-                <th>Tema</th>
-                <th>Módulos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hubs.map((h) => (
-                <tr key={h.id}>
-                  <td>
-                    <strong>{h.nome}</strong>
-                  </td>
-                  <td className="muted">{h.slug}</td>
-                  <td>
-                    <span className="badge">{h.tema_modo}</span>
-                  </td>
-                  <td className="muted">
-                    {[
-                      h.mod_site && "Site",
-                      h.mod_instagram && "Instagram",
-                      h.mod_crm && "CRM",
-                      h.mod_financeiro && "Financeiro",
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </td>
-                </tr>
-              ))}
-              {hubs.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="muted">
-                    Nenhum hub ainda.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {ok && (
+        <div className="owner-banner" style={{ borderRadius: 12, marginBottom: 16 }}>
+          Hub criado com sucesso.
         </div>
+      )}
 
-        <div className="card">
-          <h2 style={{ margin: "0 0 6px", fontSize: 17 }}>Novo hub</h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Uma marca white-label completa.
-          </p>
-          <form action={criarHubAction}>
-            <label htmlFor="nome">Nome do hub</label>
-            <input id="nome" name="nome" placeholder="Ex.: ClinicDigital" required />
-
-            <label htmlFor="tema_modo">Tema</label>
-            <select id="tema_modo" name="tema_modo" defaultValue="escuro">
-              <option value="escuro">Escuro</option>
-              <option value="claro">Claro</option>
-            </select>
-
-            <label htmlFor="cor_destaque">Cor de destaque</label>
-            <input id="cor_destaque" name="cor_destaque" defaultValue="#C9A961" />
-
-            <div style={{ marginTop: 14 }}>
-              <label style={{ margin: 0 }}>Módulos padrão</label>
-              <div className="row" style={{ flexWrap: "wrap", gap: 16, marginTop: 8 }}>
-                <label className="row" style={{ margin: 0 }}>
-                  <input type="checkbox" name="mod_site" defaultChecked style={{ width: "auto" }} /> Site
-                </label>
-                <label className="row" style={{ margin: 0 }}>
-                  <input type="checkbox" name="mod_instagram" defaultChecked style={{ width: "auto" }} />{" "}
-                  Instagram
-                </label>
-                <label className="row" style={{ margin: 0 }}>
-                  <input type="checkbox" name="mod_crm" style={{ width: "auto" }} /> CRM
-                </label>
-                <label className="row" style={{ margin: 0 }}>
-                  <input type="checkbox" name="mod_financeiro" style={{ width: "auto" }} /> Financeiro
-                </label>
+      <div className="cols-3">
+        {hubs.map((h) => {
+          const mods = [
+            h.mod_site && "Site",
+            h.mod_instagram && "Instagram",
+            h.mod_crm && "CRM",
+            h.mod_financeiro && "Financeiro",
+          ].filter(Boolean);
+          return (
+            <div key={h.id} className="card">
+              {/* faixa de cores da marca */}
+              <div className="row" style={{ gap: 8, marginBottom: 14 }}>
+                <span style={{ width: 26, height: 26, borderRadius: 8, background: h.cor_destaque || "#C9A961", border: "1px solid var(--line)" }} />
+                <span style={{ width: 26, height: 26, borderRadius: 8, background: h.cor_fundo || "#0B1838", border: "1px solid var(--line)" }} />
+                <span className="badge" style={{ marginLeft: "auto" }}>{h.tema_modo}</span>
+              </div>
+              <div className="row" style={{ gap: 10 }}>
+                <div className="icon-box"><IcoHub width={18} height={18} /></div>
+                <div style={{ minWidth: 0 }}>
+                  <strong>{h.nome}</strong>
+                  <div className="muted" style={{ fontSize: 12 }}>/{h.slug}</div>
+                </div>
+              </div>
+              {h.descricao && <p className="muted" style={{ fontSize: 13, margin: "12px 0 0" }}>{h.descricao}</p>}
+              <div className="row" style={{ gap: 6, marginTop: 14, flexWrap: "wrap" }}>
+                {mods.length ? mods.map((m) => <span key={String(m)} className="badge">{m}</span>) : <span className="muted" style={{ fontSize: 13 }}>Sem módulos opcionais</span>}
+              </div>
+              <div className="spread" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+                <span className="muted" style={{ fontSize: 12.5 }}>{contaPorHub.get(h.id) || 0} cliente(s)</span>
+                {h.dominio && <span className="muted" style={{ fontSize: 12.5 }}>{h.dominio}</span>}
               </div>
             </div>
-
-            <button className="btn" type="submit" style={{ width: "100%", marginTop: 18 }}>
-              Criar hub
-            </button>
-          </form>
-        </div>
+          );
+        })}
+        {hubs.length === 0 && (
+          <div className="card"><p className="muted" style={{ margin: 0 }}>Nenhum hub ainda. Clique em Novo hub.</p></div>
+        )}
       </div>
     </>
   );

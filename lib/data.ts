@@ -14,8 +14,14 @@ export async function createHub(input: {
   slug: string;
   tema_modo: "escuro" | "claro";
   cor_destaque: string;
+  cor_apoio: string;
   cor_fundo: string;
   cor_texto: string;
+  tipografia: "moderna" | "classica" | "mono";
+  descricao: string | null;
+  dominio: string | null;
+  login_titulo: string;
+  login_botao: string;
   mod_site: boolean;
   mod_instagram: boolean;
   mod_financeiro: boolean;
@@ -24,17 +30,24 @@ export async function createHub(input: {
   return (
     await query<Hub>(
       `INSERT INTO hubs
-         (nome, slug, tema_modo, cor_destaque, cor_fundo, cor_texto,
-          mod_site, mod_instagram, mod_financeiro, mod_crm, login_titulo, login_botao)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$1,'Entrar')
+         (nome, slug, tema_modo, cor_destaque, cor_apoio, cor_fundo, cor_texto, tipografia,
+          descricao, dominio, login_titulo, login_botao,
+          mod_site, mod_instagram, mod_financeiro, mod_crm)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
       [
         input.nome,
         input.slug,
         input.tema_modo,
         input.cor_destaque,
+        input.cor_apoio,
         input.cor_fundo,
         input.cor_texto,
+        input.tipografia,
+        input.descricao,
+        input.dominio,
+        input.login_titulo,
+        input.login_botao,
         input.mod_site,
         input.mod_instagram,
         input.mod_financeiro,
