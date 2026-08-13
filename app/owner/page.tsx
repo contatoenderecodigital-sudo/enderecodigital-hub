@@ -1,16 +1,11 @@
 import Link from "@/components/link";
 import PageHead from "@/components/page-head";
-import { listWorkspaces, listHubs } from "@/lib/data";
-import {
-  IcoUsers,
-  IcoActivity,
-  IcoFunnel,
-  IcoSparkles,
-  IcoShield,
-  IcoHub,
-} from "@/components/icons";
+import { platformTotais } from "@/lib/platform";
+import { IcoHub, IcoUsers, IcoFunnel, IcoActivity, IcoSparkles, IcoChevronRight, IcoPlus, IcoGrid } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
+
+function brl(n: number) { return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 
 function Kpi({ n, label, Icon }: { n: number | string; label: string; Icon: typeof IcoUsers }) {
   return (
@@ -24,100 +19,86 @@ function Kpi({ n, label, Icon }: { n: number | string; label: string; Icon: type
   );
 }
 
-export default async function Dashboard() {
-  const [ws, hubs] = await Promise.all([listWorkspaces(), listHubs()]);
-  const ativos = ws.filter((w) => w.status === "ativo").length;
-  const emConfig = ws.filter((w) => w.status === "em_configuracao").length;
-  const leads = ws.reduce((a, w) => a + w.leads, 0);
-  const interacoes = ws.reduce((a, w) => a + w.interacoes, 0);
-  const saude = ws.length ? Math.round(ws.reduce((a, w) => a + w.health_score, 0) / ws.length) : 100;
+export default async function PlataformaHome() {
+  const t = await platformTotais();
 
   return (
     <>
       <PageHead
-        eyebrow="Operação"
-        titulo="Dashboard"
-        sub="A plataforma inteira num olhar."
-        acao={<Link className="btn" href="/owner/clientes#novo-cliente">Novo cliente</Link>}
+        eyebrow="Plataforma"
+        titulo="Todos os hubs"
+        sub="A visão de cima — cada hub é uma marca com sua operação isolada. Entre num hub pra operar."
+        acao={<Link className="btn" href="/owner/hubs#novo"><IcoPlus width={15} height={15} /> Novo hub</Link>}
       />
 
-      <div className="cols-4">
-        <Kpi n={ws.length} label="Clientes" Icon={IcoUsers} />
-        <Kpi n={ativos} label="Workspaces ativos" Icon={IcoActivity} />
-        <Kpi n={leads} label="Leads no funil" Icon={IcoFunnel} />
-        <Kpi n={interacoes} label="Conversas IA" Icon={IcoSparkles} />
+      <div className="cols-5">
+        <Kpi n={t.hubs} label="Hubs" Icon={IcoHub} />
+        <Kpi n={t.workspaces} label="Workspaces (clientes)" Icon={IcoUsers} />
+        <Kpi n={t.leads} label="Leads (todos)" Icon={IcoFunnel} />
+        <Kpi n={brl(t.mrr)} label="MRR somado" Icon={IcoActivity} />
+        <Kpi n={"US$ " + t.custo_ia.toFixed(2)} label="IA no mês" Icon={IcoSparkles} />
       </div>
 
-      <div className="cols-side" style={{ marginTop: 18 }}>
-        {/* Clientes recentes */}
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="spread" style={{ padding: "16px 20px 6px" }}>
-            <h2 style={{ margin: 0, fontSize: 17 }}>Clientes recentes</h2>
-            <Link className="btn btn-ghost btn-sm" href="/owner/clientes">Ver todos</Link>
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ paddingLeft: 20 }}>Empresa</th>
-                  <th>Hub</th>
-                  <th>Status</th>
-                  <th>Saúde</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ws.slice(0, 6).map((w) => (
-                  <tr key={w.id}>
-                    <td style={{ paddingLeft: 20 }}>
-                      <div className="row" style={{ gap: 10 }}>
-                        <div className="avatar" style={{ width: 32, height: 32, background: w.marca_cor || "#C9A961" }}>
-                          {(w.nome_fantasia || w.nome).slice(0, 2).toUpperCase()}
-                        </div>
-                        <strong>{w.nome_fantasia || w.nome}</strong>
-                      </div>
-                    </td>
-                    <td className="muted">{w.hub_nome}</td>
-                    <td><span className={"badge " + (w.status === "ativo" ? "ok" : "warn")}>{w.status}</span></td>
-                    <td className="muted">{w.health_score}%</td>
-                  </tr>
-                ))}
-                {ws.length === 0 && (
-                  <tr><td colSpan={4} className="muted" style={{ paddingLeft: 20 }}>Nenhum cliente ainda.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <h2 style={{ fontSize: 16, margin: "24px 0 12px" }}>Seus hubs</h2>
+      <div className="cols-3">
+        {t.lista.map((h) => (
+          <div key={h.id} className="card" style={{ display: "flex", flexDirection: "column" }}>
+            <div className="spread">
+              <div className="row" style={{ gap: 11 }}>
+                <div className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: h.cor || "var(--gold)" }}>
+                  {h.nome.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <strong style={{ fontSize: 15 }}>{h.nome}</strong>
+                  <div className="muted" style={{ fontSize: 12 }}>/{h.slug}</div>
+                </div>
+              </div>
+              <span className={"badge " + (h.ativo ? "ok" : "")}>{h.ativo ? "ativo" : "off"}</span>
+            </div>
 
-        {/* Coluna direita: saúde + hubs */}
-        <div className="grid" style={{ gap: 16 }}>
-          <div className="card">
-            <div className="row" style={{ gap: 12 }}>
-              <div className="icon-box"><IcoShield width={18} height={18} /></div>
-              <div>
-                <div className="kpi" style={{ fontSize: 26 }}>{saude}%</div>
-                <div className="kpi-label">Saúde média · {emConfig} em config.</div>
+            <div className="row" style={{ gap: 8, marginTop: 16 }}>
+              <div className="glass-soft" style={{ borderRadius: 10, padding: "8px 10px", flex: 1, textAlign: "center" }}>
+                <div style={{ fontWeight: 800 }}>{h.workspaces}</div>
+                <div className="muted" style={{ fontSize: 10.5 }}>clientes</div>
+              </div>
+              <div className="glass-soft" style={{ borderRadius: 10, padding: "8px 10px", flex: 1, textAlign: "center" }}>
+                <div style={{ fontWeight: 800 }}>{h.leads}</div>
+                <div className="muted" style={{ fontSize: 10.5 }}>leads</div>
+              </div>
+              <div className="glass-soft" style={{ borderRadius: 10, padding: "8px 10px", flex: 1, textAlign: "center" }}>
+                <div style={{ fontWeight: 800, color: "var(--gold-l)" }}>{brl(h.mrr)}</div>
+                <div className="muted" style={{ fontSize: 10.5 }}>MRR</div>
               </div>
             </div>
-          </div>
-          <div className="card">
-            <div className="spread">
-              <h2 style={{ margin: 0, fontSize: 16 }}>Hubs</h2>
-              <Link className="btn btn-ghost btn-sm" href="/owner/hubs">Gerenciar</Link>
+
+            <div className="row" style={{ gap: 8, marginTop: 8 }}>
+              <span className="badge" style={{ fontSize: 10 }}>{h.tem_ia ? "IA própria" : "IA da plataforma"}</span>
+              <span className="muted" style={{ fontSize: 11 }}>US$ {h.custo_ia.toFixed(2)} IA/mês</span>
             </div>
-            <div className="grid" style={{ gap: 8, marginTop: 12 }}>
-              {hubs.map((h) => (
-                <div key={h.id} className="row" style={{ gap: 10 }}>
-                  <div className="icon-box sm"><IcoHub width={15} height={15} /></div>
-                  <div style={{ minWidth: 0 }}>
-                    <strong style={{ fontSize: 14 }}>{h.nome}</strong>
-                    <div className="muted" style={{ fontSize: 12 }}>/{h.slug}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+
+            <a href={`/api/hub/entrar?id=${h.id}`} className="btn" style={{ marginTop: 16, justifyContent: "center" }}>
+              Entrar no hub <IcoChevronRight width={15} height={15} />
+            </a>
           </div>
-        </div>
+        ))}
+
+        {/* criar hub */}
+        <Link href="/owner/hubs#novo" className="card" style={{ display: "grid", placeItems: "center", textAlign: "center", minHeight: 220, borderStyle: "dashed" }}>
+          <div>
+            <div className="icon-box" style={{ width: 50, height: 50, margin: "0 auto 12px" }}><IcoPlus width={24} height={24} /></div>
+            <strong>Criar novo hub</strong>
+            <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 0", maxWidth: 200 }}>Uma marca nova (ex.: VetHub) com clientes e operação próprios.</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* infra da plataforma */}
+      <h2 style={{ fontSize: 16, margin: "26px 0 12px" }}>Plataforma</h2>
+      <div className="cols-4">
+        <Link href="/owner/hubs" className="card row" style={{ gap: 11 }}><div className="icon-box sm"><IcoHub width={15} height={15} /></div> <span>Hubs & marcas</span></Link>
+        <Link href="/owner/clientes" className="card row" style={{ gap: 11 }}><div className="icon-box sm"><IcoUsers width={15} height={15} /></div> <span>Todos os clientes</span></Link>
+        <Link href="/owner/contas-claude" className="card row" style={{ gap: 11 }}><div className="icon-box sm"><IcoSparkles width={15} height={15} /></div> <span>Contas Claude / IA</span></Link>
+        <Link href="/owner/auditoria" className="card row" style={{ gap: 11 }}><div className="icon-box sm"><IcoGrid width={15} height={15} /></div> <span>Auditoria & segurança</span></Link>
       </div>
     </>
   );

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { hubOpId } from "@/lib/hub-ctx";
+import { nomeDoHub } from "@/lib/platform";
 import OwnerShell from "@/components/owner-shell";
 
 export const dynamic = "force-dynamic";
@@ -13,5 +15,12 @@ export default async function OwnerLayout({
   if (!s) redirect("/login");
   if (s.papel !== "owner_plataforma") redirect("/app");
 
-  return <OwnerShell email={s.email}>{children}</OwnerShell>;
+  const hid = await hubOpId();
+  const hubAtivo = hid ? await nomeDoHub(hid) : null;
+
+  return (
+    <OwnerShell email={s.email} hubAtivo={hubAtivo}>
+      {children}
+    </OwnerShell>
+  );
 }

@@ -37,28 +37,6 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
     itens: [{ href: "/owner", label: "Dashboard", Icon: IcoDashboard, exact: true }],
   },
   {
-    grupo: "Agência · GROOW OS",
-    itens: [
-      { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
-      { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
-      { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
-      { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
-      { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
-      { href: "/owner/ops/trafego", label: "Tráfego & ROAS", Icon: IcoActivity },
-      { href: "/owner/ops/social", label: "Conteúdo Social", Icon: IcoInstagram },
-      { href: "/owner/ops/blog", label: "Blog SEO", Icon: IcoGlobe },
-      { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
-      { href: "/owner/ops/pipeline", label: "Pipeline", Icon: IcoGrid },
-      { href: "/owner/ops/aprovacoes", label: "Aprovações", Icon: IcoShield },
-      { href: "/owner/ops/ia", label: "IA & Custos", Icon: IcoSparkles },
-      { href: "/owner/ops/relatorios", label: "Relatórios", Icon: IcoActivity },
-      { href: "/owner/ops/cardapios", label: "Cardápios", Icon: IcoGrid },
-      { href: "/owner/ops/conversas", label: "Conversas", Icon: IcoInbox },
-      { href: "/owner/ops/disparos", label: "Disparos", Icon: IcoWhatsapp },
-      { href: "/owner/ops/senhas", label: "Senhas", Icon: IcoLock },
-    ],
-  },
-  {
     grupo: "Usuários",
     itens: [
       { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
@@ -89,6 +67,27 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
   },
 ];
 
+// Operação do HUB (GROOW OS) — só aparece quando um hub está selecionado.
+const GROOW: NavItem[] = [
+  { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
+  { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
+  { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
+  { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
+  { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
+  { href: "/owner/ops/trafego", label: "Tráfego & ROAS", Icon: IcoActivity },
+  { href: "/owner/ops/social", label: "Conteúdo Social", Icon: IcoInstagram },
+  { href: "/owner/ops/blog", label: "Blog SEO", Icon: IcoGlobe },
+  { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
+  { href: "/owner/ops/pipeline", label: "Pipeline", Icon: IcoGrid },
+  { href: "/owner/ops/aprovacoes", label: "Aprovações", Icon: IcoShield },
+  { href: "/owner/ops/ia", label: "IA & Custos", Icon: IcoSparkles },
+  { href: "/owner/ops/relatorios", label: "Relatórios", Icon: IcoActivity },
+  { href: "/owner/ops/cardapios", label: "Cardápios", Icon: IcoGrid },
+  { href: "/owner/ops/conversas", label: "Conversas", Icon: IcoInbox },
+  { href: "/owner/ops/disparos", label: "Disparos", Icon: IcoWhatsapp },
+  { href: "/owner/ops/senhas", label: "Senhas", Icon: IcoLock },
+];
+
 const TITULOS: [string, string][] = [
   ["/owner/clientes", "Clientes"],
   ["/owner/workspaces", "Workspaces"],
@@ -109,9 +108,11 @@ const TITULOS: [string, string][] = [
 
 export default function OwnerShell({
   email,
+  hubAtivo,
   children,
 }: {
   email: string;
+  hubAtivo?: { id: string; nome: string; cor: string | null } | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname() || "/owner";
@@ -122,6 +123,18 @@ export default function OwnerShell({
   const ativo = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
+  const link = ({ href, label, Icon, exact }: NavItem) => (
+    <Link
+      key={href}
+      href={href}
+      className={"side-link" + (ativo(href, exact) ? " active" : "")}
+      onClick={() => setOpen(false)}
+    >
+      <Icon width={19} height={19} />
+      {label}
+    </Link>
+  );
+
   return (
     <div className={"shell" + (open ? " open" : "")}>
       <div className="side-backdrop" onClick={() => setOpen(false)} />
@@ -130,20 +143,31 @@ export default function OwnerShell({
           <div className="avatar">ED</div>
           <b>EnderecoDigital Hub</b>
         </div>
-        {NAV.map((g) => (
+
+        {/* nível 1 — plataforma */}
+        <div>
+          <div className="side-group">Plataforma</div>
+          {link({ href: "/owner", label: "Todos os hubs", Icon: IcoDashboard, exact: true })}
+        </div>
+
+        {/* nível 2 — dentro de um hub (GROOW OS) */}
+        {hubAtivo && (
+          <div>
+            <div className="side-group" style={{ display: "flex", alignItems: "center", gap: 7, color: "var(--gold-l)" }}>
+              <span className="avatar" style={{ width: 18, height: 18, fontSize: 8, background: hubAtivo.cor || "var(--gold)" }}>{hubAtivo.nome.slice(0, 2).toUpperCase()}</span>
+              {hubAtivo.nome}
+            </div>
+            <a href="/api/hub/sair" className="side-link" style={{ color: "var(--muted)", fontSize: 12.5 }}>
+              <IcoChevronRight width={16} height={16} style={{ transform: "scaleX(-1)" }} /> Sair do hub
+            </a>
+            {GROOW.map(link)}
+          </div>
+        )}
+
+        {NAV.filter((g) => g.grupo !== "Operação").map((g) => (
           <div key={g.grupo}>
             <div className="side-group">{g.grupo}</div>
-            {g.itens.map(({ href, label, Icon, exact }) => (
-              <Link
-                key={href}
-                href={href}
-                className={"side-link" + (ativo(href, exact) ? " active" : "")}
-                onClick={() => setOpen(false)}
-              >
-                <Icon width={19} height={19} />
-                {label}
-              </Link>
-            ))}
+            {g.itens.map(link)}
           </div>
         ))}
         <div className="side-foot">
