@@ -4,7 +4,7 @@ import NovoHubModal from "@/components/novo-hub-modal";
 import ModulosHubModal from "@/components/modulos-hub-modal";
 import { platformTotais } from "@/lib/platform";
 import { listHubs } from "@/lib/data";
-import { IcoHub, IcoUsers, IcoFunnel, IcoActivity, IcoSparkles, IcoChevronRight, IcoGrid } from "@/components/icons";
+import { IcoHub, IcoUsers, IcoFunnel, IcoActivity, IcoSparkles, IcoChevronRight, IcoGrid, IcoExternal } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,11 @@ export default async function PlataformaHome() {
               <a href={`/api/hub/entrar?id=${h.id}`} className="btn" style={{ marginTop: 16, justifyContent: "center" }}>
                 Entrar no hub <IcoChevronRight width={15} height={15} />
               </a>
+              {full?.dominio && (
+                <a href={`https://${full.dominio}`} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ marginTop: 8, justifyContent: "center" }}>
+                  Abrir painel do cliente <IcoExternal width={14} height={14} />
+                </a>
+              )}
               {full && (
                 <div className="row" style={{ gap: 8, marginTop: 8 }}>
                   <ModulosHubModal hub={full} />
