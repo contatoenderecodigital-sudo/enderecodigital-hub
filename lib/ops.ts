@@ -442,3 +442,39 @@ export async function revelarSenha(id: number): Promise<string | null> {
 export async function excluirSenha(id: number) {
   await query(`DELETE FROM ops_senhas_cofre WHERE id = $1`, [id]);
 }
+
+// ---------- CONVERSAS (inbox WhatsApp da agência) ----------
+export interface OpsConversa {
+  id: number; whatsapp: string; nome: string | null; status: string; nao_lidas: number;
+  ultima_mensagem: string | null; ultima_mensagem_em: string | null;
+}
+export async function listOpsConversas(): Promise<OpsConversa[]> {
+  return (await query<OpsConversa>(
+    `SELECT id, whatsapp, nome, status, nao_lidas, ultima_mensagem, ultima_mensagem_em
+     FROM ops_wa_conversas ORDER BY ultima_mensagem_em DESC NULLS LAST LIMIT 100`)).rows;
+}
+export async function mensagensDaConversa(id: number) {
+  return (await query<{ origem: string; tipo: string; texto: string | null; created_at: string }>(
+    `SELECT origem, tipo, texto, created_at FROM ops_wa_mensagens WHERE conversa_id = $1 ORDER BY created_at ASC LIMIT 500`,
+    [id])).rows;
+}
+export async function conversasResumo() {
+  const { rows } = await query<{ total: string; nao_lidas: string; ia: string }>(
+    `SELECT count(*) total, COALESCE(sum(nao_lidas),0) nao_lidas,
+            count(*) FILTER (WHERE status='ai_active') ia FROM ops_wa_conversas`);
+  const r = rows[0] || { total: "0", nao_lidas: "0", ia: "0" };
+  return { total: +r.total, naoLidas: +r.nao_lidas, ia: +r.ia };
+}
+
+// ---------- DISPAROS ----------
+export async function listCampanhas() {
+  return (await query<{ id: number; nome: string; template_nome: string; status: string; cap_dia: number; total: string; enviados: string }>(
+    `SELECT c.id, c.nome, c.template_nome, c.status, c.cap_dia,
+       (SELECT count(*) FROM ops_wa_campanha_destinatarios d WHERE d.campanha_id=c.id) total,
+       (SELECT count(*) FROM ops_wa_campanha_destinatarios d WHERE d.campanha_id=c.id AND d.status IN ('enviado','entregue','lido','respondeu')) enviados
+     FROM ops_wa_campanhas c ORDER BY c.created_at DESC LIMIT 100`)).rows;
+}
+export async function optoutTotal() {
+  const { rows } = await query<{ n: string }>(`SELECT count(*) n FROM ops_wa_optout`);
+  return +(rows[0]?.n || 0);
+}
