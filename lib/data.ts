@@ -532,13 +532,14 @@ export async function mensagensDoContato(
 
 // ---------------- OWNER: WORKSPACES / TOKENS / CONTAS / AUDITORIA ----------------
 export async function listWorkspaces(): Promise<
-  (Negocio & { hub_nome: string; leads: number; interacoes: number })[]
+  (Negocio & { hub_nome: string; leads: number; interacoes: number; integracoes: number })[]
 > {
   return (
-    await query<Negocio & { hub_nome: string; leads: number; interacoes: number }>(
+    await query<Negocio & { hub_nome: string; leads: number; interacoes: number; integracoes: number }>(
       `SELECT n.*, h.nome AS hub_nome,
               (SELECT count(*)::int FROM leads l WHERE l.negocio_id = n.id) AS leads,
-              (SELECT count(*)::int FROM uso_ia u WHERE u.negocio_id = n.id) AS interacoes
+              (SELECT count(*)::int FROM uso_ia u WHERE u.negocio_id = n.id) AS interacoes,
+              (SELECT count(*)::int FROM wa_conexoes w WHERE w.negocio_id = n.id AND w.status = 'conectado') AS integracoes
        FROM negocios n JOIN hubs h ON h.id = n.hub_id
        ORDER BY n.criado_em DESC`
     )

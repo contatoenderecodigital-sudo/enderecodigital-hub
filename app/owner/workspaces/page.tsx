@@ -1,78 +1,63 @@
-import Link from "@/components/link";
-import { listWorkspaces } from "@/lib/data";
+import PageHead from "@/components/page-head";
+import NovoClienteModal from "@/components/novo-cliente-modal";
+import WorkspacesTable from "@/components/workspaces-table";
+import { listWorkspaces, listHubs } from "@/lib/data";
+import { IcoActivity, IcoSettings, IcoAlert, IcoServer, IcoShield } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
-function Kpi({ n, label }: { n: number | string; label: string }) {
+function Kpi({ n, label, Icon }: { n: number | string; label: string; Icon: typeof IcoActivity }) {
   return (
     <div className="card">
-      <div className="kpi">{n}</div>
+      <div className="spread" style={{ alignItems: "flex-start" }}>
+        <div className="kpi">{n}</div>
+        <div className="icon-box sm"><Icon width={16} height={16} /></div>
+      </div>
       <div className="kpi-label">{label}</div>
-    </div>
-  );
-}
-function Mini({ n, l }: { n: number | string; l: string }) {
-  return (
-    <div>
-      <div style={{ fontWeight: 700, fontSize: 18 }}>{n}</div>
-      <div className="muted" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>{l}</div>
     </div>
   );
 }
 
 export default async function WorkspacesPage() {
-  const ws = await listWorkspaces();
+  const [ws, hubs] = await Promise.all([listWorkspaces(), listHubs()]);
   const ativos = ws.filter((w) => w.status === "ativo").length;
   const emConfig = ws.filter((w) => w.status === "em_configuracao").length;
-  const saude = ws.length ? Math.round(ws.reduce((a, w) => a + w.health_score, 0) / ws.length) : 0;
+  const integracoes = ws.reduce((a, w) => a + w.integracoes, 0);
+  const saude = ws.length ? Math.round(ws.reduce((a, w) => a + w.health_score, 0) / ws.length) : 100;
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <div className="eyebrow">Usuários</div>
-          <h1>Workspaces</h1>
-          <p className="muted">Os ambientes dos clientes, num olhar.</p>
-        </div>
+      <PageHead
+        eyebrow="Usuários"
+        titulo="Workspaces"
+        sub="Os ambientes operacionais de cada cliente — módulos, integrações, acessos e status."
+        acao={<NovoClienteModal hubs={hubs} />}
+      />
+
+      <div className="cols-5">
+        <Kpi n={ativos} label="Ativos" Icon={IcoActivity} />
+        <Kpi n={emConfig} label="Em configuração" Icon={IcoSettings} />
+        <Kpi n={0} label="Com alertas" Icon={IcoAlert} />
+        <Kpi n={integracoes} label="Integrações ativas" Icon={IcoServer} />
+        <Kpi n={`${saude}%`} label="Saúde média" Icon={IcoShield} />
       </div>
 
-      <div className="cols-4">
-        <Kpi n={ws.length} label="Workspaces" />
-        <Kpi n={ativos} label="Ativos" />
-        <Kpi n={emConfig} label="Em configuração" />
-        <Kpi n={`${saude}%`} label="Saúde média" />
-      </div>
-
-      <div className="cols-3" style={{ marginTop: 18 }}>
-        {ws.map((w) => (
-          <div key={w.id} className="card">
-            <div className="spread">
-              <div className="row" style={{ gap: 10 }}>
-                <div className="avatar" style={{ background: w.marca_cor || "#C9A961" }}>
-                  {(w.nome_fantasia || w.nome).slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <strong>{w.nome_fantasia || w.nome}</strong>
-                  <div className="muted" style={{ fontSize: 12 }}>{w.hub_nome}</div>
-                </div>
-              </div>
-              <span className={"badge " + (w.status === "ativo" ? "ok" : "warn")}>{w.status}</span>
-            </div>
-            <div className="row" style={{ gap: 20, marginTop: 16 }}>
-              <Mini n={w.leads} l="Leads" />
-              <Mini n={w.interacoes} l="IA" />
-              <Mini n={`${w.health_score}%`} l="Saúde" />
-            </div>
-            <div className="row" style={{ gap: 8, marginTop: 16 }}>
-              <Link className="btn btn-ghost btn-sm" href={`/owner/clientes/${w.id}`}>Ver cliente</Link>
-              <form action="/api/impersonar" method="post">
-                <input type="hidden" name="negocio_id" value={w.id} />
-                <button className="btn btn-sm" type="submit">Abrir</button>
-              </form>
-            </div>
-          </div>
-        ))}
-        {ws.length === 0 && <p className="muted">Nenhum workspace ainda.</p>}
+      <div style={{ marginTop: 18 }}>
+        <WorkspacesTable
+          items={ws.map((w) => ({
+            id: w.id,
+            nome: w.nome,
+            nome_fantasia: w.nome_fantasia,
+            slug: w.slug,
+            marca_cor: w.marca_cor,
+            status: w.status,
+            health_score: w.health_score,
+            resp_nome: w.resp_nome,
+            dominio: w.dominio,
+            site_url: w.site_url,
+            hub_nome: w.hub_nome,
+          }))}
+        />
       </div>
     </>
   );
