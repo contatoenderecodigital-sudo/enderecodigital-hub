@@ -299,3 +299,60 @@ export async function registrarInvestimento(canal: string, mes: string, valor: n
     [canal, mes, valor]
   );
 }
+
+// ---------- BLOG ----------
+export interface BlogPost {
+  id: number; slug: string; titulo: string; resumo: string; keyword_foco: string;
+  categoria: string; status: string; origem: string; created_at: string; published_at: string | null;
+}
+export async function listBlogPosts(status?: string): Promise<BlogPost[]> {
+  const ok = ["rascunho", "aprovado", "publicado", "arquivado"];
+  const where = status && ok.includes(status) ? `WHERE status = $1` : "";
+  const params = where ? [status] : [];
+  return (await query<BlogPost>(
+    `SELECT id, slug, titulo, resumo, keyword_foco, categoria, status, origem, created_at, published_at
+     FROM ops_blog_posts ${where} ORDER BY created_at DESC LIMIT 200`, params)).rows;
+}
+export async function blogResumo() {
+  const { rows } = await query<{ total: string; publicados: string; rascunhos: string }>(
+    `SELECT count(*) total,
+       count(*) FILTER (WHERE status='publicado') publicados,
+       count(*) FILTER (WHERE status='rascunho') rascunhos FROM ops_blog_posts`);
+  const r = rows[0] || { total: "0", publicados: "0", rascunhos: "0" };
+  return { total: +r.total, publicados: +r.publicados, rascunhos: +r.rascunhos };
+}
+export async function setBlogStatus(id: number, status: string) {
+  const ok = ["rascunho", "aprovado", "publicado", "arquivado"];
+  if (!ok.includes(status)) return;
+  const pub = status === "publicado" ? ", published_at = COALESCE(published_at, now())" : "";
+  await query(`UPDATE ops_blog_posts SET status = $1 ${pub} WHERE id = $2`, [status, id]);
+}
+
+// ---------- SOCIAL ----------
+export interface SocialIdeia {
+  id: number; pilar: string; tipo: string; hook: string; descricao: string | null;
+  formato: string; status: string; created_at: string;
+}
+export interface SocialConteudo {
+  id: number; ideia_id: number | null; tipo: string; titulo: string; legenda: string | null;
+  hashtags: string | null; status: string; created_at: string;
+}
+export async function listSocialIdeias(): Promise<SocialIdeia[]> {
+  return (await query<SocialIdeia>(
+    `SELECT * FROM ops_social_ideias WHERE status <> 'descartada' ORDER BY (status='nova') DESC, created_at DESC LIMIT 120`)).rows;
+}
+export async function listSocialConteudos(): Promise<SocialConteudo[]> {
+  return (await query<SocialConteudo>(
+    `SELECT id, ideia_id, tipo, titulo, legenda, hashtags, status, created_at FROM ops_social_conteudos ORDER BY created_at DESC LIMIT 60`)).rows;
+}
+export async function socialResumo() {
+  const { rows } = await query<{ ideias: string; conteudos: string; publicados: string }>(
+    `SELECT (SELECT count(*) FROM ops_social_ideias WHERE status<>'descartada') ideias,
+            (SELECT count(*) FROM ops_social_conteudos) conteudos,
+            (SELECT count(*) FROM ops_social_conteudos WHERE status='publicado') publicados`);
+  const r = rows[0] || { ideias: "0", conteudos: "0", publicados: "0" };
+  return { ideias: +r.ideias, conteudos: +r.conteudos, publicados: +r.publicados };
+}
+export async function descartarIdeia(id: number) {
+  await query(`UPDATE ops_social_ideias SET status='descartada' WHERE id = $1`, [id]);
+}

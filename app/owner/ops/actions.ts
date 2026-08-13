@@ -6,7 +6,7 @@ import {
   criarOpsLead, moverOpsLeadStatus, excluirOpsLead,
   criarOpsCliente, setOpsClienteStatus, marcarPago,
   criarOpsTarefa, toggleOpsTarefa, excluirOpsTarefa,
-  registrarInvestimento,
+  registrarInvestimento, setBlogStatus, descartarIdeia,
 } from "@/lib/ops";
 
 // ---- LEADS ----
@@ -103,4 +103,17 @@ export async function investimentoAction(fd: FormData) {
   const valor = Number(String(fd.get("valor") || "0").replace(",", ".")) || 0;
   if (canal && /^\d{4}-\d{2}$/.test(mes)) await registrarInvestimento(canal, mes, valor);
   revalidatePath("/owner/ops/trafego");
+}
+
+// ---- BLOG / SOCIAL ----
+export async function blogStatusAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  const status = String(fd.get("status") || "");
+  if (id && status) await setBlogStatus(id, status);
+  revalidatePath("/owner/ops/blog");
+}
+export async function descartarIdeiaAction(fd: FormData) {
+  const id = Number(fd.get("id"));
+  if (id) await descartarIdeia(id);
+  revalidatePath("/owner/ops/social");
 }
