@@ -356,3 +356,38 @@ export async function socialResumo() {
 export async function descartarIdeia(id: number) {
   await query(`UPDATE ops_social_ideias SET status='descartada' WHERE id = $1`, [id]);
 }
+
+// ---------- IA & CUSTOS ----------
+export async function iaResumo() {
+  const { rows: k } = await query<{ chamadas: string; custo_mes: string; custo_hoje: string; tokens: string }>(
+    `SELECT count(*) chamadas,
+       COALESCE(sum(custo_usd) FILTER (WHERE created_at >= date_trunc('month', now())),0) custo_mes,
+       COALESCE(sum(custo_usd) FILTER (WHERE created_at >= CURRENT_DATE),0) custo_hoje,
+       COALESCE(sum(input_tokens+output_tokens),0) tokens
+     FROM ops_ia_logs`);
+  const { rows: porModulo } = await query<{ modulo: string | null; custo: string; chamadas: string }>(
+    `SELECT modulo, COALESCE(sum(custo_usd),0) custo, count(*) chamadas
+     FROM ops_ia_logs WHERE created_at >= now() - interval '30 days'
+     GROUP BY modulo ORDER BY sum(custo_usd) DESC NULLS LAST`);
+  const { rows: ultimas } = await query<{ modulo: string | null; acao: string | null; modelo: string | null; custo_usd: string; input_tokens: number; output_tokens: number; status: string | null; created_at: string }>(
+    `SELECT modulo, acao, modelo, custo_usd, input_tokens, output_tokens, status, created_at
+     FROM ops_ia_logs ORDER BY created_at DESC LIMIT 40`);
+  const r = k[0] || { chamadas: "0", custo_mes: "0", custo_hoje: "0", tokens: "0" };
+  return {
+    chamadas: +r.chamadas, custoMes: +r.custo_mes, custoHoje: +r.custo_hoje, tokens: +r.tokens,
+    porModulo: porModulo.map((m) => ({ modulo: m.modulo || "—", custo: +m.custo, chamadas: +m.chamadas })),
+    ultimas,
+  };
+}
+
+// ---------- CARDÁPIOS ----------
+export async function listCardapios() {
+  return (await query<{ id: number; cliente: string; slug: string | null; total_itens: number; selecionados: string | null; observacoes: string | null; lida: boolean; created_at: string }>(
+    `SELECT * FROM ops_cardapio_respostas ORDER BY created_at DESC LIMIT 100`)).rows;
+}
+
+// ---------- RELATÓRIOS ----------
+export async function listRelatorios() {
+  return (await query<{ id: number; cliente: string; periodo: string; token: string; created_at: string; updated_at: string }>(
+    `SELECT id, cliente, periodo, token, created_at, updated_at FROM ops_relatorios ORDER BY created_at DESC LIMIT 100`)).rows;
+}
