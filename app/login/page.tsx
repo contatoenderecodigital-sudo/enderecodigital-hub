@@ -1,5 +1,4 @@
 import { resolveHubByHost, DEFAULT_BRAND } from "@/lib/branding";
-import { login } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +21,7 @@ export default async function LoginPage({
           Acesse o seu painel.
         </p>
 
-        <form action={login}>
+        <form action="/api/login" method="post">
           <label htmlFor="email">E-mail</label>
           <input id="email" name="email" type="email" autoComplete="username" required />
 

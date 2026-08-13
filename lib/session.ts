@@ -42,3 +42,15 @@ export async function verifySession(token: string): Promise<SessionData | null> 
 }
 
 export const SESSION_MAX_AGE = MAX_AGE;
+
+// Opcoes do cookie de sessao. Dado puro (edge-safe) — usado por route handlers
+// que setam o cookie no proprio Response (padrao confiavel p/ set-cookie + redirect).
+export function cookieOptions(maxAge: number = MAX_AGE) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge,
+  };
+}

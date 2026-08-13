@@ -1,5 +1,5 @@
 import { listHubs, listNegocios } from "@/lib/data";
-import { criarClienteAction, impersonarAction } from "./actions";
+import { criarClienteAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,7 @@ export default async function ClientesPage() {
                 </td>
                 <td className="muted">{c.health_score}%</td>
                 <td style={{ textAlign: "right" }}>
-                  <form action={impersonarAction}>
+                  <form action="/api/impersonar" method="post">
                     <input type="hidden" name="negocio_id" value={c.id} />
                     <button className="btn btn-ghost btn-sm" type="submit">
                       Abrir workspace

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { clearSession } from "@/lib/auth";
+import { SESSION_COOKIE, cookieOptions } from "@/lib/session";
 
 export async function GET(req: Request) {
-  await clearSession();
-  return NextResponse.redirect(new URL("/login", req.url));
+  const res = NextResponse.redirect(new URL("/login", req.url));
+  res.cookies.set(SESSION_COOKIE, "", cookieOptions(0));
+  return res;
 }
