@@ -66,18 +66,35 @@ export async function createNegocio(input: {
   nome_fantasia: string | null;
   segmento: string | null;
   marca_cor: string | null;
+  marca_logo: string | null;
   resp_nome: string | null;
+  resp_cargo: string | null;
   resp_email: string | null;
   resp_whatsapp: string | null;
+  dominio: string | null;
   site_url: string | null;
   instagram_url: string | null;
+  wpp_comercial: string | null;
+  mod_site: boolean;
+  mod_instagram: boolean;
+  mod_financeiro: boolean;
+  mod_crm: boolean;
+  tipo_cliente: "recorrente" | "nao_recorrente" | "nao_definido";
+  experimental: boolean;
+  health_score: number;
+  observacoes: string | null;
+  ia_modo: "api_plataforma" | "claude_cliente" | "sem_ia";
+  status: "ativo" | "em_configuracao" | "arquivado";
 }): Promise<Negocio> {
   return (
     await query<Negocio>(
       `INSERT INTO negocios
-         (hub_id, slug, nome, nome_fantasia, segmento, marca_cor,
-          resp_nome, resp_email, resp_whatsapp, site_url, instagram_url, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'em_configuracao')
+         (hub_id, slug, nome, nome_fantasia, segmento, marca_cor, marca_logo,
+          resp_nome, resp_cargo, resp_email, resp_whatsapp,
+          dominio, site_url, instagram_url, wpp_comercial,
+          mod_site, mod_instagram, mod_financeiro, mod_crm,
+          tipo_cliente, experimental, health_score, observacoes, ia_modo, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
        RETURNING *`,
       [
         input.hub_id,
@@ -86,11 +103,25 @@ export async function createNegocio(input: {
         input.nome_fantasia,
         input.segmento,
         input.marca_cor,
+        input.marca_logo,
         input.resp_nome,
+        input.resp_cargo,
         input.resp_email,
         input.resp_whatsapp,
+        input.dominio,
         input.site_url,
         input.instagram_url,
+        input.wpp_comercial,
+        input.mod_site,
+        input.mod_instagram,
+        input.mod_financeiro,
+        input.mod_crm,
+        input.tipo_cliente,
+        input.experimental,
+        input.health_score,
+        input.observacoes,
+        input.ia_modo,
+        input.status,
       ]
     )
   ).rows[0];
