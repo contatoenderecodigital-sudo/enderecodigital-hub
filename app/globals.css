@@ -227,7 +227,8 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
 .wsnav-tabs { display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .wsnav-tabs::-webkit-scrollbar { display: none; }
 .wsnav-tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border-radius: 11px;
-  color: var(--muted-2); font-size: 14px; font-weight: 500; white-space: nowrap; }
+  color: var(--muted-2); font-size: 14px; font-weight: 500; white-space: nowrap;
+  background: transparent; border: none; font-family: inherit; cursor: pointer; }
 .wsnav-tab svg { color: var(--muted); }
 .wsnav-tab:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
 .wsnav-tab.active { background: rgba(201, 169, 97, 0.16); color: var(--gold-l); }
