@@ -1,6 +1,6 @@
 import "server-only";
 import { query } from "./db";
-import type { Hub, Negocio, Usuario } from "./types";
+import type { Hub, Negocio, Usuario, Etapa, Lead } from "./types";
 
 // ---------------- HUBS ----------------
 export async function listHubs(): Promise<Hub[]> {
@@ -233,6 +233,110 @@ export async function getUsuario(id: string): Promise<Usuario | null> {
 
 export async function updateSenhaUsuario(id: string, senhaHash: string): Promise<void> {
   await query("UPDATE usuarios SET senha_hash = $1 WHERE id = $2", [senhaHash, id]);
+}
+
+// ---------------- CRM: ETAPAS DO FUNIL ----------------
+const ETAPAS_PADRAO = ["Novo", "Em contato", "Negociando", "Ganho", "Perdido"];
+
+export async function ensureFunil(negocioId: string): Promise<Etapa[]> {
+  const atuais = await listEtapas(negocioId);
+  if (atuais.length > 0) return atuais;
+  for (let i = 0; i < ETAPAS_PADRAO.length; i++) {
+    await query(
+      "INSERT INTO funil_etapas (negocio_id, nome, ordem) VALUES ($1,$2,$3)",
+      [negocioId, ETAPAS_PADRAO[i], i]
+    );
+  }
+  return listEtapas(negocioId);
+}
+
+export async function listEtapas(negocioId: string): Promise<Etapa[]> {
+  return (
+    await query<Etapa>(
+      "SELECT id, negocio_id, nome, ordem FROM funil_etapas WHERE negocio_id = $1 ORDER BY ordem ASC",
+      [negocioId]
+    )
+  ).rows;
+}
+
+// ---------------- CRM: LEADS ----------------
+export async function listLeads(negocioId: string): Promise<Lead[]> {
+  return (
+    await query<Lead>(
+      "SELECT * FROM leads WHERE negocio_id = $1 ORDER BY criado_em DESC",
+      [negocioId]
+    )
+  ).rows;
+}
+
+export async function criarLead(input: {
+  negocio_id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  origem: string | null;
+  etapa_id: string | null;
+}): Promise<Lead> {
+  return (
+    await query<Lead>(
+      `INSERT INTO leads (negocio_id, nome, telefone, email, origem, etapa_id)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [input.negocio_id, input.nome, input.telefone, input.email, input.origem, input.etapa_id]
+    )
+  ).rows[0];
+}
+
+// Move um lead de etapa — SEMPRE escopado por negocio_id (nunca move de outro tenant).
+export async function moverLead(
+  leadId: string,
+  negocioId: string,
+  etapaId: string
+): Promise<void> {
+  await query(
+    "UPDATE leads SET etapa_id = $1, atualizado_em = now() WHERE id = $2 AND negocio_id = $3",
+    [etapaId, leadId, negocioId]
+  );
+}
+
+export async function excluirLead(leadId: string, negocioId: string): Promise<void> {
+  await query("DELETE FROM leads WHERE id = $1 AND negocio_id = $2", [leadId, negocioId]);
+}
+
+// ---------------- CRM: TOKEN DE CAPTURA (form no site) ----------------
+export async function ensureCapturaToken(negocioId: string): Promise<string> {
+  const r = await query<{ captura_token: string | null }>(
+    "SELECT captura_token FROM negocios WHERE id = $1",
+    [negocioId]
+  );
+  const atual = r.rows[0]?.captura_token;
+  if (atual) return atual;
+  const token = crypto.randomUUID().replace(/-/g, "");
+  await query("UPDATE negocios SET captura_token = $1 WHERE id = $2", [token, negocioId]);
+  return token;
+}
+
+// Cria lead a partir do token publico (form no site). Cai na 1a etapa.
+export async function criarLeadPorToken(
+  token: string,
+  input: { nome: string; telefone: string | null; email: string | null; origem: string | null }
+): Promise<boolean> {
+  const neg = (
+    await query<{ id: string }>("SELECT id FROM negocios WHERE captura_token = $1 AND ativo = true", [
+      token,
+    ])
+  ).rows[0];
+  if (!neg) return false;
+  const etapas = await ensureFunil(neg.id);
+  const primeira = etapas[0]?.id ?? null;
+  await criarLead({
+    negocio_id: neg.id,
+    nome: input.nome,
+    telefone: input.telefone,
+    email: input.email,
+    origem: input.origem || "site",
+    etapa_id: primeira,
+  });
+  return true;
 }
 
 // ---------------- USO DE IA (medicao por tenant) ----------------

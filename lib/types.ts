@@ -61,6 +61,26 @@ export interface Negocio {
   criado_em: string;
 }
 
+export interface Etapa {
+  id: string;
+  negocio_id: string;
+  nome: string;
+  ordem: number;
+}
+
+export interface Lead {
+  id: string;
+  negocio_id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  origem: string | null;
+  etapa_id: string | null;
+  valor_cent: number;
+  observacoes: string | null;
+  criado_em: string;
+}
+
 export interface Usuario {
   id: string;
   negocio_id: string | null;

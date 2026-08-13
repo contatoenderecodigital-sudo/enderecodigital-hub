@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "./lib/session";
 
 // Rotas publicas (sem sessao).
-const PUBLIC = ["/login", "/api/login", "/api/bootstrap", "/api/health"];
+const PUBLIC = ["/login", "/api/login", "/api/bootstrap", "/api/health", "/api/lead-capture"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
