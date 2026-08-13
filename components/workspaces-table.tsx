@@ -72,7 +72,7 @@ export default function WorkspacesTable({ items }: { items: WsRow[] }) {
             </thead>
             <tbody>
               {filtrados.map((w) => {
-                const cor = w.health_score >= 70 ? "linear-gradient(90deg, var(--copper), var(--gold))" : "var(--warn)";
+                const cor = w.health_score >= 70 ? "linear-gradient(90deg, var(--gold-d), var(--gold-l))" : "var(--warn)";
                 return (
                   <tr key={w.id}>
                     <td style={{ paddingLeft: 20 }}>
