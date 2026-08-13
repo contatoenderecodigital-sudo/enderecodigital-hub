@@ -1,30 +1,31 @@
 import PageHead from "@/components/page-head";
-import { IcoKey } from "@/components/icons";
+import { IcoKey, IcoPlus } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
 export default function AssentosPage() {
   return (
     <>
-      <PageHead eyebrow="Plataforma" titulo="Assentos Claude" sub="Provisionamento de IA por cliente." />
+      <PageHead
+        eyebrow="Plataforma"
+        titulo="Assentos Claude"
+        sub="Provisionamento de IA por cliente — 0 ativos."
+        acao={<button className="btn"><IcoPlus width={15} height={15} /> Novo assento</button>}
+      />
 
-      <div className="card">
-        <div className="row" style={{ gap: 12 }}>
-          <div className="icon-box"><IcoKey width={18} height={18} /></div>
-          <div>
-            <strong>Modelo do Endereço Digital</strong>
-            <p className="muted" style={{ margin: "6px 0 0", maxWidth: 720 }}>
-              O concorrente dá um <em>assento Team</em> por cliente (risco de ban da Anthropic por revenda de assinatura).
-              Aqui o padrão é <strong>API Anthropic central</strong> com custo medido por cliente — previsível e sem risco.
-              Cada cliente tem limite de tokens e modelo definidos em <strong>Config. do cliente</strong>, e o consumo aparece em <strong>Tokens</strong>.
-            </p>
-          </div>
-        </div>
-        <div className="cols-3" style={{ marginTop: 18 }}>
-          <div className="card"><div className="kpi-label">Padrão</div><div style={{ fontWeight: 700, marginTop: 6 }}>API da plataforma</div><p className="muted" style={{ fontSize: 13, margin: "4px 0 0" }}>Custo real, sem assento revendido.</p></div>
-          <div className="card"><div className="kpi-label">Opcional</div><div style={{ fontWeight: 700, marginTop: 6 }}>Claude do cliente</div><p className="muted" style={{ fontSize: 13, margin: "4px 0 0" }}>O cliente traz a própria assinatura.</p></div>
-          <div className="card"><div className="kpi-label">Controle</div><div style={{ fontWeight: 700, marginTop: 6 }}>Limite por cliente</div><p className="muted" style={{ fontSize: 13, margin: "4px 0 0" }}>Modelo e teto de tokens por tenant.</p></div>
-        </div>
+      <div className="card glass-soft" style={{ marginBottom: 18, fontSize: 13, lineHeight: 1.6 }}>
+        O concorrente dá um <em>assento Team</em> por cliente (risco de ban por revenda de assinatura). Aqui o padrão é a
+        <strong> API Anthropic central</strong> com custo medido — previsível e sem risco. Assentos ficam como opção só
+        quando o cliente traz a própria conta; o token viveria só na VPS (arquivo root 0600, nunca no banco).
+      </div>
+
+      <div className="card" style={{ display: "grid", placeItems: "center", padding: 56, textAlign: "center" }}>
+        <div className="icon-box" style={{ width: 56, height: 56 }}><IcoKey width={26} height={26} /></div>
+        <strong style={{ marginTop: 16, fontSize: 16 }}>Nenhum assento cadastrado</strong>
+        <p className="muted" style={{ margin: "4px 0 16px", maxWidth: 420 }}>
+          A plataforma usa a API central. Crie um assento só se um cliente for trazer a própria assinatura Claude.
+        </p>
+        <button className="btn"><IcoPlus width={15} height={15} /> Criar o primeiro</button>
       </div>
     </>
   );
