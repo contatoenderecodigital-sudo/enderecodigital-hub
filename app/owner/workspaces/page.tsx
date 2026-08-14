@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import PageHead from "@/components/page-head";
 import NovoClienteModal from "@/components/novo-cliente-modal";
 import WorkspacesTable from "@/components/workspaces-table";
 import { listWorkspaces, listHubs } from "@/lib/data";
+import { hubOpId } from "@/lib/hub-ctx";
 import { IcoActivity, IcoSettings, IcoAlert, IcoServer, IcoShield } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +21,9 @@ function Kpi({ n, label, Icon }: { n: number | string; label: string; Icon: type
 }
 
 export default async function WorkspacesPage() {
-  const [ws, hubs] = await Promise.all([listWorkspaces(), listHubs()]);
+  const hub = await hubOpId();
+  if (!hub) redirect("/owner");
+  const [ws, hubs] = await Promise.all([listWorkspaces(hub), listHubs()]);
   const ativos = ws.filter((w) => w.status === "ativo").length;
   const emConfig = ws.filter((w) => w.status === "em_configuracao").length;
   const integracoes = ws.reduce((a, w) => a + w.integracoes, 0);

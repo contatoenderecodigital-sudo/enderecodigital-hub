@@ -564,9 +564,11 @@ export async function mensagensDoContato(
 }
 
 // ---------------- OWNER: WORKSPACES / TOKENS / CONTAS / AUDITORIA ----------------
-export async function listWorkspaces(): Promise<
+export async function listWorkspaces(hubId?: string): Promise<
   (Negocio & { hub_nome: string; leads: number; interacoes: number; integracoes: number })[]
 > {
+  const where = hubId ? "WHERE n.hub_id = $1" : "";
+  const params = hubId ? [hubId] : [];
   return (
     await query<Negocio & { hub_nome: string; leads: number; interacoes: number; integracoes: number }>(
       `SELECT n.*, h.nome AS hub_nome,
@@ -574,7 +576,9 @@ export async function listWorkspaces(): Promise<
               (SELECT count(*)::int FROM uso_ia u WHERE u.negocio_id = n.id) AS interacoes,
               (SELECT count(*)::int FROM wa_conexoes w WHERE w.negocio_id = n.id AND w.status = 'conectado') AS integracoes
        FROM negocios n JOIN hubs h ON h.id = n.hub_id
-       ORDER BY n.criado_em DESC`
+       ${where}
+       ORDER BY n.criado_em DESC`,
+      params
     )
   ).rows;
 }
