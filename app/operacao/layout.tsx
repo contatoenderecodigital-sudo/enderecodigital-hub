@@ -30,7 +30,7 @@ export default async function AdminPanelLayout({
 }) {
   const s = await getSession();
   if (!s) redirect("/login");
-  if (s.papel !== "owner_plataforma") redirect("/app");
+  if (s.papel !== "owner_plataforma") redirect("/login");
 
   return (
     <div className={`ed2 ${fontVars}`} style={{ minHeight: "100vh" }}>

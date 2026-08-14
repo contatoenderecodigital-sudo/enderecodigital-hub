@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         hub_id: u.hub_id,
         imp: null,
       });
-      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/app");
+      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/login");
       res.cookies.set(SESSION_COOKIE, token, cookieOptions());
       return res;
     }

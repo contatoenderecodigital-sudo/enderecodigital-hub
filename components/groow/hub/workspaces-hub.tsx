@@ -140,7 +140,6 @@ function RowMenu({ w }: { w: WsRow }) {
         <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "var(--ed2-card)", borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.14)", border: "1px solid var(--ed2-hair)", minWidth: 210, zIndex: 20, overflow: "hidden", textAlign: "left" }}>
           <form action="/api/impersonar" method="post">
             <input type="hidden" name="negocio_id" value={w.id} />
-            <input type="hidden" name="destino" value="/app/config-hub" />
             <MenuBtn icon={<Settings size={14} />} label="Editar workspace" />
           </form>
           <div style={{ height: 1, background: "var(--ed2-hair)" }} />

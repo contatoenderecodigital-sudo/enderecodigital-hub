@@ -63,23 +63,6 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
 const GROOW: NavItem[] = [
   { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
   { href: "/owner/workspaces", label: "Workspaces", Icon: IcoBuilding },
-  { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
-  { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
-  { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
-  { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
-  { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
-  { href: "/owner/ops/trafego", label: "Tráfego & ROAS", Icon: IcoActivity },
-  { href: "/owner/ops/social", label: "Conteúdo Social", Icon: IcoInstagram },
-  { href: "/owner/ops/blog", label: "Blog SEO", Icon: IcoGlobe },
-  { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
-  { href: "/owner/ops/pipeline", label: "Pipeline", Icon: IcoGrid },
-  { href: "/owner/ops/aprovacoes", label: "Aprovações", Icon: IcoShield },
-  { href: "/owner/ops/ia", label: "IA & Custos", Icon: IcoSparkles },
-  { href: "/owner/ops/relatorios", label: "Relatórios", Icon: IcoActivity },
-  { href: "/owner/ops/cardapios", label: "Cardápios", Icon: IcoGrid },
-  { href: "/owner/ops/conversas", label: "Conversas", Icon: IcoInbox },
-  { href: "/owner/ops/disparos", label: "Disparos", Icon: IcoWhatsapp },
-  { href: "/owner/ops/senhas", label: "Senhas", Icon: IcoLock },
 ];
 
 const TITULOS: [string, string][] = [

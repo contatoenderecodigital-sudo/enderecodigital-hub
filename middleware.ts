@@ -48,7 +48,7 @@ export async function middleware(req: NextRequest) {
   // Console do owner: so owner_plataforma.
   if (pathname.startsWith("/owner") && session.papel !== "owner_plataforma") {
     const url = req.nextUrl.clone();
-    url.pathname = "/app";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
@@ -61,7 +61,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const url = req.nextUrl.clone();
-    url.pathname = "/app";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 

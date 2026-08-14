@@ -15,12 +15,9 @@ export async function POST(req: Request) {
   const negocioId = String(form.get("negocio_id") || "");
   if (!negocioId) return redir("/owner/clientes");
 
-  // destino opcional (ex.: /app/config-hub pra "Editar workspace"); só rotas /app.
-  const dRaw = String(form.get("destino") || "/app");
-  const destino = dRaw.startsWith("/app") ? dRaw : "/app";
-
+  // Owner abre o painel próprio do cliente (MODO OWNER via /ws).
   const token = await signSession({ ...s, imp: negocioId });
-  const res = redir(destino);
+  const res = redir(`/ws/${negocioId}`);
   res.cookies.set(SESSION_COOKIE, token, cookieOptions());
   return res;
 }
