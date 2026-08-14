@@ -17,6 +17,7 @@ export async function middleware(req: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
+    /\.(png|svg|jpg|jpeg|gif|ico|webp|avif|txt|xml|json|woff2?|ttf|otf|map)$/i.test(pathname) ||
     PUBLIC.some((p) => pathname === p || pathname.startsWith(p + "/"))
   ) {
     return NextResponse.next();
