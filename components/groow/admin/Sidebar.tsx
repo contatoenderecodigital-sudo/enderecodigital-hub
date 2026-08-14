@@ -10,6 +10,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, CheckSquare,
   MessageSquare, Megaphone, Wallet, Receipt, BarChart3, Target,
   FileText, BadgeCheck, Share2, KeyRound, X, TrendingUp, Network, ClipboardList, Filter, Bot, ListChecks,
+  Boxes, LayoutGrid, Sparkles, SlidersHorizontal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import AdminActions from "@/components/groow/admin/AdminActions";
@@ -17,6 +18,16 @@ import AdminActions from "@/components/groow/admin/AdminActions";
 type Item = { href?: string; label: string; icon: LucideIcon; exact?: boolean; soon?: boolean; badge?: string };
 
 const GRUPOS: { titulo: string; itens: Item[] }[] = [
+  {
+    titulo: "Endereço Digital",
+    itens: [
+      { href: "/owner", label: "Todos os hubs", icon: Boxes, exact: true },
+      { href: "/operacao/hub/clientes", label: "Clientes", icon: Building2 },
+      { href: "/operacao/hub/workspaces", label: "Workspaces", icon: LayoutGrid },
+      { href: "/operacao/hub/contas-claude", label: "Contas Claude", icon: Sparkles },
+      { href: "/operacao/hub/config", label: "Configurações do hub", icon: SlidersHorizontal },
+    ],
+  },
   {
     titulo: "Principal",
     itens: [

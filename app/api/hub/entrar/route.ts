@@ -18,7 +18,8 @@ export async function GET(req: Request) {
   const hub = id ? await getHub(id) : null;
   if (!hub) return irPara("/owner");
 
-  const res = irPara("/owner");
+  // Ao entrar num hub, o dono cai direto na interface GROOW (nível operação).
+  const res = irPara("/operacao");
   res.cookies.set(HUB_COOKIE, hub.id, {
     httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 30,
   });
