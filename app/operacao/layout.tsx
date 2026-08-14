@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Inter, Inter_Tight, JetBrains_Mono, DM_Sans } from "next/font/google";
 import { getSession } from "@/lib/auth";
 import TopNav from "@/components/groow/admin/TopNav";
 import Sidebar from "@/components/groow/admin/Sidebar";
 import GuiaModulo from "@/components/groow/admin/GuiaModulo";
 import "./groow.css";
+
+// Mesmas fontes do site antigo (Inter texto, Inter Tight titulos) — define as
+// CSS vars que o groow.css/tailwind esperam (--font-sans, --font-display, etc).
+const interSans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const interDisplay = Inter_Tight({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+const fontVars = `${interSans.variable} ${interDisplay.variable} ${dmSans.variable} ${mono.variable}`;
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +33,7 @@ export default async function AdminPanelLayout({
   if (s.papel !== "owner_plataforma") redirect("/app");
 
   return (
-    <div className="ed2" style={{ minHeight: "100vh" }}>
+    <div className={`ed2 ${fontVars}`} style={{ minHeight: "100vh" }}>
       {/* aplica o tema salvo antes da pintura (evita flash do tema claro) */}
       <script
         dangerouslySetInnerHTML={{
