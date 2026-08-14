@@ -4,18 +4,23 @@ Executado ao vivo em `https://hub.179.198.126.197.sslip.io` como owner (`contato
 hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
 `c:\Projetos Claude\site-enderecodigital\.playwright-mcp\` (e raiz do projeto para os nomeados por ID).
 
+> **FASE 4 (re-verificação, 2026-08-14).** Os 4 itens REPROVADOS foram corrigidos e re-testados ao vivo
+> via Playwright. TODOS os 4 passaram; +1 achado de asset (400 no logo) também foi corrigido e re-verificado.
+> Provas novas nos respectivos itens (prefixo de screenshot `recheck-*` em
+> `c:\Projetos Claude\site-enderecodigital\.playwright-mcp\`).
+
 ## Resumo
 
 - Total de itens: 54 — todos executados ao vivo.
-- APROVADOS: 47
-- REPROVADOS: 4
+- APROVADOS: 51 (era 47; os 4 reprovados foram corrigidos e re-aprovados na FASE 4)
+- REPROVADOS: 0 (era 4)
 - BLOQUEADOS (não testáveis ao vivo nesta sessão): 3
 
-### Reprovados (com repro no item)
-- **B-FOCUS-ESC-01** — Esc não fecha o modal "Novo cliente" (falha de acessibilidade; só fecha por X/Cancelar/overlay).
-- **B-ERR-VIS-01** — action de Conectar sem nome redireciona `?erro=nome` mas NÃO mostra nenhuma mensagem de erro visível ao usuário.
-- **B-DBLCLICK-SAVE-01** — duplo clique em "Criar cadastro" cria DOIS clientes idênticos (sem guard de duplo envio).
-- **C-ENTRAR-BADID-01** — `/api/hub/entrar?id=id-invalido` responde HTTP 500 em vez de redirecionar para `/owner` (id não-UUID quebra a query).
+### Reprovados na FASE 3 — todos CORRIGIDOS e RE-APROVADOS na FASE 4
+- **B-FOCUS-ESC-01** — RE-APROVADO: Esc agora fecha o modal "Novo cliente".
+- **B-ERR-VIS-01** — RE-APROVADO: estado `?erro=*` agora mostra banner vermelho (`role="alert"`) visível.
+- **B-DBLCLICK-SAVE-01** — RE-APROVADO: duplo clique cria só 1 cliente (guard de duplo envio ativo; 1 só POST).
+- **C-ENTRAR-BADID-01** — RE-APROVADO: `?id=id-invalido` agora responde 303 → `/owner` (não mais 500).
 
 ### Bloqueados (sem meios ao vivo)
 - **C-NONOWNER-OP-01** e **C-NONOWNER-API-01** — não há conta NÃO-owner disponível para autenticar (só owner_plataforma).
@@ -90,11 +95,14 @@ hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
 ## B-KBD-TAB-01 — APROVADO
 - No modal "Novo cliente": Tab de `nome` → `nome_fantasia` (ordem lógica), `outlineStyle: solid` (foco visível), Shift+Tab retornou de `nome_fantasia` → `nome`.
 
-## B-FOCUS-ESC-01 — REPROVADO
-- Screenshot: `B-FOCUS-ESC-01.png` (modal ainda aberto após Esc).
+## B-FOCUS-ESC-01 — REPROVADO (FASE 3) → APROVADO (FASE 4, re-verificado 2026-08-14)
+- Screenshot original: `B-FOCUS-ESC-01.png` (modal ainda aberto após Esc).
 - Repro: abrir modal "Novo cliente" → focar um campo → pressionar Esc. Esperado (plano): modal fecha.
-  Observado: modal permanece aberto (`document.querySelector('input[name="nome"]')` ainda existe; h2 "Novo cliente" presente).
-- Conforme o próprio plano previa, é falha de acessibilidade a registrar (Esc não fecha; só fecha por X/Cancelar/overlay).
+  Observado (FASE 3): modal permanecia aberto.
+- **FASE 4 — APROVADO.** Screenshots: `recheck-03-esc-before.png` (modal aberto) e `recheck-03-esc-after.png` (fechado).
+  - Antes do Esc: `{ modalOpen: true, h2: ["Novo cliente"] }`.
+  - Foquei `input[name="nome"]` → `browser_press_key Escape`.
+  - Depois do Esc: `{ modalOpen: false, h2: [] }` — o modal fechou. Console: 0 erros / 0 warnings.
 
 ## A-WS-EDIT-01 — APROVADO
 - Screenshot: `A-WS-EDIT-01.png`.
@@ -156,11 +164,15 @@ hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
 - Duplo clique em "Novo cliente": nunca há dois modais. O 2º clique alterna/fecha (0 modais); um clique único
   abre exatamente 1 (1 heading "Novo cliente", 1 input `name=nome`). Sem sobreposição/duplicação.
 
-## B-DBLCLICK-SAVE-01 — REPROVADO
-- Screenshot: `B-DBLCLICK-SAVE-01.png` (duas linhas "QA DblSave").
-- Repro: `/operacao/hub/clientes` → "Novo cliente" → Nome="QA DblSave" → DUPLO clique em "Criar cadastro".
-- Esperado: apenas UM cliente criado. Observado: DOIS clientes idênticos criados (slugs `/qa-dblsave-p2ll4` e `/qa-dblsave-5su6n`).
-- Defeito: o submit não é desabilitado/deduplicado no 1º clique (sem guard de duplo envio). (Duplicatas removidas na limpeza.)
+## B-DBLCLICK-SAVE-01 — REPROVADO (FASE 3) → APROVADO (FASE 4, re-verificado 2026-08-14)
+- Screenshot original: `B-DBLCLICK-SAVE-01.png` (duas linhas "QA DblSave").
+- Repro: `/operacao/hub/clientes` → "Novo cliente" → Nome único → DUPLO clique rápido em "Criar cadastro".
+- Observado (FASE 3): DOIS clientes idênticos criados (sem guard de duplo envio).
+- **FASE 4 — APROVADO.** Screenshot: `recheck-02-dblclick-after.png`. Nome de teste: "QA Recheck Duplo 140636".
+  - `dblclick()` em "Criar cadastro" → redirecionou para `?ok=1`.
+  - Rede: exatamente **1** POST efetivo — `POST /operacao/hub/clientes => [303]` (só um; nenhum 2º POST/action).
+  - Lista: `{ totalRows: 3, matchCount: 1 }` — apenas **1** linha "QA Recheck Duplo 140636" (2 originais + 1 novo). Console 0 erros.
+  - **Limpeza:** cliente de teste excluído via (…) → "Excluir permanentemente" (confirm aceito); lista voltou a 2 (Doce Pão + Padaria Aroma), `hasQA:false`.
 
 ## C-EMPTY-NOME-01 — APROVADO
 - Screenshot: `C-EMPTY-NOME-01.png`.
@@ -188,12 +200,15 @@ hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
 - Screenshot: `C-FILTER-EMPTY-01.png`.
 - Workspaces → filtro "Arquivados" (sem nenhum arquivado) → estado vazio "Nenhum workspace encontrado.".
 
-## B-ERR-VIS-01 — REPROVADO
-- Screenshot: `B-ERR-VIS-01.png` (tela sem qualquer aviso, apesar de `?erro=nome`).
-- Repro: `/operacao/hub/contas-claude` → remover `required` do input `nome` via devtools → "Conectar" com nome vazio.
-- Resultado: action redireciona para `?erro=nome` e NÃO cria conta (Clientes segue 2). Porém NÃO há mensagem de erro
-  VISÍVEL ao usuário — a tela fica idêntica ao estado normal (sem banner/alerta; nenhum `[role=alert]`/`.erro`/`.error`).
-- Conforme o plano previa, a ausência de aviso para estados `?erro=*` é defeito de UX a registrar.
+## B-ERR-VIS-01 — REPROVADO (FASE 3) → APROVADO (FASE 4, re-verificado 2026-08-14)
+- Screenshot original: `B-ERR-VIS-01.png` (tela sem qualquer aviso, apesar de `?erro=nome`).
+- Observado (FASE 3): action redirecionava para `?erro=*` sem NENHUMA mensagem visível ao usuário.
+- **FASE 4 — APROVADO.** Screenshot: `recheck-04-erro-banner.png`.
+  - Repro: `/operacao/hub/clientes` → "Novo cliente" → removi `required` de `input[name="nome"]` → "Criar cadastro" com nome vazio.
+  - URL final: `…/operacao/hub/clientes?erro=dados`.
+  - Agora há **banner vermelho visível** com `role="alert"`:
+    `"Dados inválidos, revise os campos."` — cor do texto `rgb(200, 38, 28)`, fundo `rgba(255, 59, 48, 0.1)`.
+  - Nenhum cliente criado (validação recusou). Console 0 erros. (Mensagem difere do exemplo "Informe o nome do cliente." mas cumpre o esperado: erro vermelho visível para `?erro=*`.)
 
 ## A-BACK-01 — APROVADO
 - Screenshot: `A-BACK-01.png`.
@@ -205,6 +220,9 @@ hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
   sem spinner infinito e sem flash de tema. Console sem erros de app.
 - Achados menores de assets (não bloqueiam render): 400 em `/_next/image?url=/logo-mark.png&w=32` (otimização do logo)
   e 404 do favicon de `enderecodigital.tech` (vindo do preview do painel do cliente).
+- **FASE 4 (bonus, re-verificado 2026-08-14) — CORRIGIDO/APROVADO.** O logo agora é servido direto: em `/operacao`
+  a rede mostra `GET /logo-mark.png => [200]` e NÃO há mais requisição `/_next/image?url=/logo-mark.png` (some o 400).
+  Console: 0 erros / 0 warnings.
 
 ## B-F5-01 — APROVADO
 - Screenshot: `B-F5-01.png`.
@@ -260,13 +278,14 @@ hub Endereço Digital (`777815b4-7f3a-4813-8331-18e539111710`). Screenshots em
 - Sem contexto de hub, `/operacao/hub/config` NÃO redireciona (URL permanece); mostra o card de fallback
   "Entre em um hub para editar as configurações dele.". Diferença em relação aos irmãos é intencional/confirmada.
 
-## C-ENTRAR-BADID-01 — REPROVADO
-- Screenshot: `C-ENTRAR-BADID-01.png` (página de erro do navegador). Rede: `GET /api/hub/entrar?id=id-invalido => [500]`.
-- Repro: navegar para `https://hub.179.198.126.197.sslip.io/api/hub/entrar?id=id-invalido`.
-- Esperado (plano): redirecionar para `/owner` sem gravar `ed_hub_op`.
-- Observado: o endpoint responde HTTP 500 (página de erro do Chromium, sem redirect). O cookie NÃO é gravado
-  (após o erro, `/operacao/hub/clientes` ainda redireciona para `/owner`), mas o 500 em vez de redirect gracioso é defeito.
-  Provável causa: id fora do formato UUID quebra a query sem tratamento/try-catch.
+## C-ENTRAR-BADID-01 — REPROVADO (FASE 3) → APROVADO (FASE 4, re-verificado 2026-08-14)
+- Screenshot original: `C-ENTRAR-BADID-01.png` (página de erro do navegador). Rede FASE 3: `GET …?id=id-invalido => [500]`.
+- Observado (FASE 3): o endpoint respondia HTTP 500 com id fora do formato UUID.
+- **FASE 4 — APROVADO.** Screenshots: `recheck-01-badid-owner.png` (God-view) e `recheck-01-validid-operacao.png`.
+  - `id-invalido`: rede `GET /api/hub/entrar?id=id-invalido => [303]` seguido de `GET /owner => [200]`.
+    URL final `…/owner` (God-view). **Nenhum 500.**
+  - Regressão do caminho feliz confirmada: `GET /api/hub/entrar?id=777815b4-…111710 => [303]` → `GET /operacao => [200]`
+    (id válido ainda leva a `/operacao`).
 
 ## C-SESSION-EXPIRED-01 — APROVADO
 - Screenshot: `C-SESSION-EXPIRED-01.png`.
