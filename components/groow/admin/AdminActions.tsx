@@ -95,8 +95,7 @@ export default function AdminActions({ dropdownSide = "bottom", onDark = false }
   const initials = (profile.nome || "Admin").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "AD";
 
   const onLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    window.location.href = "/operacao/login";
+    window.location.href = "/logout";
   };
 
   // popover: pra baixo (topbar) ou pra direita (sidebar)

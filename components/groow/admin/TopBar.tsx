@@ -30,8 +30,7 @@ export default function TopBar() {
   };
 
   const onLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    window.location.href = "/operacao/login";
+    window.location.href = "/logout";
   };
 
   const hora = new Date().getHours();
