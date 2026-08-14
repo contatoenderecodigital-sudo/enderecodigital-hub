@@ -5,6 +5,7 @@ import { hubOpId } from "@/lib/hub-ctx";
 import PageHeader from "@/components/groow/admin/ed2/PageHeader";
 import Card from "@/components/groow/admin/ed2/Card";
 import { salvarConfigAction } from "@/app/operacao/hub/actions";
+import SubmitButton from "@/components/groow/hub/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,13 @@ function badge(ok: boolean, on: string, off: string) {
   );
 }
 
-export default async function HubConfigPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const { ok } = await searchParams;
+export default async function HubConfigPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const { ok, erro } = await searchParams;
   const hub = await hubOpId();
   const cfg = await getHubConfig();
   const temChaveGlobal = !!process.env.ANTHROPIC_API_KEY;
+
+  const msgErro = erro === "nome" ? "Informe o nome do hub." : erro ? "Dados inválidos, revise os campos." : null;
 
   return (
     <>
@@ -33,6 +36,11 @@ export default async function HubConfigPage({ searchParams }: { searchParams: Pr
       {ok && (
         <div style={{ background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.25)", color: "#1d8a3a", borderRadius: 16, padding: "12px 18px", fontSize: 13.5, fontWeight: 500, marginBottom: 18 }}>
           Configurações salvas.
+        </div>
+      )}
+      {msgErro && (
+        <div role="alert" style={{ background: "rgba(255,59,48,0.10)", border: "1px solid rgba(255,59,48,0.28)", color: "#c8261c", borderRadius: 16, padding: "12px 18px", fontSize: 13.5, fontWeight: 500, marginBottom: 18 }}>
+          {msgErro}
         </div>
       )}
 
@@ -54,7 +62,7 @@ export default async function HubConfigPage({ searchParams }: { searchParams: Pr
                 <div><label style={lStyle}>Título da tela de login</label><input name="login_titulo" defaultValue={cfg.login_titulo || ""} style={iStyle} /></div>
                 <div><label style={lStyle}>Texto do botão de login</label><input name="login_botao" defaultValue={cfg.login_botao || ""} style={iStyle} /></div>
               </div>
-              <div style={{ marginTop: 18 }}><button type="submit" style={goldBtn}>Salvar configurações</button></div>
+              <div style={{ marginTop: 18 }}><SubmitButton style={goldBtn} pendingLabel="Salvando…">Salvar configurações</SubmitButton></div>
             </form>
           </Card>
 

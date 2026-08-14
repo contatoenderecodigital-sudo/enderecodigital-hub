@@ -15,7 +15,17 @@ export async function GET(req: Request) {
   if (!s || s.papel !== "owner_plataforma") return irPara("/login");
 
   const id = new URL(req.url).searchParams.get("id") || "";
-  const hub = id ? await getHub(id) : null;
+
+  // id fora do formato UUID quebra a query no Postgres. Trata como "hub não existe":
+  // sem gravar cookie, volta pra God-view em vez de estourar 500.
+  let hub = null;
+  if (id) {
+    try {
+      hub = await getHub(id);
+    } catch {
+      hub = null;
+    }
+  }
   if (!hub) return irPara("/owner");
 
   // Ao entrar num hub, o dono cai direto na interface GROOW (nível operação).

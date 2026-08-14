@@ -169,7 +169,7 @@ export default function Sidebar() {
 
   const brand = (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-      <Image src="/logo-mark.png" alt="" width={28} height={28} style={{ borderRadius: 8 }} aria-hidden />
+      <Image src="/logo-mark.png" alt="" width={28} height={28} unoptimized style={{ borderRadius: 8 }} aria-hidden />
       <div style={{ lineHeight: 1.15 }}>
         <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.02em", color: "#fff" }}>Endereço Digital</div>
         <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em" }}>OPERAÇÃO · OS</div>

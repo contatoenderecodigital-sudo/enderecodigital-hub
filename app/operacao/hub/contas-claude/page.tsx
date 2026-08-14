@@ -26,13 +26,15 @@ function badge(ok: boolean, on: string, off: string) {
   );
 }
 
-export default async function HubContasClaudePage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const { ok } = await searchParams;
+export default async function HubContasClaudePage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const { ok, erro } = await searchParams;
   const hub = await hubOpId();
   if (!hub) redirect("/owner");
   const [contas, clientes] = await Promise.all([listContasClaude(), listNegocios(hub)]);
   const comIA = clientes.filter((c) => c.ia_habilitada && c.ia_modo === "api_plataforma").length;
   const temChave = !!process.env.ANTHROPIC_API_KEY;
+
+  const msgErro = erro === "nome" ? "Informe o nome da conta." : erro ? "Dados inválidos, revise os campos." : null;
 
   return (
     <>
@@ -41,6 +43,11 @@ export default async function HubContasClaudePage({ searchParams }: { searchPara
       {ok && (
         <div style={{ background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.25)", color: "#1d8a3a", borderRadius: 16, padding: "12px 18px", fontSize: 13.5, fontWeight: 500, marginBottom: 18 }}>
           Conta conectada.
+        </div>
+      )}
+      {msgErro && (
+        <div role="alert" style={{ background: "rgba(255,59,48,0.10)", border: "1px solid rgba(255,59,48,0.28)", color: "#c8261c", borderRadius: 16, padding: "12px 18px", fontSize: 13.5, fontWeight: 500, marginBottom: 18 }}>
+          {msgErro}
         </div>
       )}
 

@@ -36,7 +36,7 @@ export default function TopNav() {
           aria-label="Endereço Digital · Admin"
           style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 15, color: "var(--ed2-ink)", textDecoration: "none", flexShrink: 0 }}
         >
-          <Image src="/logo-mark.png" alt="" width={26} height={26} style={{ borderRadius: 8, display: "block" }} aria-hidden />
+          <Image src="/logo-mark.png" alt="" width={26} height={26} unoptimized style={{ borderRadius: 8, display: "block" }} aria-hidden />
           <span className="hidden sm:inline">Endereço Digital</span>
         </Link>
 

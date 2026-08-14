@@ -10,6 +10,7 @@ import {
   mudarStatusClienteAction,
   excluirClienteAction,
 } from "@/app/operacao/hub/actions";
+import SubmitButton from "@/components/groow/hub/submit-button";
 
 type HubMin = { id: string; nome: string; slug: string };
 
@@ -47,6 +48,9 @@ export default function ClientesHub({ clientes, hubs }: { clientes: Negocio[]; h
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("todos");
   const [modalOpen, setModalOpen] = useState(false);
+  const openBtnRef = useRef<HTMLButtonElement>(null);
+  // Fecha o modal e devolve o foco ao botão que o abriu (acessibilidade).
+  const closeModal = () => { setModalOpen(false); openBtnRef.current?.focus(); };
 
   const filtrados = clientes.filter((c) => {
     if (status !== "todos" && c.status !== status) return false;
@@ -68,7 +72,7 @@ export default function ClientesHub({ clientes, hubs }: { clientes: Negocio[]; h
             Tenants deste hub — cada um com seu workspace, integrações e IA.
           </div>
         </div>
-        <button type="button" onClick={() => setModalOpen(true)} style={goldBtn}>
+        <button ref={openBtnRef} type="button" onClick={() => setModalOpen(true)} style={goldBtn}>
           <Plus size={16} /> Novo cliente
         </button>
       </div>
@@ -162,7 +166,7 @@ export default function ClientesHub({ clientes, hubs }: { clientes: Negocio[]; h
         </div>
       </div>
 
-      {modalOpen && <NovoClienteModal hubs={hubs} onClose={() => setModalOpen(false)} />}
+      {modalOpen && <NovoClienteModal hubs={hubs} onClose={closeModal} />}
 
       <style>{`.hub-row:hover td { background: var(--ed2-surface-2) !important; }`}</style>
     </div>
@@ -231,6 +235,12 @@ const lStyle: React.CSSProperties = { display: "block", fontSize: 11.5, fontWeig
 
 function NovoClienteModal({ hubs, onClose }: { hubs: HubMin[]; onClose: () => void }) {
   const [exp, setExp] = useState(false);
+  // Esc fecha o modal enquanto ele está aberto.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, display: "grid", placeItems: "center", background: "rgba(11,24,56,0.45)", padding: 16 }}>
       <form action={criarClienteAction} onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 640, maxHeight: "90vh", overflowY: "auto", background: "var(--ed2-card)", borderRadius: 24, boxShadow: "0 24px 60px rgba(0,0,0,0.18)" }}>
@@ -299,7 +309,7 @@ function NovoClienteModal({ hubs, onClose }: { hubs: HubMin[]; onClose: () => vo
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, padding: "16px 24px", borderTop: "1px solid var(--ed2-hair)" }}>
           <button type="button" onClick={onClose} style={{ all: "unset", cursor: "pointer", padding: "10px 16px", color: "var(--ed2-ink-2)", fontSize: 13 }}>Cancelar</button>
-          <button type="submit" style={{ ...goldBtn, padding: "10px 18px", fontSize: 13 }}>Criar cadastro</button>
+          <SubmitButton style={{ ...goldBtn, padding: "10px 18px", fontSize: 13 }} pendingLabel="Criando…">Criar cadastro</SubmitButton>
         </div>
       </form>
     </div>
