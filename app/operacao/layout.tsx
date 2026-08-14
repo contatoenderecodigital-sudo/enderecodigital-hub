@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Inter, Inter_Tight, JetBrains_Mono, DM_Sans } from "next/font/google";
 import { getSession } from "@/lib/auth";
@@ -56,9 +55,10 @@ export default async function AdminPanelLayout({
         }}
       >
         <span>MODO OPERAÇÃO · GROOW OS</span>
-        <Link href="/owner" style={{ color: "#D9BE7E", textDecoration: "none" }}>
+        {/* <a> (nav cheia) e nao <Link>: recarrega o console limpo, sem o CSS/Tailwind do GROOW grudar nas fontes. */}
+        <a href="/owner" style={{ color: "#D9BE7E", textDecoration: "none" }}>
           Voltar ao console
-        </Link>
+        </a>
       </div>
       <Sidebar />
       <div className="ed3-shift">

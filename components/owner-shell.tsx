@@ -124,7 +124,15 @@ export default function OwnerShell({
         {/* nível 1 — plataforma */}
         <div>
           <div className="side-group">Plataforma</div>
-          {link({ href: "/operacao", label: "Operação (GROOW OS)", Icon: IcoGrid })}
+          {/* <a> (nav cheia) e nao <Link>: cruzar pro GROOW/voltar sem CSS grudar nas fontes. */}
+          <a
+            href="/operacao"
+            className={"side-link" + (ativo("/operacao") ? " active" : "")}
+            onClick={() => setOpen(false)}
+          >
+            <IcoGrid width={19} height={19} />
+            Operação (GROOW OS)
+          </a>
           {link({ href: "/owner", label: "Todos os hubs", Icon: IcoDashboard, exact: true })}
         </div>
 
