@@ -37,13 +37,6 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
     itens: [{ href: "/owner", label: "Dashboard", Icon: IcoDashboard, exact: true }],
   },
   {
-    grupo: "Usuários",
-    itens: [
-      { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
-      { href: "/owner/workspaces", label: "Workspaces", Icon: IcoBuilding },
-    ],
-  },
-  {
     grupo: "Plataforma",
     itens: [
       { href: "/owner/sites", label: "Sites", Icon: IcoGlobe },
@@ -66,8 +59,10 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
   },
 ];
 
-// Operação do HUB (GROOW OS) — só aparece quando um hub está selecionado.
+// Tudo do HUB — só aparece DENTRO de um hub. Clientes/Workspaces são de cada hub.
 const GROOW: NavItem[] = [
+  { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
+  { href: "/owner/workspaces", label: "Workspaces", Icon: IcoBuilding },
   { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
   { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
   { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
