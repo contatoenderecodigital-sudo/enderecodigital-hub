@@ -141,6 +141,7 @@ export default function OwnerShell({
         {/* nível 1 — plataforma */}
         <div>
           <div className="side-group">Plataforma</div>
+          {link({ href: "/operacao", label: "Operação (GROOW OS)", Icon: IcoGrid })}
           {link({ href: "/owner", label: "Todos os hubs", Icon: IcoDashboard, exact: true })}
         </div>
 

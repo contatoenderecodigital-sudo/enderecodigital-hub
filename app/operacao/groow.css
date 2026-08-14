@@ -1,0 +1,561 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── shadcn/ui tokens (tematizados navy+dourado) ──
+   Claro = :root · Escuro = .ed2-dark (mesma classe do toggle do admin). */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 13%;
+  --primary: 41 47% 58%;            /* dourado */
+  --primary-foreground: 222 47% 13%; /* texto navy sobre dourado */
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 222 47% 13%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%;
+  --accent: 240 5% 96%;
+  --accent-foreground: 222 47% 13%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 6% 90%;
+  --input: 240 6% 90%;
+  --ring: 41 47% 58%;
+  --radius: 0.625rem;
+}
+.ed2-dark {
+  --background: 220 60% 10%;
+  --foreground: 43 38% 94%;
+  --card: 222 58% 19%;
+  --card-foreground: 43 38% 94%;
+  --popover: 222 58% 19%;
+  --popover-foreground: 43 38% 94%;
+  --primary: 41 47% 58%;
+  --primary-foreground: 222 47% 13%;
+  --secondary: 222 40% 24%;
+  --secondary-foreground: 43 38% 94%;
+  --muted: 222 40% 24%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 222 40% 24%;
+  --accent-foreground: 43 38% 94%;
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 35% 28%;
+  --input: 222 35% 28%;
+  --ring: 41 47% 58%;
+}
+
+/* Blindagem global: decorativos animados que escapem da própria seção não
+   podem inflar o layout (scroll lateral de 21px no mobile — auditoria visual).
+   "clip" não cria scroll container, então position:sticky continua funcionando. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* ── Blog: tipografia do artigo (HTML vindo do banco) ── */
+.blog-prose {
+  color: rgba(42, 51, 68, 0.85);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.blog-prose h2 {
+  font-family: var(--font-display, inherit);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #0b1838;
+  font-size: 1.6rem;
+  line-height: 1.25;
+  margin: 2.5rem 0 1rem;
+}
+.blog-prose h3 {
+  font-weight: 600;
+  color: #0b1838;
+  font-size: 1.2rem;
+  margin: 2rem 0 0.75rem;
+}
+.blog-prose p { margin: 0 0 1.25rem; }
+.blog-prose ul, .blog-prose ol { margin: 0 0 1.25rem; padding-left: 1.4rem; }
+.blog-prose li { margin-bottom: 0.5rem; }
+.blog-prose ul li { list-style: disc; }
+.blog-prose ol li { list-style: decimal; }
+.blog-prose strong { color: #0b1838; font-weight: 600; }
+.blog-prose a {
+  color: #0b1838;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(201, 169, 97, 0.6);
+  transition: color 0.15s ease;
+}
+.blog-prose a:hover { color: #c9a961; }
+.blog-prose blockquote {
+  border-left: 3px solid #c9a961;
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  color: rgba(42, 51, 68, 0.7);
+  font-style: italic;
+}
+/* preview do artigo dentro do admin no tema escuro */
+.ed2-dark .blog-prose { color: rgba(245, 242, 234, 0.82); }
+.ed2-dark .blog-prose h2,
+.ed2-dark .blog-prose h3,
+.ed2-dark .blog-prose strong { color: #f5f2ea; }
+.ed2-dark .blog-prose a { color: #e3c98a; text-decoration-color: rgba(227, 201, 138, 0.5); }
+.ed2-dark .blog-prose blockquote { color: rgba(245, 242, 234, 0.65); }
+
+/* ── Pills de status (Leads/Pipeline/Cobranças) ──
+   fg escuro no tema claro, fg CLARO no tema escuro (legibilidade no navy). */
+:root {
+  --pill-blue-fg: #0a5cc4;
+  --pill-cyan-fg: #1d7fa8;
+  --pill-purple-fg: #3934a3;
+  --pill-gold-fg: #8a712d;
+  --pill-green-fg: #1d8a3a;
+  --pill-red-fg: #c8261c;
+  --pill-orange-fg: #a85f00;
+}
+.ed2-dark {
+  --pill-blue-fg: #7db9ff;
+  --pill-cyan-fg: #7fd0f2;
+  --pill-purple-fg: #b0aef5;
+  --pill-gold-fg: #e3c98a;
+  --pill-green-fg: #7fe0a0;
+  --pill-red-fg: #ff9b93;
+  --pill-orange-fg: #f2b566;
+}
+
+:root {
+  /* Legacy aliases — mantidos pra não quebrar site público */
+  --color-navy: #0b1838;
+  --color-navy-deep: #070f26;
+  --color-gold: #c9a961;
+  --color-cream: #f5f2ea;
+  --color-ink: #2a3344;
+
+  /* === DESIGN SYSTEM ADMIN (Regra #1) === */
+
+  /* Marca */
+  --brand-navy-900: #070F26;
+  --brand-navy-800: #0B1838;
+  --brand-navy-700: #15224A;
+  --brand-navy-600: #2A3344;
+  --brand-gold-500: #C9A961;
+  --brand-gold-600: #B8954A;
+  --brand-gold-700: #8C7440;
+  --brand-cream-50:  #FAF8F2;
+  --brand-cream-100: #F5F2EA;
+  --brand-cream-200: #EBE6D6;
+
+  /* Neutros */
+  --bg-1: #FAF8F2;
+  --bg-2: #F5F2EA;
+  --bg-3: #EBE6D6;
+  --surface: #FFFFFF;
+  --fg-1-admin: #B3AFA0;
+  --fg-2-admin: #6B6557;
+  --fg-3-admin: #3D3A33;
+  --fg-4-admin: #0B1838;
+
+  /* Status */
+  --success: #2F8F4A;
+  --success-soft: #E8F5EC;
+  --warning: #C9A961;
+  --warning-soft: #FBF4E2;
+  --danger:  #B5341F;
+  --danger-soft: #FBE9E4;
+  --info:    #2C78FC;
+  --info-soft: #EBF2FF;
+
+  /* Raios */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-pill: 9999px;
+
+  /* Espaçamento (escala 4px) */
+  --s-1: 4px;  --s-2: 8px;   --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px;  --s-8: 32px; --s-10: 40px;
+  --s-12: 48px; --s-16: 64px;
+
+  /* Sombras assinatura */
+  --shadow-card:
+    0 1px 3px 0 rgba(11,24,56,.06),
+    0 0 0 1px rgba(11,24,56,.04);
+  --shadow-card-hover:
+    0 1px 3px 0 rgba(11,24,56,.06),
+    0 8px 24px -4px rgba(11,24,56,.10),
+    0 0 0 1px rgba(11,24,56,.04);
+  --shadow-gold:
+    0 1px 3px 0 rgba(201,169,97,.35),
+    0 0 0 1px rgba(201,169,97,.45);
+
+  /* Easing */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: #ffffff;
+  color: #0b1838;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background-color: rgba(201, 169, 97, 0.35);
+  color: var(--color-navy);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+/* shadcn/cmdk: foco próprio (sem o outline dourado global dentro de popovers/dropdowns) */
+[data-radix-popper-content-wrapper] *:focus-visible,
+[cmdk-input]:focus-visible,
+[cmdk-item]:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  /* Italic gold accent with breathing room (italic letters lean right and visually collapse the following space). */
+  .italic-accent {
+    font-style: italic;
+    color: var(--color-gold);
+    padding-right: 0.12em;
+  }
+  .redacted {
+    position: relative;
+    display: inline-block;
+    color: transparent;
+    filter: blur(7px);
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.95);
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 0 0.15em;
+    border-radius: 2px;
+    user-select: none;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+  }
+
+  /* Live status dot (pulse + halo) */
+  .live-dot {
+    position: relative;
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-gold);
+    border-radius: 9999px;
+  }
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background-color: var(--color-gold);
+    animation: live-pulse 2s ease-out infinite;
+  }
+
+  /* Spotlight glow on cards. Container also gets onMouseMove via ShimmerCard. */
+  .shimmer-card {
+    position: relative;
+    isolation: isolate;
+  }
+  .shimmer-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      220px circle at var(--shimmer-x, 50%) var(--shimmer-y, 50%),
+      rgba(201, 169, 97, 0.16),
+      transparent 55%
+    );
+    opacity: 0;
+    transition: opacity 350ms ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .shimmer-card:hover::before {
+    opacity: 1;
+  }
+  .shimmer-card > * {
+    position: relative;
+    z-index: 1;
+  }
+  .shimmer-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      300px circle at var(--shimmer-x, 50%) var(--shimmer-y, 50%),
+      rgba(201, 169, 97, 0.55),
+      transparent 50%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 350ms ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .shimmer-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Subtle grid pattern (use as ::before/::after overlay) */
+  .pattern-grid {
+    background-image:
+      linear-gradient(to right, rgba(245, 242, 234, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(245, 242, 234, 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: -1px -1px;
+  }
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, rgba(245, 242, 234, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(245, 242, 234, 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: -1px -1px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 80%);
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 80%);
+  }
+  .pattern-grid-soft {
+    background-image:
+      linear-gradient(to right, rgba(245, 242, 234, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(245, 242, 234, 0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, #000 20%, transparent 90%);
+            mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, #000 20%, transparent 90%);
+  }
+
+  /* Noise overlay (SVG turbulence). Apply to dark sections with `relative`. */
+  .noise-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("/noise.svg");
+    background-size: 180px 180px;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    z-index: 0;
+  }
+  /* Stack non-absolute children above the noise. Skip absolute/fixed children
+     so decorative blurs and grid overlays keep their original positioning. */
+  .noise-overlay > *:not(.absolute):not(.fixed) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Framer Motion SSR bake opacity:0 em todos os elementos animados.
+     Quando o client JS falha (manifests error), tudo fica invisível.
+     !important supera inline styles e garante que o conteúdo seja visível. */
+  main [style*="opacity:0"] {
+    opacity: 1 !important;
+  }
+}
+
+@keyframes live-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* === Admin: keyframes obrigatórios (Regra #9) === */
+@keyframes ed-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes ed-pulse-soft {
+  50% { opacity: .5; }
+}
+@keyframes ed-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes ed-bar-in {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+@keyframes ed-pulse-halo {
+  0%   { box-shadow: 0 0 0 0 rgba(201,169,97,.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(201,169,97,0); }
+  100% { box-shadow: 0 0 0 0 rgba(201,169,97,0); }
+}
+@keyframes ed-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Admin: live dot melhor que o legacy === */
+.ed-dot-live {
+  width: 6px; height: 6px; border-radius: 9999px;
+  background: var(--brand-gold-500);
+  animation: ed-pulse-halo 2s infinite;
+  display: inline-block;
+}
+
+/* Tabular nums helper */
+.ed-tnum { font-feature-settings: "tnum"; }
+
+/* ============================================================
+   ED2 — Design tokens do novo painel admin (Financeiro/Painel/etc)
+   Escopados em .ed2 pra não afetar o site público nem o admin legacy.
+   ============================================================ */
+.ed2 {
+  --ed2-surface: #F2F2F7;
+  --ed2-surface-2: #FAFAFC;
+  --ed2-card: #FFFFFF;
+  --ed2-ink: #000000;
+  --ed2-ink-2: #8E8E93;
+  --ed2-ink-3: #C7C7CC;
+  --ed2-hair: rgba(0,0,0,0.06);
+  --ed2-gold: #C9A961;
+  --ed2-gold-deep: #a8893d;
+  --ed2-gold-soft: rgba(201,169,97,0.12);
+  --ed2-navy: #0B1838;
+  --ed2-navy-2: #1d2d56;
+  --ed2-green: #34C759;
+  --ed2-green-soft: rgba(52,199,89,0.14);
+  --ed2-orange: #FF9F0A;
+  --ed2-orange-soft: rgba(255,159,10,0.14);
+  --ed2-red: #FF3B30;
+  --ed2-red-soft: rgba(255,59,48,0.14);
+  --ed2-blue: #0A84FF;
+  --ed2-blue-soft: rgba(10,132,255,0.12);
+  --ed2-purple: #5856D6;
+  --ed2-pink: #AF52DE;
+  --ed2-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  --ed2-shadow-hover: 0 6px 18px rgba(0,0,0,0.07);
+  /* botão/ação primária (claro = navy c/ texto branco) */
+  --ed2-accent: #0B1838;
+  --ed2-accent-ink: #FFFFFF;
+  /* barra superior (glass) */
+  --ed2-topbar-bg: rgba(255,255,255,0.78);
+  --ed2-radius: 28px;
+  --ed2-radius-md: 18px;
+  --ed2-radius-sm: 14px;
+
+  background: var(--ed2-surface);
+  color: var(--ed2-ink);
+  font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  transition: background .25s ease, color .25s ease;
+}
+
+/* ============================================================
+   TEMA ESCURO — navy profundo + dourado (toggle .ed2-dark no <html>)
+   Sobrescreve só os tokens; componentes que usam var() adaptam sozinhos.
+   ============================================================ */
+.ed2-dark .ed2 {
+  color-scheme: dark;          /* controles nativos (select, date, scrollbar) no escuro */
+  --ed2-surface: #0A1428;      /* fundo da página: navy profundo */
+  --ed2-surface-2: #0E1B38;    /* superfícies sutis (headers de tabela, pills) */
+  --ed2-card: #14264F;         /* cards: navy mais claro p/ elevação */
+  --ed2-ink: #F5F2EA;          /* texto principal: branco/creme */
+  --ed2-ink-2: #9DAFCE;        /* secundário: azul-acinzentado */
+  --ed2-ink-3: #5E6F92;        /* terciário */
+  --ed2-hair: rgba(255,255,255,0.10);
+  --ed2-gold-soft: rgba(201,169,97,0.18);
+  --ed2-green-soft: rgba(52,199,89,0.20);
+  --ed2-orange-soft: rgba(255,159,10,0.20);
+  --ed2-red-soft: rgba(255,59,48,0.20);
+  --ed2-blue-soft: rgba(10,132,255,0.20);
+  --ed2-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  --ed2-shadow-hover: 0 8px 22px rgba(0,0,0,0.55);
+  /* ação primária no escuro = DOURADO c/ texto navy */
+  --ed2-accent: #C9A961;
+  --ed2-accent-ink: #0B1838;
+  --ed2-topbar-bg: rgba(10,20,40,0.72);
+}
+/* cor de fundo do <html>/body atrás do painel no escuro (evita borda branca) */
+.ed2-dark body { background: #0A1428; }
+.ed2 .ed2-card {
+  background: var(--ed2-card);
+  border-radius: var(--ed2-radius);
+  box-shadow: var(--ed2-shadow);
+}
+.ed2 .ed2-card-sm { border-radius: var(--ed2-radius-md); }
+.ed2 .ed2-tabular { font-variant-numeric: tabular-nums; }
+
+/* Shell do admin com sidebar fixa (estilo OS): aside só no desktop, drawer no mobile */
+.ed3-aside-desktop { display: none; }
+@media (min-width: 1024px) {
+  .ed3-aside-desktop { display: flex; flex-direction: column; }
+  .ed3-shift { margin-left: 236px; }
+  .ed3-brand-top { display: none !important; }
+  .ed3-top-mobile { display: none !important; }
+}
+
+/* Grids do Painel overview (estilo Stripe): funil largo + volume | 3 colunas */
+.ed3-grid-a { display: grid; gap: 18px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: stretch; }
+.ed3-grid-b { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+.ed3-grid-a > *, .ed3-grid-b > * { min-width: 0; }
+@media (max-width: 1080px) {
+  .ed3-grid-a { grid-template-columns: 1fr; }
+  .ed3-grid-b { grid-template-columns: 1fr; }
+}
+
+/* Avatar gradients reutilizáveis (iniciais coloridas) */
+.ed2-av-c1 { background: linear-gradient(135deg,#C9A961,#a8893d); }
+.ed2-av-c2 { background: linear-gradient(135deg,#0B1838,#1d2d56); }
+.ed2-av-c3 { background: linear-gradient(135deg,#34C759,#1d8a3a); }
+.ed2-av-c4 { background: linear-gradient(135deg,#FF9F0A,#c87a00); }
+.ed2-av-c5 { background: linear-gradient(135deg,#FF3B30,#c8261c); }
+.ed2-av-c6 { background: linear-gradient(135deg,#5856D6,#3934a3); }
+.ed2-av-c7 { background: linear-gradient(135deg,#0A84FF,#0858b0); }
+.ed2-av-c8 { background: linear-gradient(135deg,#AF52DE,#7a3a9b); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

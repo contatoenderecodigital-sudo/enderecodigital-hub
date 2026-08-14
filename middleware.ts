@@ -51,6 +51,19 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // GROOW OS (operacao + api/admin): so owner_plataforma.
+  if (
+    (pathname.startsWith("/operacao") || pathname.startsWith("/api/admin")) &&
+    session.papel !== "owner_plataforma"
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = "/app";
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
