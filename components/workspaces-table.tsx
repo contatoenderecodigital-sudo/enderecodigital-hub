@@ -123,6 +123,9 @@ export default function WorkspacesTable({ items }: { items: WsRow[] }) {
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 25 }} onClick={() => setMenu(null)} />
           <div className="menu" style={{ position: "fixed", top: menu.top, left: menu.left, right: "auto" }}>
+            {alvo.dominio && (
+              <Link href={`/ws/${alvo.id}`}><IcoSettings width={16} height={16} /> Abrir painel (MODO OWNER)</Link>
+            )}
             <form action="/api/impersonar" method="post">
               <input type="hidden" name="negocio_id" value={alvo.id} />
               <input type="hidden" name="destino" value="/app/config-hub" />
