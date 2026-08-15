@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, KanbanSquare, Building2, CheckSquare,
   MessageSquare, Megaphone, Wallet, Receipt, BarChart3, Target,
   FileText, BadgeCheck, Share2, KeyRound, X, TrendingUp, Network, ClipboardList, Filter, Bot, ListChecks,
-  Boxes, LayoutGrid, Sparkles, SlidersHorizontal,
+  Boxes, LayoutGrid, Sparkles, SlidersHorizontal, Cpu,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import AdminActions from "@/components/groow/admin/AdminActions";
@@ -25,6 +25,7 @@ const GRUPOS: { titulo: string; itens: Item[] }[] = [
       { href: "/operacao/hub/clientes", label: "Clientes", icon: Building2 },
       { href: "/operacao/hub/workspaces", label: "Workspaces", icon: LayoutGrid },
       { href: "/operacao/hub/contas-claude", label: "Contas Claude", icon: Sparkles },
+      { href: "/operacao/hub/tokens", label: "Tokens & IA", icon: Cpu, badge: "novo" },
       { href: "/operacao/hub/config", label: "Configurações do hub", icon: SlidersHorizontal },
     ],
   },

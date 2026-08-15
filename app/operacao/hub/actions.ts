@@ -20,6 +20,13 @@ import {
   setContaStatus,
   excluirContaClaude,
 } from "@/lib/platform-config";
+import {
+  salvarWorkspaceIA,
+  trocarModeloWorkspace,
+  toggleTravaWorkspace,
+  salvarLimiteHub,
+} from "@/lib/tokens-ia";
+import { MODELOS_IA, DEFAULT_MODELO, type ProvedorIA } from "@/lib/precos-ia";
 import { slugify, sufixoCurto } from "@/lib/util";
 
 const HUB = "/operacao/hub";
@@ -182,4 +189,65 @@ export async function salvarConfigAction(fd: FormData) {
   });
   revalidatePath(`${HUB}/config`);
   redirect(`${HUB}/config?ok=1`);
+}
+
+// ---------------- TOKENS & IA ----------------
+const PROVEDORES_OK = ["openai", "gemini", "claude"] as const;
+
+// Valida o par provedor+modelo. Se o modelo não pertence ao provedor (ou é
+// desconhecido), cai no 1º modelo do provedor — nunca grava par inválido.
+function parProvedorModelo(fd: FormData): { provedor: ProvedorIA; modelo: string } {
+  const pRaw = txt(fd, "provedor").toLowerCase();
+  const provedor = ((PROVEDORES_OK as readonly string[]).includes(pRaw) ? pRaw : "openai") as ProvedorIA;
+  const modelo = txt(fd, "modelo");
+  const doProvedor = MODELOS_IA.filter((m) => m.provedor === provedor);
+  const ok = doProvedor.some((m) => m.id === modelo);
+  return { provedor, modelo: ok ? modelo : doProvedor[0]?.id || DEFAULT_MODELO };
+}
+
+function limiteTokens(fd: FormData): number {
+  const raw = txt(fd, "limite_tokens").replace(/[^\d]/g, "");
+  const n = parseInt(raw || "0", 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export async function salvarWorkspaceIaAction(fd: FormData) {
+  await guard();
+  const negocioId = txt(fd, "negocio_id");
+  if (!negocioId) redirect(`${HUB}/tokens?erro=dados`);
+  const { provedor, modelo } = parProvedorModelo(fd);
+  await salvarWorkspaceIA(negocioId, {
+    provedor,
+    modelo,
+    limite_tokens: limiteTokens(fd),
+    travado: on(fd, "travado"),
+    chave_ref: nul(fd, "chave_ref"),
+  });
+  revalidatePath(`${HUB}/tokens`);
+  redirect(`${HUB}/tokens?ok=salvo`);
+}
+
+export async function trocarModeloAction(fd: FormData) {
+  await guard();
+  const negocioId = txt(fd, "negocio_id");
+  if (!negocioId) redirect(`${HUB}/tokens?erro=dados`);
+  const { provedor, modelo } = parProvedorModelo(fd);
+  await trocarModeloWorkspace(negocioId, provedor, modelo);
+  revalidatePath(`${HUB}/tokens`);
+  redirect(`${HUB}/tokens?ok=modelo`);
+}
+
+export async function travarWorkspaceAction(fd: FormData) {
+  await guard();
+  const negocioId = txt(fd, "negocio_id");
+  if (negocioId) await toggleTravaWorkspace(negocioId);
+  revalidatePath(`${HUB}/tokens`);
+  redirect(`${HUB}/tokens`);
+}
+
+export async function salvarLimiteHubAction(fd: FormData) {
+  await guard();
+  await salvarLimiteHub(limiteTokens(fd));
+  revalidatePath(`${HUB}/tokens`);
+  redirect(`${HUB}/tokens?ok=hub`);
 }
