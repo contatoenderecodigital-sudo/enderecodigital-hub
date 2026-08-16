@@ -81,6 +81,55 @@ export async function desconectar(phoneNumberId: string): Promise<void> {
   ]);
 }
 
+// ---------------------------------------------------------------------------
+// Segredo de provisionamento POR CLIENTE
+// ---------------------------------------------------------------------------
+// É a senha que o hub apresenta ao painel do cliente na hora de entregar as
+// credenciais do WhatsApp. Um por cliente, e não um global, por um motivo
+// prático: com um segredo só, vazou o de um painel, vale para todos, e não dá
+// pra revogar só aquele. Assim cada cliente é uma porta separada.
+//
+// Nasce sozinho no primeiro uso — ninguém precisa lembrar de gerar. O valor
+// aparece na tela de WhatsApp pra ser colado no painel daquele cliente.
+let _colunaSegredoOk = false;
+async function ensureColunaSegredo(): Promise<void> {
+  if (_colunaSegredoOk) return;
+  try {
+    await query("ALTER TABLE negocios ADD COLUMN IF NOT EXISTS provision_secret TEXT");
+    _colunaSegredoOk = true;
+  } catch {
+    /* sem privilégio: cai no segredo global do env */
+  }
+}
+
+function gerarSegredo(): string {
+  const alfabeto = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return "pv_" + Array.from(bytes, (b) => alfabeto[b % alfabeto.length]).join("");
+}
+
+export async function segredoDoNegocio(negocioId: string): Promise<string> {
+  await ensureColunaSegredo();
+  const { rows } = await query<{ provision_secret: string | null }>(
+    "SELECT provision_secret FROM negocios WHERE id = $1",
+    [negocioId]
+  );
+  const atual = (rows[0]?.provision_secret || "").trim();
+  if (atual) return atual;
+
+  const novo = gerarSegredo();
+  await query("UPDATE negocios SET provision_secret = $1 WHERE id = $2", [novo, negocioId]);
+  return novo;
+}
+
+/** Gira o segredo de um cliente (usar quando desconfiar de vazamento). */
+export async function girarSegredo(negocioId: string): Promise<string> {
+  await ensureColunaSegredo();
+  const novo = gerarSegredo();
+  await query("UPDATE negocios SET provision_secret = $1 WHERE id = $2", [novo, negocioId]);
+  return novo;
+}
+
 /** Onde fica o painel próprio do cliente, se tiver. Sai de negocios.dominio. */
 export async function destinoDoNegocio(negocioId: string): Promise<string | null> {
   const { rows } = await query<{ dominio: string | null }>(

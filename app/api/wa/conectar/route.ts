@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { salvarConexao, destinoDoNegocio } from "@/lib/wa-conexoes";
+import { salvarConexao, destinoDoNegocio, segredoDoNegocio } from "@/lib/wa-conexoes";
 
 // Fecha o Embedded Signup: recebe do navegador o `code` (que a Meta devolve no
 // FB.login) mais o phone_number_id e o waba_id, e faz o resto no servidor —
@@ -91,9 +91,11 @@ export async function POST(req: Request) {
   // está válida e isso pode ser refeito.
   let avisoRepasse: string | null = null;
   if (destino) {
-    const segredo = process.env.PROVISION_SECRET;
+    // Segredo DESTE cliente (criado sozinho no primeiro uso). O global do env
+    // fica só como rede de segurança para instalações antigas.
+    const segredo = (await segredoDoNegocio(negocioId)) || process.env.PROVISION_SECRET;
     if (!segredo) {
-      avisoRepasse = "Conexão salva, mas PROVISION_SECRET não está configurado: o painel do cliente não recebeu as credenciais.";
+      avisoRepasse = "Conexão salva, mas não consegui gerar o segredo de provisionamento deste cliente.";
     } else {
       try {
         const url = destino.replace(/\/api\/whatsapp$/, "/api/whatsapp/provisionar");

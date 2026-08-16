@@ -1,7 +1,7 @@
 import PageHead from "@/components/page-head";
 import { hubOpId } from "@/lib/hub-ctx";
 import { listNegocios } from "@/lib/data";
-import { listarConexoes } from "@/lib/wa-conexoes";
+import { listarConexoes, segredoDoNegocio } from "@/lib/wa-conexoes";
 import ConectarWhatsApp from "@/components/conectar-whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,13 @@ export default async function WhatsAppPage() {
     listNegocios(hub ?? undefined),
     listarConexoes(hub),
   ]);
+  // Cada cliente com painel próprio tem o SEU segredo de provisionamento —
+  // criado sozinho aqui, na primeira vez que a tela é aberta. É o que aparece
+  // pra ser colado no painel dele.
+  const segredos = new Map<string, string>();
+  for (const n of negocios) {
+    if ((n.dominio || "").trim()) segredos.set(n.id, await segredoDoNegocio(n.id));
+  }
   const porNegocio = new Map(conexoes.filter((c) => c.status === "conectado").map((c) => [c.negocio_id, c]));
 
   const appId = process.env.META_APP_ID || "";
@@ -84,7 +91,34 @@ export default async function WhatsAppPage() {
                     {c ? c.phone_number_id : <span className="muted">—</span>}
                   </td>
                   <td className="muted" style={{ fontSize: 12.5 }}>
-                    {c?.webhook_destino ? "painel próprio do cliente" : "IA do hub"}
+                    {segredos.has(n.id) ? (
+                      <>
+                        painel próprio do cliente
+                        <div style={{ marginTop: 4 }}>
+                          <span style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                            PROVISION_SECRET dele
+                          </span>
+                          <div
+                            style={{
+                              fontFamily: "ui-monospace, monospace",
+                              fontSize: 11.5,
+                              color: "var(--muted-2)",
+                              background: "rgba(0,0,0,0.25)",
+                              border: "1px solid var(--line)",
+                              borderRadius: 8,
+                              padding: "4px 8px",
+                              marginTop: 3,
+                              wordBreak: "break-all",
+                              maxWidth: 260,
+                            }}
+                          >
+                            {segredos.get(n.id)}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      "IA do hub"
+                    )}
                   </td>
                   <td>
                     {c ? (
