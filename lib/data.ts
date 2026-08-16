@@ -490,15 +490,42 @@ export async function removerWaConexao(negocioId: string): Promise<void> {
 // Resolve o tenant pelo phone_number_id (o webhook usa isto). Nunca "adivinha".
 export async function resolverTenantPorPhoneNumberId(
   phoneNumberId: string
-): Promise<{ negocio_id: string; phone_number_id: string; access_token: string } | null> {
+): Promise<{
+  negocio_id: string;
+  phone_number_id: string;
+  access_token: string;
+  // Quando o cliente tem PAINEL PROPRIO (ex: a padaria, que tem motor de pedido,
+  // fila de aprovacao e impressao), o hub nao responde por ele: encaminha o
+  // payload cru pra aplicacao dele. Vazio = o hub mesmo atende com a IA dele.
+  webhook_destino: string | null;
+} | null> {
+  await ensureWebhookDestino();
   const c = (
-    await query<WaConexao>(
+    await query<WaConexao & { webhook_destino: string | null }>(
       "SELECT * FROM wa_conexoes WHERE phone_number_id = $1 AND status = 'conectado' LIMIT 1",
       [phoneNumberId]
     )
   ).rows[0];
   if (!c) return null;
-  return { negocio_id: c.negocio_id, phone_number_id: c.phone_number_id, access_token: c.access_token };
+  return {
+    negocio_id: c.negocio_id,
+    phone_number_id: c.phone_number_id,
+    access_token: c.access_token,
+    webhook_destino: c.webhook_destino ?? null,
+  };
+}
+
+// Coluna que permite um tenant ter aplicacao propria atras do webhook unico.
+// Idempotente (roda uma vez por processo).
+let _waDestinoOk = false;
+async function ensureWebhookDestino(): Promise<void> {
+  if (_waDestinoOk) return;
+  try {
+    await query("ALTER TABLE wa_conexoes ADD COLUMN IF NOT EXISTS webhook_destino TEXT");
+    _waDestinoOk = true;
+  } catch {
+    /* sem privilegio: segue sem encaminhamento */
+  }
 }
 
 // ---------------- MENSAGENS (historico do WhatsApp / chat) ----------------

@@ -36,10 +36,20 @@ interface WaMsg {
 // POST — recebe mensagens, roteia por phone_number_id, responde com a IA do tenant.
 // Retorna 200 sempre (pra Meta nao reenviar). Numero desconhecido = descarta.
 export async function POST(req: Request) {
-  const payload = (await req.json().catch(() => null)) as {
-    object?: string;
-    entry?: { changes?: { value?: { metadata?: { phone_number_id?: string }; messages?: WaMsg[] } }[] }[];
-  } | null;
+  // Lê o corpo CRU antes de qualquer parse: quando a mensagem é de um cliente
+  // com painel próprio, ela é reenviada byte a byte pra ele — se reserializar,
+  // a assinatura X-Hub-Signature-256 da Meta deixa de bater e o painel recusa.
+  const corpoBruto = await req.text();
+  const payload = (() => {
+    try {
+      return JSON.parse(corpoBruto) as {
+        object?: string;
+        entry?: { changes?: { value?: { metadata?: { phone_number_id?: string }; messages?: WaMsg[] } }[] }[];
+      };
+    } catch {
+      return null;
+    }
+  })();
 
   try {
     if (payload?.object === "whatsapp_business_account") {
@@ -52,6 +62,15 @@ export async function POST(req: Request) {
 
           const tenant = await resolverTenantPorPhoneNumberId(pnid);
           if (!tenant) continue; // numero desconhecido -> nunca roteia
+
+          // Cliente com aplicação própria (ex: a padaria, que tem motor de
+          // pedido, fila de aprovação e impressão na cozinha): o hub não tenta
+          // responder por ele — repassa o payload cru e sai do caminho. É o que
+          // permite UM webhook só na Meta pra todos os clientes.
+          if (tenant.webhook_destino) {
+            await encaminhar(tenant.webhook_destino, corpoBruto, req.headers);
+            continue;
+          }
 
           const negocio = await getNegocio(tenant.negocio_id);
           if (!negocio || !negocio.ia_habilitada) continue;
@@ -98,4 +117,20 @@ async function enviarWhatsApp(
       text: { body: texto },
     }),
   }).catch(() => {});
+}
+
+// Repassa o webhook pro painel do próprio cliente, preservando o corpo cru e a
+// assinatura da Meta (o painel dele valida X-Hub-Signature-256). Best-effort:
+// se a aplicação do cliente estiver fora do ar, o hub ainda devolve 200 pra
+// Meta — reenviar não adiantaria e só geraria fila de retentativa.
+async function encaminhar(destino: string, corpoBruto: string, headers: Headers): Promise<void> {
+  try {
+    const h: Record<string, string> = { "content-type": "application/json" };
+    const assinatura = headers.get("x-hub-signature-256");
+    if (assinatura) h["x-hub-signature-256"] = assinatura;
+    const r = await fetch(destino, { method: "POST", headers: h, body: corpoBruto });
+    if (!r.ok) console.error("[wa-hub] destino recusou", destino, r.status, (await r.text()).slice(0, 200));
+  } catch (e) {
+    console.error("[wa-hub] falha ao encaminhar pra", destino, e);
+  }
 }
