@@ -513,6 +513,28 @@ body {
 }
 /* cor de fundo do <html>/body atrás do painel no escuro (evita borda branca) */
 .ed2-dark body { background: #0A1428; }
+
+/* ============================================================
+   CONTROLES NATIVOS DENTRO DO PAINEL (.ed2)
+   O app/globals.css do console é escuro e usa seletores de elemento sem escopo
+   (`select option`, `input::placeholder`, `color-scheme: dark` no body). Como o
+   painel vive dentro do mesmo body, aquilo vaza pra cá: no tema CLARO a lista
+   do select vinha com fundo navy e texto preto (ilegível) e o placeholder vinha
+   quase branco sobre input branco. As regras abaixo têm especificidade maior e
+   devolvem o contraste — e como usam os tokens --ed2-*, servem os dois temas
+   com uma regra só.
+   ============================================================ */
+/* Tema claro do painel. (O escuro já declara `color-scheme: dark` no bloco
+   `.ed2-dark .ed2` acima — color-scheme é herdado, então cobre os filhos.) */
+.ed2 { color-scheme: light; }
+
+.ed2 select option,
+.ed2 select optgroup {
+  background: var(--ed2-card);
+  color: var(--ed2-ink);
+}
+.ed2 input::placeholder,
+.ed2 textarea::placeholder { color: var(--ed2-ink-3); }
 .ed2 .ed2-card {
   background: var(--ed2-card);
   border-radius: var(--ed2-radius);

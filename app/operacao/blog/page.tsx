@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Sparkles, Eye, Trash2, ExternalLink, X, Pencil, Check } from "lucide-react";
 import { custoEmReais } from "@/lib/groow/custo-ia";
+import { SITE_PUBLICO } from "@/lib/groow/constants";
 
 interface PostResumo {
   id: number;
@@ -237,7 +238,9 @@ export default function BlogAdminPage() {
                     )}
                     {p.status === "publicado" && (
                       <>
-                        <a href={`/blog/${p.slug}`} target="_blank" rel="noreferrer" title="Ver no site"
+                        {/* absoluto: o painel vive no domínio privado, que não
+                            tem /blog. Link relativo aqui dava 404. */}
+                        <a href={`${SITE_PUBLICO}/blog/${p.slug}`} target="_blank" rel="noreferrer" title="Ver no site"
                           style={{ ...btnPill, background: "var(--ed2-surface)", color: "var(--ed2-ink)", display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}>
                           <ExternalLink size={13} aria-hidden="true" /> Ver no site
                         </a>

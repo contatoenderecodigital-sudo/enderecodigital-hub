@@ -7,9 +7,23 @@ export const COLORS = {
   ink: "#2A3344",
 } as const;
 
+// O painel roda num domínio (enderecodigital.tech, privado) e o site público
+// que o Google indexa é outro (enderecodigital.com). Todo link "abrir no site",
+// ping de IndexNow e URL em e-mail/WhatsApp tem que apontar para o PÚBLICO —
+// nunca para o domínio do painel, que é fechado e não tem as páginas.
+// Uma constante só, alimentada por env, para não ter que caçar URL no código
+// de novo na próxima troca de domínio.
+export const SITE_PUBLICO =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://enderecodigital.com";
+
+// Onde o PAINEL responde (domínio privado). Usado em links que levam alguém a
+// operar — aprovar artigo, revisar pedido — e que não podem ir pro site público.
+export const PAINEL_URL =
+  process.env.NEXT_PUBLIC_PAINEL_URL?.replace(/\/+$/, "") || "https://enderecodigital.tech";
+
 export const SITE = {
   name: "Endereço Digital",
-  url: "https://enderecodigital.com",
+  url: SITE_PUBLICO,
   contactEmail: "contato@enderecodigital.com",
   whatsapp: "+55 49 99953-3072",
 } as const;

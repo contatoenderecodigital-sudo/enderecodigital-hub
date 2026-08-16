@@ -70,9 +70,7 @@ export async function POST(req: Request) {
             if (r.texto) {
               await enviarWhatsApp(tenant.access_token, tenant.phone_number_id, de, r.texto);
               await registrarMensagem(tenant.negocio_id, de, "saida", r.texto, null);
-              registrarUso(tenant.negocio_id, "whatsapp", r.model, r.tokensIn, r.tokensOut).catch(
-                () => {}
-              );
+              registrarUso(tenant.negocio_id, "whatsapp", r, de).catch(() => {});
             }
           }
         }

@@ -4,6 +4,7 @@
 // Sem ADMIN_WHATSAPP ou sem WhatsApp configurado, tudo degrada em silêncio
 // (o rascunho fica esperando aprovação no admin, como sempre).
 import { query, exec } from "@/lib/groow/db";
+import { SITE_PUBLICO, PAINEL_URL } from "@/lib/groow/constants";
 import { isWhatsAppConfigured, sendWhatsAppText } from "@/lib/groow/whatsapp";
 
 export function adminWhatsapp(): string | null {
@@ -22,7 +23,9 @@ export async function enviarPedidoAprovacao(post: { id: number; titulo: string; 
   const msg =
     `Artigo novo esperando tua aprovacao:\n\n` +
     `*${post.titulo}*\n${post.resumo}\n\n` +
-    `Preview: https://enderecodigital.com/admin/blog\n\n` +
+    // preview vai pro PAINEL (domínio privado), não pro site público:
+    // é lá que se aprova. Só o link do artigo publicado usa o SITE_PUBLICO.
+    `Preview: ${PAINEL_URL}/operacao/blog\n\n` +
     `Responde:\n` +
     `*APROVAR* - publica agora no blog\n` +
     `*OUTRO* - descarto esse e gero um novo tema`;
@@ -58,7 +61,7 @@ export async function aprovarPendente(): Promise<{ ok: boolean; msg: string }> {
   const p = await rascunhoPendente();
   if (!p) return { ok: false, msg: "Nao tem rascunho esperando aprovacao agora." };
   await exec(`UPDATE blog_posts SET status = 'publicado', published_at = COALESCE(published_at, NOW()) WHERE id = ?`, [p.id]);
-  return { ok: true, msg: `No ar!\n${p.titulo}\nhttps://enderecodigital.com/blog/${p.slug}` };
+  return { ok: true, msg: `No ar!\n${p.titulo}\n${SITE_PUBLICO}/blog/${p.slug}` };
 }
 
 /** Arquiva o rascunho pendente (o "OUTRO" - a regeneração é disparada à parte). */

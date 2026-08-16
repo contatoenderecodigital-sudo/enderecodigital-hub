@@ -1,6 +1,9 @@
 import "server-only";
 import { query } from "./db";
 import type { Hub, Negocio, Usuario, Etapa, Lead } from "./types";
+import type { RespostaIA } from "./ia";
+import { custoBRL, precoDoModelo, provedorDoModelo, DEFAULT_MODELO, USD_BRL } from "./precos-ia";
+import { ensureColunasUso } from "./uso-ia";
 
 // ---------------- HUBS ----------------
 export async function listHubs(): Promise<Hub[]> {
@@ -583,21 +586,8 @@ export async function listWorkspaces(hubId?: string): Promise<
   ).rows;
 }
 
-export async function usoPorCliente(): Promise<
-  { negocio_id: string; nome: string; interacoes: number; tokens_in: number; tokens_out: number; custo_cent: number }[]
-> {
-  return (
-    await query<{ negocio_id: string; nome: string; interacoes: number; tokens_in: number; tokens_out: number; custo_cent: number }>(
-      `SELECT n.id AS negocio_id, COALESCE(n.nome_fantasia, n.nome) AS nome,
-              count(u.id)::int AS interacoes,
-              COALESCE(sum(u.tokens_in),0)::bigint AS tokens_in,
-              COALESCE(sum(u.tokens_out),0)::bigint AS tokens_out,
-              COALESCE(sum(u.custo_cent),0)::int AS custo_cent
-       FROM negocios n LEFT JOIN uso_ia u ON u.negocio_id = n.id
-       GROUP BY n.id, nome ORDER BY interacoes DESC`
-    )
-  ).rows;
-}
+// (usoPorCliente saiu daqui: a tela de Consumo de Tokens passou a ler pela
+// matriz de lib/uso-ia.ts, que sabe de cache, provedor e custo por chamada.)
 
 export async function listContasClaude(): Promise<
   { id: string; nome: string; tipo: string; plano: string | null; status: string }[]
@@ -621,15 +611,72 @@ export async function listAuditoria(
 }
 
 // ---------------- USO DE IA (medicao por tenant) ----------------
+// Uma linha por chamada de IA. Grava as quatro faixas de token separadas
+// (entrada, saida, cache escrito, cache lido) porque cada uma tem preco
+// diferente, e congela o preco+cambio usados no calculo — assim mexer na
+// tabela de precos amanha nao reescreve o historico.
+// custo_cent (faturado) fica em 0 de proposito: quem preenche ele e o
+// pipeline de faturamento do provedor, nunca este calculo.
+// `contato` é o que amarra a chamada a UMA conversa: o número de WhatsApp de
+// quem falou, ou o usuário do painel no chat interno. É por ele que a tela
+// consegue somar "quanto a IA gastou atendendo a dona da Doce Pão", em vez de
+// só somar o cliente inteiro. Sem isso, cada linha é órfã.
 export async function registrarUso(
   negocioId: string,
   origem: string,
-  modelo: string,
-  tokensIn: number,
-  tokensOut: number
+  r: RespostaIA,
+  contato: string | null = null
 ): Promise<void> {
+  const preco = precoDoModelo(r.model);
+  const custo = custoBRL(
+    r.model,
+    {
+      tokens_in: r.tokensIn,
+      tokens_out: r.tokensOut,
+      cache_write: r.cacheWrite,
+      cache_read: r.cacheRead,
+    },
+    { inUsd: preco.inUsd, outUsd: preco.outUsd, usdBrl: USD_BRL }
+  );
+  await ensureColunasUso();
   await query(
-    "INSERT INTO uso_ia (negocio_id, origem, modelo, tokens_in, tokens_out) VALUES ($1,$2,$3,$4,$5)",
-    [negocioId, origem, modelo, tokensIn, tokensOut]
+    `INSERT INTO uso_ia
+       (negocio_id, origem, contato, provedor, modelo, tokens_in, tokens_out, cache_write, cache_read,
+        custo_brl, preco_in_usd, preco_out_usd, usd_brl, custo_fonte, latencia_ms, req_id)
+     VALUES ($1,$2,$15,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'tabela',$13,$14)`,
+    [
+      negocioId,
+      origem,
+      r.provedor,
+      r.model,
+      r.tokensIn,
+      r.tokensOut,
+      r.cacheWrite,
+      r.cacheRead,
+      custo,
+      preco.inUsd,
+      preco.outUsd,
+      USD_BRL,
+      r.latenciaMs,
+      r.reqId,
+      contato,
+    ]
+  );
+}
+
+// Chamada que estourou antes de devolver tokens. Fica registrada com 0 token e
+// custo 0, só pra tela de consumo conseguir mostrar taxa de falha por cliente.
+export async function registrarFalhaUso(
+  negocioId: string,
+  origem: string,
+  modelo: string | null,
+  erro: string
+): Promise<void> {
+  const m = modelo || DEFAULT_MODELO;
+  await ensureColunasUso();
+  await query(
+    `INSERT INTO uso_ia (negocio_id, origem, provedor, modelo, tokens_in, tokens_out, erro)
+     VALUES ($1,$2,$3,$4,0,0,$5)`,
+    [negocioId, origem, provedorDoModelo(m), m, erro]
   );
 }

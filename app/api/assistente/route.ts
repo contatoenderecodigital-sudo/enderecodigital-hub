@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { activeNegocioId } from "@/lib/tenant";
-import { getNegocio, getCerebro, registrarUso } from "@/lib/data";
+import { getNegocio, getCerebro, registrarUso, registrarFalhaUso } from "@/lib/data";
 import { iaDisponivel, gerarResposta } from "@/lib/ia";
 
 interface MsgIn {
@@ -42,9 +42,14 @@ export async function POST(req: Request) {
   const cerebro = await getCerebro(neg);
   try {
     const r = await gerarResposta(negocio, cerebro?.conteudo, msgs);
-    registrarUso(neg, "chat", r.model, r.tokensIn, r.tokensOut).catch(() => {});
+    // no chat do painel a "conversa" é o usuário logado que está perguntando
+    registrarUso(neg, "chat", r, s.email || s.uid).catch(() => {});
     return NextResponse.json({ resposta: r.texto || "(sem resposta)" });
   } catch (e) {
+    // Chamada que falhou também vira linha em uso_ia (0 token, com o erro).
+    // Sem isso a tela de consumo mostra só o que deu certo e a taxa de falha
+    // do agente fica invisível.
+    registrarFalhaUso(neg, "chat", negocio.ia_modelo_chat, String(e).slice(0, 300)).catch(() => {});
     return NextResponse.json({
       resposta: "Nao consegui responder agora. Verifique a chave e o modelo da IA nas configuracoes.",
       detalhe: String(e).slice(0, 200),

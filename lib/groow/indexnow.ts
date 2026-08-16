@@ -2,7 +2,14 @@
 // uma URL é publicada ou atualizada, sem esperar recrawl. Google não usa,
 // mas o custo é zero e o alcance é grátis. Melhor esforço: falha em silêncio.
 
+import { SITE_PUBLICO } from "./constants";
+
 export const INDEXNOW_CHAVE = "e1f47c2b9a8d4063b5c7d92e6f1a3b84";
+
+// host/keyLocation vêm do site PÚBLICO, não do domínio do painel: o IndexNow
+// só aceita URLs do host que hospeda o arquivo da chave, e quem tem o
+// e1f4....txt na raiz é o site indexado.
+const HOST_PUBLICO = SITE_PUBLICO.replace(/^https?:\/\//, "");
 
 export async function pingIndexNow(urls: string[]): Promise<void> {
   if (!urls.length) return;
@@ -11,9 +18,9 @@ export async function pingIndexNow(urls: string[]): Promise<void> {
       method: "POST",
       headers: { "content-type": "application/json; charset=utf-8" },
       body: JSON.stringify({
-        host: "enderecodigital.com",
+        host: HOST_PUBLICO,
         key: INDEXNOW_CHAVE,
-        keyLocation: `https://enderecodigital.com/${INDEXNOW_CHAVE}.txt`,
+        keyLocation: `${SITE_PUBLICO}/${INDEXNOW_CHAVE}.txt`,
         urlList: urls.slice(0, 100),
       }),
     });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { exec } from "@/lib/groow/db";
 import { getPostById, sanitizeHtml, slugify } from "@/lib/groow/blog";
 import { pingIndexNow } from "@/lib/groow/indexnow";
+import { SITE_PUBLICO } from "@/lib/groow/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     // publicou: avisa os buscadores via IndexNow (fire-and-forget)
     if (body.status === "publicado") {
       const slug = body.slug?.trim() ? slugify(body.slug) : post.slug;
-      void pingIndexNow([`https://enderecodigital.com/blog/${slug}`, "https://enderecodigital.com/blog"]);
+      void pingIndexNow([`${SITE_PUBLICO}/blog/${slug}`, `${SITE_PUBLICO}/blog`]);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
