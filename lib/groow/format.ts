@@ -7,6 +7,17 @@ export function formatPhone(raw: string): string {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
+/**
+ * Formata para EXIBIÇÃO um telefone que pode vir em E.164 BR sem "+"
+ * (12/13 dígitos começando com 55, como o CampoTelefone salva) ou já nacional.
+ * Ex.: "5549999999999" -> "(49) 99999-9999". Vazio/nulo -> "".
+ */
+export function formatPhoneBR(raw: string | null | undefined): string {
+  let d = (raw || "").replace(/\D/g, "");
+  if ((d.length === 12 || d.length === 13) && d.startsWith("55")) d = d.slice(2);
+  return formatPhone(d);
+}
+
 /** Conta só os dígitos do telefone */
 export function phoneDigits(raw: string): string {
   return (raw || "").replace(/\D/g, "");

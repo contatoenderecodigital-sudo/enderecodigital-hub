@@ -109,7 +109,7 @@ export default function WorkspacesHub({ items }: { items: WsRow[] }) {
                 );
               })}
               {filtrados.length === 0 && (
-                <tr><Td first last><span style={{ color: "var(--ed2-ink-2)" }}>Nenhum workspace encontrado.</span></Td></tr>
+                <tr><Td first last><span style={{ color: "var(--ed2-ink-2)" }}>{items.length === 0 ? "Nenhum workspace ainda — crie um cliente para gerar o workspace." : "Nenhum workspace encontrado."}</span></Td></tr>
               )}
             </tbody>
           </table>

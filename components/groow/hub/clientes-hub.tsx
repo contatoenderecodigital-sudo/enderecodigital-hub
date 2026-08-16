@@ -12,6 +12,7 @@ import {
 } from "@/app/operacao/hub/actions";
 import SubmitButton from "@/components/groow/hub/submit-button";
 import CampoTelefone from "@/components/campo-telefone";
+import { formatPhoneBR } from "@/lib/groow/format";
 
 type HubMin = { id: string; nome: string; slug: string };
 
@@ -132,7 +133,7 @@ export default function ClientesHub({ clientes, hubs }: { clientes: Negocio[]; h
                       {c.resp_nome ? (
                         <div>
                           <div>{c.resp_nome}</div>
-                          <div style={{ color: "var(--ed2-ink-2)", fontSize: 12.5 }}>{c.resp_email || c.resp_whatsapp || ""}</div>
+                          <div style={{ color: "var(--ed2-ink-2)", fontSize: 12.5 }}>{c.resp_email || formatPhoneBR(c.resp_whatsapp) || ""}</div>
                         </div>
                       ) : <span style={{ color: "var(--ed2-ink-2)" }}>—</span>}
                     </Td>

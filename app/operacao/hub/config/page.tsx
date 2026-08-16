@@ -66,7 +66,7 @@ export default async function HubConfigPage({ searchParams }: { searchParams: Pr
             </form>
           </Card>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 18 }}>
             <Card>
               <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
                 <span style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(201,169,97,0.14)", color: "#8a712d", display: "flex", alignItems: "center", justifyContent: "center" }}><Sparkles size={18} /></span>

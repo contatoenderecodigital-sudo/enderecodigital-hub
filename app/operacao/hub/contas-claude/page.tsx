@@ -10,6 +10,8 @@ import {
   statusContaAction,
   excluirContaAction,
 } from "@/app/operacao/hub/actions";
+import SubmitButton from "@/components/groow/hub/submit-button";
+import ConfirmSubmit from "@/components/groow/hub/confirm-submit";
 
 export const dynamic = "force-dynamic";
 
@@ -70,11 +72,11 @@ export default async function HubContasClaudePage({ searchParams }: { searchPara
             <label style={lStyle}>Tipo</label>
             <select name="tipo" style={{ ...iStyle, appearance: "auto" }}><option value="dedicada">dedicada</option><option value="compartilhada">compartilhada</option></select>
           </div>
-          <div><button type="submit" style={goldBtn}><Plus size={15} /> Conectar</button></div>
+          <div><SubmitButton style={goldBtn} pendingLabel={<><Plus size={15} /> Conectando…</>}><Plus size={15} /> Conectar</SubmitButton></div>
         </form>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: 18 }}>
         {/* Conta central */}
         <Card padding={22}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -121,15 +123,15 @@ export default async function HubContasClaudePage({ searchParams }: { searchPara
               <form action={statusContaAction}>
                 <input type="hidden" name="id" value={c.id} />
                 <input type="hidden" name="status" value={c.status === "ativa" ? "inativa" : "ativa"} />
-                <button type="submit" style={ghostBtn}>{c.status === "ativa" ? "Desativar" : "Ativar"}</button>
+                <SubmitButton style={ghostBtn} pendingLabel="Aplicando…">{c.status === "ativa" ? "Desativar" : "Ativar"}</SubmitButton>
               </form>
               <form action={toggleCompartilhadaAction}>
                 <input type="hidden" name="id" value={c.id} />
-                <button type="submit" style={ghostBtn}>{c.tipo === "compartilhada" ? "Tornar dedicada" : "Tornar compartilhada"}</button>
+                <SubmitButton style={ghostBtn} pendingLabel="Aplicando…">{c.tipo === "compartilhada" ? "Tornar dedicada" : "Tornar compartilhada"}</SubmitButton>
               </form>
               <form action={excluirContaAction} style={{ marginLeft: "auto" }}>
                 <input type="hidden" name="id" value={c.id} />
-                <button type="submit" aria-label="Excluir" style={{ ...ghostBtn, color: "#c8261c", padding: "8px 10px" }}><Trash2 size={15} /></button>
+                <ConfirmSubmit aria-label="Excluir" message="Excluir esta conta Claude? Não dá pra desfazer." style={{ ...ghostBtn, color: "#c8261c", padding: "8px 10px" }} pendingLabel={<Trash2 size={15} />}><Trash2 size={15} /></ConfirmSubmit>
               </form>
             </div>
           </Card>

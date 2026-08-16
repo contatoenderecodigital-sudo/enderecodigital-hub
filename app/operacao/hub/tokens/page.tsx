@@ -89,7 +89,7 @@ export default async function HubTokensPage({ searchParams }: { searchParams: Pr
 
       {/* layout: clientes (esq) + assinatura do hub (dir) */}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 340px", gap: 20, alignItems: "start" }} className="ed-tokens-grid">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16, minWidth: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))", gap: 16, minWidth: 0 }}>
           {workspaces.length === 0 ? (
             <Card padding={24}>
               <div style={{ color: "var(--ed2-ink-2)", fontSize: 14 }}>Nenhum cliente neste hub ainda.</div>
