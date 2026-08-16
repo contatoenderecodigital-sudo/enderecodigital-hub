@@ -341,6 +341,91 @@ export async function usoPorOrigem(f: FiltroUso): Promise<Fatia[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Por CONVERSA: quanto a IA gastou atendendo cada pessoa.
+// O agrupamento é (cliente + contato). `contato` só passou a ser gravado a
+// partir de 16/08/2026 — chamadas anteriores vêm com NULL e caem num balde
+// "antes do registro por conversa", em vez de fingir que são uma conversa só.
+// ---------------------------------------------------------------------------
+export interface Conversa extends Agregado {
+  negocio_id: string;
+  cliente: string;
+  contato: string | null;
+  modelos: string[];
+  primeiro: string | null;
+  ultimo: string | null;
+  latencia_ms: number | null;
+}
+
+export async function usoPorConversa(f: FiltroUso, limite = 100): Promise<Conversa[]> {
+  await ensureColunasUso();
+  const w = montarWhere(f);
+  const { rows } = await query<Record<string, unknown>>(
+    `SELECT u.negocio_id,
+            COALESCE(n.nome_fantasia, n.nome) AS cliente,
+            u.contato, u.modelo, ${COLS_AGG},
+            avg(u.latencia_ms) AS latencia_ms,
+            min(u.criado_em)   AS primeiro,
+            max(u.criado_em)   AS ultimo
+       FROM uso_ia u
+       JOIN negocios n ON n.id = u.negocio_id
+       ${w.sql}
+      GROUP BY u.negocio_id, cliente, u.contato, u.modelo`,
+    w.params
+  );
+
+  // dobra (cliente + contato), somando as linhas de cada modelo
+  const mapa = new Map<string, Conversa>();
+  for (const r of rows) {
+    const modelo = String(r.modelo);
+    const a = agregar(r, modelo);
+    const contato = r.contato ? String(r.contato) : null;
+    const chave = `${String(r.negocio_id)}|${contato ?? ""}`;
+    const atual = mapa.get(chave);
+    if (!atual) {
+      mapa.set(chave, {
+        negocio_id: String(r.negocio_id),
+        cliente: String(r.cliente),
+        contato,
+        modelos: [modelo],
+        primeiro: r.primeiro ? String(r.primeiro) : null,
+        ultimo: r.ultimo ? String(r.ultimo) : null,
+        latencia_ms: r.latencia_ms == null ? null : inteiro(r.latencia_ms),
+        ...a,
+      });
+      continue;
+    }
+    if (!atual.modelos.includes(modelo)) atual.modelos.push(modelo);
+    atual.chamadas += a.chamadas;
+    atual.falhas += a.falhas;
+    atual.tokens_in += a.tokens_in;
+    atual.tokens_out += a.tokens_out;
+    atual.cache_write += a.cache_write;
+    atual.cache_read += a.cache_read;
+    atual.custo_brl += a.custo_brl;
+    atual.custo_faturado_brl += a.custo_faturado_brl;
+    atual.linhas_faturadas += a.linhas_faturadas;
+    atual.economia_cache_brl += a.economia_cache_brl;
+    atual.custo_reconstruido = atual.custo_reconstruido || a.custo_reconstruido;
+    if (r.ultimo && (!atual.ultimo || String(r.ultimo) > atual.ultimo)) atual.ultimo = String(r.ultimo);
+    if (r.primeiro && (!atual.primeiro || String(r.primeiro) < atual.primeiro)) atual.primeiro = String(r.primeiro);
+  }
+  return [...mapa.values()].sort((a, b) => b.custo_brl - a.custo_brl).slice(0, limite);
+}
+
+// Decompõe o custo de UMA chamada nas quatro faixas, em R$. É o "gastou tanto
+// por tal motivo": mostra quanto da conta foi prompt novo, quanto foi gravar
+// cache, quanto foi reaproveitar cache e quanto foi o texto gerado.
+export function decomporCusto(modelo: string, t: Tokens): { rotulo: string; tokens: number; brl: number }[] {
+  return [
+    { rotulo: "Entrada nova", tokens: t.tokens_in, brl: custoBRL(modelo, { ...ZERO, tokens_in: t.tokens_in }) },
+    { rotulo: "Gravar cache", tokens: t.cache_write, brl: custoBRL(modelo, { ...ZERO, cache_write: t.cache_write }) },
+    { rotulo: "Ler cache", tokens: t.cache_read, brl: custoBRL(modelo, { ...ZERO, cache_read: t.cache_read }) },
+    { rotulo: "Resposta gerada", tokens: t.tokens_out, brl: custoBRL(modelo, { ...ZERO, tokens_out: t.tokens_out }) },
+  ];
+}
+const ZERO: Tokens = { tokens_in: 0, tokens_out: 0, cache_write: 0, cache_read: 0 };
+
+// ---------------------------------------------------------------------------
 // Série por dia (barra de evolução)
 // ---------------------------------------------------------------------------
 export async function usoPorDia(f: FiltroUso): Promise<Dia[]> {

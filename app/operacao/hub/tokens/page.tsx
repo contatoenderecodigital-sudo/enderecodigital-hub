@@ -59,6 +59,32 @@ export default async function HubTokensPage({ searchParams }: { searchParams: Pr
         sub={`${workspaces.length} cliente(s) · ${fmt(totTokens)} tokens · provedor e modelo por cliente`}
       />
 
+      {/* Esta tela é a CONFIGURAÇÃO (provedor, modelo, teto por cliente).
+          O relatório de consumo mora no console e é bem mais detalhado —
+          o link evita que as duas telas contem a mesma história pela metade. */}
+      <a
+        href="/owner/tokens"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
+          background: "var(--ed2-card)", border: "1px solid var(--ed2-hair)",
+          borderRadius: 16, padding: "14px 18px", marginBottom: 18, textDecoration: "none",
+        }}
+      >
+        <span style={{ fontSize: 13.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
+          <strong style={{ color: "var(--ed2-ink)" }}>Aqui você configura</strong> qual empresa de IA e
+          qual modelo cada cliente usa. Para ver <strong style={{ color: "var(--ed2-ink)" }}>quanto cada
+          conversa custou</strong>, o extrato chamada a chamada e a conta por faixa de token, abra o
+          relatório completo no console.
+        </span>
+        <span style={{
+          flex: "none", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+          background: "var(--ed2-accent)", color: "var(--ed2-accent-ink)",
+          borderRadius: 999, padding: "9px 16px",
+        }}>
+          Ver consumo detalhado
+        </span>
+      </a>
+
       {msg && (
         <div style={{ background: "rgba(52,199,89,0.10)", border: "1px solid rgba(52,199,89,0.25)", color: "#1d8a3a", borderRadius: 16, padding: "12px 18px", fontSize: 13.5, fontWeight: 500, marginBottom: 18 }}>
           {msg}

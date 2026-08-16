@@ -7,6 +7,8 @@ import {
   usoPorDia,
   ultimasChamadas,
   clientesDoEscopo,
+  usoPorConversa,
+  decomporCusto,
   dobrar,
   totalizar,
   totalTokens,
@@ -193,6 +195,7 @@ export default async function TokensPage({ searchParams }: { searchParams: Promi
       usoPorDia(filtro),
       ultimasChamadas(filtro, 40),
       clientesDoEscopo(hub),
+      usoPorConversa(filtro, 100),
       temFiltroDim ? matrizUso(semDimensao) : null,
       temFiltroDim ? usoPorOrigem(semDimensao) : null,
     ]);
@@ -213,7 +216,7 @@ export default async function TokensPage({ searchParams }: { searchParams: Promi
       </>
     );
   }
-  const [matrizBruta, porOrigem, porDia, chamadas, clientes, matrizSemDim, origensSemDim] = dados;
+  const [matrizBruta, porOrigem, porDia, chamadas, clientes, conversas, matrizSemDim, origensSemDim] = dados;
   const matrizOpcoes = matrizSemDim ?? matrizBruta;
   const origensOpcoes = origensSemDim ?? porOrigem;
 
@@ -630,6 +633,75 @@ export default async function TokensPage({ searchParams }: { searchParams: Promi
             </div>
           </div>
 
+          {/* ---------------- CUSTO POR CONVERSA ---------------- */}
+          <div className="card" style={{ marginTop: 18 }}>
+            <div className="spread" style={{ marginBottom: 4 }}>
+              <strong style={{ fontSize: 15 }}>Custo por conversa</strong>
+              <span className="badge">{conversas.length} conversa(s)</span>
+            </div>
+            <p className="muted" style={{ fontSize: 12.5, margin: "0 0 14px", lineHeight: 1.6 }}>
+              Quanto a IA gastou atendendo cada pessoa. Uma conversa é a soma de todas as respostas
+              dadas para o mesmo contato — o número de WhatsApp do cliente final, ou o usuário no chat
+              do painel.
+            </p>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Contato</th>
+                    <th style={{ textAlign: "right" }}>Respostas</th>
+                    <th style={{ textAlign: "right" }}>Tokens</th>
+                    <th style={{ textAlign: "right" }}>Custo R$</th>
+                    <th style={{ textAlign: "right" }}>Média/resposta</th>
+                    <th style={{ textAlign: "right" }}>Latência</th>
+                    <th>Última</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conversas.map((c) => (
+                    <tr key={`${c.negocio_id}-${c.contato ?? "sem"}`}>
+                      <td style={{ fontWeight: 600 }}>{c.cliente}</td>
+                      <td>
+                        {c.contato ? (
+                          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12.5 }}>{c.contato}</span>
+                        ) : (
+                          <span className="muted" style={{ fontSize: 12.5 }}>
+                            sem identificação
+                            <div style={{ fontSize: 11, color: "var(--warn)" }}>
+                              gravada antes do registro por conversa
+                            </div>
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{num(c.chamadas)}</td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{num(totalTokens(c))}</td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
+                        {brl(c.custo_brl)}
+                      </td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                        {brl(c.chamadas > 0 ? c.custo_brl / c.chamadas : 0)}
+                      </td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
+                        {c.latencia_ms == null ? <span className="muted">—</span> : `${num(c.latencia_ms)} ms`}
+                      </td>
+                      <td style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>
+                        {c.ultimo ? dataHora(c.ultimo) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {conversas.some((c) => !c.contato) && (
+              <p className="muted" style={{ fontSize: 12, margin: "12px 0 0", lineHeight: 1.6 }}>
+                A coluna de contato passou a ser gravada em 16/08/2026. Chamadas anteriores não têm como
+                ser atribuídas a uma conversa específica — elas aparecem juntas na linha
+                &quot;sem identificação&quot; em vez de serem chutadas para alguém.
+              </p>
+            )}
+          </div>
+
           {/* ---------------- EXTRATO ---------------- */}
           <div className="card" style={{ marginTop: 18 }}>
             <div className="spread" style={{ marginBottom: 4 }}>
@@ -685,8 +757,16 @@ export default async function TokensPage({ searchParams }: { searchParams: Promi
                       </td>
                       <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
                         {brl(c.custo_brl)}
+                        {/* a decomposição responde "gastou por quê": mostra quanto
+                            de cada real veio de prompt novo, cache e resposta. */}
+                        <div style={{ fontSize: 10.5, fontWeight: 400, color: "var(--muted)", marginTop: 2 }}>
+                          {decomporCusto(c.modelo, c)
+                            .filter((d) => d.tokens > 0)
+                            .map((d) => `${d.rotulo.toLowerCase()} ${brl(d.brl)}`)
+                            .join(" · ")}
+                        </div>
                         {c.custo_reconstruido && (
-                          <div style={{ fontSize: 10.5, color: "var(--warn)" }}>reconstruído</div>
+                          <div style={{ fontSize: 10.5, fontWeight: 400, color: "var(--warn)" }}>reconstruído</div>
                         )}
                       </td>
                       <td>
