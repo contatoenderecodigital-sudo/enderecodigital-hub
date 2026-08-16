@@ -131,9 +131,9 @@ export default async function WhatsAppPage() {
                     {configurado ? (
                       <ConectarWhatsApp
                         negocioId={n.id}
-                        nome={c ? "de novo" : "número"}
                         appId={appId}
                         configId={configId}
+                        phoneAtual={c?.phone_number_id ?? null}
                       />
                     ) : (
                       <span className="muted" style={{ fontSize: 12 }}>

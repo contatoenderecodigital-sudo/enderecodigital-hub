@@ -41,6 +41,7 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
     itens: [
       { href: "/owner/sites", label: "Sites", Icon: IcoGlobe },
       { href: "/owner/modelos", label: "Modelos", Icon: IcoGrid },
+      { href: "/owner/whatsapp", label: "WhatsApp", Icon: IcoActivity },
       { href: "/owner/contas-claude", label: "Contas Claude", Icon: IcoSparkles },
       { href: "/owner/assentos", label: "Assentos Claude", Icon: IcoKey },
       { href: "/owner/tokens", label: "Tokens", Icon: IcoActivity },
@@ -71,6 +72,7 @@ const TITULOS: [string, string][] = [
   ["/owner/hubs", "Hubs"],
   ["/owner/sites", "Sites"],
   ["/owner/modelos", "Modelos"],
+  ["/owner/whatsapp", "WhatsApp dos clientes"],
   ["/owner/contas-claude", "Contas Claude"],
   ["/owner/assentos", "Assentos Claude"],
   ["/owner/tokens", "Tokens"],

@@ -26,14 +26,15 @@ declare global {
 
 export default function ConectarWhatsApp({
   negocioId,
-  nome,
   appId,
   configId,
+  phoneAtual,
 }: {
   negocioId: string;
-  nome: string;
   appId: string;
   configId: string;
+  /** número já ligado a este cliente, se houver — muda o rótulo e libera o desconectar */
+  phoneAtual?: string | null;
 }) {
   const router = useRouter();
   const [estado, setEstado] = useState<"pronto" | "abrindo" | "salvando">("pronto");
@@ -133,13 +134,45 @@ export default function ConectarWhatsApp({
     );
   }
 
+  async function soltar() {
+    if (!phoneAtual) return;
+    if (!confirm("Soltar este número do roteamento? Mensagens que chegarem nele deixam de ser entregues até você conectar de novo.")) return;
+    setEstado("salvando");
+    try {
+      await fetch("/api/wa/desconectar", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phoneNumberId: phoneAtual }),
+      });
+      setMsg("Número solto do roteamento.");
+      router.refresh();
+    } catch {
+      setMsg("Não consegui soltar o número.");
+    }
+    setEstado("pronto");
+  }
+
+  const rotulo =
+    estado === "salvando"
+      ? "Salvando..."
+      : estado === "abrindo"
+        ? "Aguardando a Meta..."
+        : phoneAtual
+          ? "Trocar número"
+          : "Conectar número";
+
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
       <button className="btn btn-sm" onClick={abrir} disabled={estado !== "pronto"}>
-        {estado === "salvando" ? "Salvando..." : estado === "abrindo" ? "Aguardando a Meta..." : `Conectar ${nome}`}
+        {rotulo}
       </button>
+      {phoneAtual && (
+        <button className="btn btn-ghost btn-sm" onClick={soltar} disabled={estado !== "pronto"}>
+          Desconectar
+        </button>
+      )}
       {msg && (
-        <div className="muted" style={{ fontSize: 12, marginTop: 8, lineHeight: 1.5, maxWidth: 460 }}>
+        <div className="muted" style={{ fontSize: 12, marginTop: 2, lineHeight: 1.5, maxWidth: 320 }}>
           {msg}
         </div>
       )}
