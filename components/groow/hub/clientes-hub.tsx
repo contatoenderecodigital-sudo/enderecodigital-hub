@@ -11,6 +11,7 @@ import {
   excluirClienteAction,
 } from "@/app/operacao/hub/actions";
 import SubmitButton from "@/components/groow/hub/submit-button";
+import CampoTelefone from "@/components/campo-telefone";
 
 type HubMin = { id: string; nome: string; slug: string };
 
@@ -264,7 +265,7 @@ function NovoClienteModal({ hubs, onClose }: { hubs: HubMin[]; onClose: () => vo
           <div><label style={lStyle}>Responsável</label><input name="resp_nome" style={iStyle} /></div>
           <div><label style={lStyle}>Cargo</label><input name="resp_cargo" style={iStyle} /></div>
           <div><label style={lStyle}>E-mail de contato</label><input name="resp_email" type="email" style={iStyle} /></div>
-          <div><label style={lStyle}>WhatsApp</label><input name="resp_whatsapp" placeholder="+55 49 99999-9999" style={iStyle} /></div>
+          <div><label style={lStyle}>WhatsApp</label><CampoTelefone name="resp_whatsapp" style={iStyle} /></div>
 
           <div><label style={lStyle}>Domínio</label><input name="dominio" placeholder="empresa.com.br" style={iStyle} /></div>
           <div><label style={lStyle}>Site atual (URL)</label><input name="site_url" placeholder="https://..." style={iStyle} /></div>

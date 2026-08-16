@@ -39,6 +39,7 @@ import {
   type ClienteStatus,
 } from "@/lib/groow/types";
 import { isValidPhone, isValidEmail } from "@/lib/groow/format";
+import CampoTelefone from "@/components/campo-telefone";
 
 const brl0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 
@@ -672,7 +673,7 @@ function ClienteDetalheModal({ id, onClose, onUpdated }: { id: number; onClose: 
             <div><label style={lStyle}>Empresa *</label><input name="empresa" required defaultValue={cliente.empresa} style={iStyle} /></div>
             <div><label style={lStyle}>Responsável</label><input name="responsavel" defaultValue={cliente.responsavel || ""} style={iStyle} /></div>
             <div><label style={lStyle}>Email</label><input name="email" type="email" defaultValue={cliente.email || ""} style={iStyle} /></div>
-            <div><label style={lStyle}>WhatsApp</label><input name="whatsapp" defaultValue={cliente.whatsapp || ""} style={iStyle} /></div>
+            <div><label style={lStyle}>WhatsApp</label><CampoTelefone name="whatsapp" value={cliente.whatsapp || ""} style={iStyle} /></div>
             <div>
               <label style={lStyle}>Plano</label>
               <select name="plano" defaultValue={cliente.plano || ""} style={{ ...iStyle, appearance: "auto" }}>
@@ -794,7 +795,10 @@ function NovoClienteModal({ onClose, onCreated }: { onClose: () => void; onCreat
           <Field name="empresa" label="Empresa *" required />
           <Field name="responsavel" label="Responsável" />
           <Field name="email" type="email" label="Email" />
-          <Field name="whatsapp" label="WhatsApp" placeholder="(49) 99999-9999" />
+          <div>
+            <Label>WhatsApp</Label>
+            <CampoTelefone name="whatsapp" style={{ display: "block", width: "100%", borderRadius: 12, border: "1px solid var(--ed2-hair)", background: "var(--ed2-surface-2)", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
+          </div>
           <div>
             <Label>Plano *</Label>
             <select name="plano" required style={{ display: "block", width: "100%", borderRadius: 12, border: "1px solid var(--ed2-hair)", background: "var(--ed2-surface-2)", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}>

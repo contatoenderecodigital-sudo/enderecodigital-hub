@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { LEAD_STATUS_LABEL, LEAD_ORIGENS, LEAD_ORIGEM_LABEL, FONTES_TRAFEGO, FONTE_TRAFEGO_LABEL, SETORES, normalizeOrigem, type Lead } from "@/lib/groow/types";
-import { formatPhone, isValidPhone, isValidEmail } from "@/lib/groow/format";
+import { isValidPhone, isValidEmail } from "@/lib/groow/format";
 import LeadModal from "@/components/groow/admin/LeadModal";
+import CampoTelefone from "@/components/campo-telefone";
 
 // fg via CSS var: escuro no claro, claro no navy (legível nos dois temas)
 const STATUS_TONE: Record<string, { bg: string; fg: string; dot: string }> = {
@@ -532,7 +533,7 @@ function NovoLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               {SETORES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div><label style={lStyle}>WhatsApp</label><input name="whatsapp" type="tel" inputMode="numeric" maxLength={15} value={whatsapp} onChange={(e) => setWhatsapp(formatPhone(e.target.value))} placeholder="(49) 99999-9999" style={iStyle} /></div>
+          <div><label style={lStyle}>WhatsApp</label><CampoTelefone value={whatsapp} onChange={setWhatsapp} style={iStyle} /></div>
           <div><label style={lStyle}>Email</label><input name="email" type="email" placeholder="email@empresa.com" style={iStyle} /></div>
           <div><label style={lStyle}>Faturamento mensal</label><input name="faturamento" placeholder="Ex: R$ 50k/mês" style={iStyle} /></div>
           <div>

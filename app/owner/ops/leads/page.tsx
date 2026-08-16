@@ -4,6 +4,7 @@ import OpsLeadsTable from "@/components/ops-leads-table";
 import { listOpsLeads, opsLeadsResumo, LEAD_STATUS } from "@/lib/ops";
 import { novoLeadAction } from "../actions";
 import { IcoPlus, IcoSearch, IcoFunnel } from "@/components/icons";
+import CampoTelefone from "@/components/campo-telefone";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export default async function OpsLeadsPage({
         <form action={novoLeadAction} className="cols-3" style={{ gap: 12, marginTop: 14 }}>
           <div><label>Nome *</label><input name="nome" required /></div>
           <div><label>Empresa</label><input name="empresa" /></div>
-          <div><label>WhatsApp</label><input name="whatsapp" placeholder="5549..." /></div>
+          <div><label>WhatsApp</label><CampoTelefone name="whatsapp" /></div>
           <div><label>E-mail</label><input name="email" type="email" /></div>
           <div><label>Setor / nicho</label><input name="setor" /></div>
           <div>

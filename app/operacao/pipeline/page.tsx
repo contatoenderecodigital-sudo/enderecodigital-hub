@@ -12,7 +12,8 @@ import {
 } from "@dnd-kit/core";
 import { Loader2 } from "lucide-react";
 import { PIPELINE_COLUMNS, LEAD_STATUS_LABEL, SETORES, type Lead, type LeadStatus } from "@/lib/groow/types";
-import { formatPhone, isValidPhone, isValidEmail } from "@/lib/groow/format";
+import { isValidPhone, isValidEmail } from "@/lib/groow/format";
+import CampoTelefone from "@/components/campo-telefone";
 import PeriodSelector, { rangeFromPreset, type PeriodRange } from "@/components/groow/admin/PeriodSelector";
 import LeadModal from "@/components/groow/admin/LeadModal";
 
@@ -494,7 +495,7 @@ function NovoDealModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               {SETORES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div><label style={lStyle}>WhatsApp</label><input name="whatsapp" type="tel" inputMode="numeric" maxLength={15} value={whatsapp} onChange={(e) => setWhatsapp(formatPhone(e.target.value))} placeholder="(49) 99999-9999" style={iStyle} /></div>
+          <div><label style={lStyle}>WhatsApp</label><CampoTelefone value={whatsapp} onChange={setWhatsapp} style={iStyle} /></div>
           <div><label style={lStyle}>Email</label><input name="email" type="email" placeholder="email@empresa.com" style={iStyle} /></div>
           <div><label style={lStyle}>Faturamento mensal</label><input name="faturamento" placeholder="Ex: R$ 50k/mês" style={iStyle} /></div>
           <div>
