@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { criarClienteAction } from "@/app/owner/clientes/actions";
+import CampoTelefone from "@/components/campo-telefone";
 import {
   IcoPlus,
   IcoX,
@@ -158,7 +159,7 @@ export default function NovoClienteModal({ hubs }: { hubs: Hub[] }) {
                     </div>
                     <div>
                       <label htmlFor="resp_whatsapp">WhatsApp / telefone</label>
-                      <input id="resp_whatsapp" name="resp_whatsapp" placeholder="+55 49 99999-9999" />
+                      <CampoTelefone id="resp_whatsapp" name="resp_whatsapp" />
                     </div>
                   </div>
                 </section>
@@ -181,7 +182,7 @@ export default function NovoClienteModal({ hubs }: { hubs: Hub[] }) {
                     </div>
                     <div>
                       <label htmlFor="wpp_comercial">WhatsApp comercial</label>
-                      <input id="wpp_comercial" name="wpp_comercial" />
+                      <CampoTelefone id="wpp_comercial" name="wpp_comercial" />
                     </div>
                   </div>
                 </section>

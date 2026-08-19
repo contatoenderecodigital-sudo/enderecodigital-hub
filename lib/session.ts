@@ -4,7 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "ed_hub_session";
 
-export type Papel = "owner_plataforma" | "admin_hub" | "dono" | "operador";
+export type Papel = "owner_plataforma" | "admin_hub" | "dono" | "operador" | "parceiro";
 
 export interface SessionData {
   uid: string;
@@ -14,6 +14,10 @@ export interface SessionData {
   hub_id: string | null;
   // negocio_id que o OWNER esta "abrindo" (impersonando). So vale pra owner.
   imp?: string | null;
+  // id do parceiro (tabela `parceiros` no MySQL). So vale pra papel 'parceiro'.
+  // verifySession faz cast cego do payload: NUNCA use este campo sem antes
+  // conferir que papel === "parceiro".
+  parceiro_id?: number | null;
 }
 
 function secret(): Uint8Array {
@@ -46,12 +50,16 @@ export const SESSION_MAX_AGE = MAX_AGE;
 // Opcoes do cookie de sessao. Dado puro (edge-safe) — usado por route handlers
 // que setam o cookie no proprio Response (padrao confiavel p/ set-cookie + redirect).
 export function cookieOptions(maxAge: number = MAX_AGE) {
+  // Em dev (http://localhost) o navegador RECUSA sameSite "none" sem secure, e
+  // secure nao vale em http. Sem esta excecao nao da pra logar localmente.
+  // Producao continua exatamente como estava.
+  const dev = process.env.NODE_ENV !== "production";
   return {
     httpOnly: true,
-    secure: true,
+    secure: !dev,
     // "none" garante que o cookie vai em TODA requisicao — inclusive os prefetch
     // do Next (que com "lax" nao carregavam a sessao e quebravam a navegacao).
-    sameSite: "none" as const,
+    sameSite: (dev ? "lax" : "none") as "lax" | "none",
     path: "/",
     maxAge,
   };

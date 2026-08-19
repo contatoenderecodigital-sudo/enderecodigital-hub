@@ -114,5 +114,5 @@ export async function impersonarAction(formData: FormData) {
   const negocioId = String(formData.get("negocio_id") || "");
   if (!negocioId) redirect("/owner/clientes");
   await setSession({ ...s, imp: negocioId });
-  redirect("/app");
+  redirect(`/ws/${negocioId}`);
 }

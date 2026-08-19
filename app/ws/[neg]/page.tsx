@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import Link from "@/components/link";
 import { getSession } from "@/lib/auth";
 import { getNegocio } from "@/lib/data";
-import { IcoShield, IcoChevronRight, IcoSettings } from "@/components/icons";
+import { IcoShield, IcoChevronRight } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +40,6 @@ export default async function WorkspacePainel({ params }: { params: Promise<{ ne
           <span style={{ opacity: 0.85 }}>· Editando o workspace de <strong style={{ color: "#fff" }}>{nome}</strong></span>
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
-          <Link href={`/app/config-hub?imp=${neg}`} style={{ color: "#c7f0d2", display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <IcoSettings width={14} height={14} /> Configurações do Hub
-          </Link>
           <Link href="/owner" style={{ color: "#c7f0d2", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <IcoChevronRight width={15} height={15} style={{ transform: "scaleX(-1)" }} /> Voltar ao console
           </Link>

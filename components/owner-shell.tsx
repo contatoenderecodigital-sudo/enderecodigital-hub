@@ -41,6 +41,7 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
     itens: [
       { href: "/owner/sites", label: "Sites", Icon: IcoGlobe },
       { href: "/owner/modelos", label: "Modelos", Icon: IcoGrid },
+      { href: "/owner/whatsapp", label: "WhatsApp", Icon: IcoActivity },
       { href: "/owner/contas-claude", label: "Contas Claude", Icon: IcoSparkles },
       { href: "/owner/assentos", label: "Assentos Claude", Icon: IcoKey },
       { href: "/owner/tokens", label: "Tokens", Icon: IcoActivity },
@@ -63,23 +64,6 @@ const NAV: { grupo: string; itens: NavItem[] }[] = [
 const GROOW: NavItem[] = [
   { href: "/owner/clientes", label: "Clientes", Icon: IcoUsers },
   { href: "/owner/workspaces", label: "Workspaces", Icon: IcoBuilding },
-  { href: "/owner/ops/prospeccao", label: "Prospecção", Icon: IcoSearch },
-  { href: "/owner/ops/leads", label: "Leads", Icon: IcoFunnel },
-  { href: "/owner/ops/funil", label: "Funil", Icon: IcoGrid },
-  { href: "/owner/ops/carteira", label: "Carteira", Icon: IcoBuilding },
-  { href: "/owner/ops/cobrancas", label: "Cobranças", Icon: IcoActivity },
-  { href: "/owner/ops/trafego", label: "Tráfego & ROAS", Icon: IcoActivity },
-  { href: "/owner/ops/social", label: "Conteúdo Social", Icon: IcoInstagram },
-  { href: "/owner/ops/blog", label: "Blog SEO", Icon: IcoGlobe },
-  { href: "/owner/ops/tarefas", label: "Tarefas", Icon: IcoFlag },
-  { href: "/owner/ops/pipeline", label: "Pipeline", Icon: IcoGrid },
-  { href: "/owner/ops/aprovacoes", label: "Aprovações", Icon: IcoShield },
-  { href: "/owner/ops/ia", label: "IA & Custos", Icon: IcoSparkles },
-  { href: "/owner/ops/relatorios", label: "Relatórios", Icon: IcoActivity },
-  { href: "/owner/ops/cardapios", label: "Cardápios", Icon: IcoGrid },
-  { href: "/owner/ops/conversas", label: "Conversas", Icon: IcoInbox },
-  { href: "/owner/ops/disparos", label: "Disparos", Icon: IcoWhatsapp },
-  { href: "/owner/ops/senhas", label: "Senhas", Icon: IcoLock },
 ];
 
 const TITULOS: [string, string][] = [
@@ -88,6 +72,7 @@ const TITULOS: [string, string][] = [
   ["/owner/hubs", "Hubs"],
   ["/owner/sites", "Sites"],
   ["/owner/modelos", "Modelos"],
+  ["/owner/whatsapp", "WhatsApp dos clientes"],
   ["/owner/contas-claude", "Contas Claude"],
   ["/owner/assentos", "Assentos Claude"],
   ["/owner/tokens", "Tokens"],
@@ -141,6 +126,15 @@ export default function OwnerShell({
         {/* nível 1 — plataforma */}
         <div>
           <div className="side-group">Plataforma</div>
+          {/* <a> (nav cheia) e nao <Link>: cruzar pro GROOW/voltar sem CSS grudar nas fontes. */}
+          <a
+            href="/operacao"
+            className={"side-link" + (ativo("/operacao") ? " active" : "")}
+            onClick={() => setOpen(false)}
+          >
+            <IcoGrid width={19} height={19} />
+            Operação (GROOW OS)
+          </a>
           {link({ href: "/owner", label: "Todos os hubs", Icon: IcoDashboard, exact: true })}
         </div>
 

@@ -134,7 +134,6 @@ export default function ClientesTable({ clientes, hubs }: { clientes: Negocio[];
           <div className="menu" style={{ position: "fixed", top: menu.top, left: menu.left, right: "auto" }}>
             <form action="/api/impersonar" method="post">
               <input type="hidden" name="negocio_id" value={alvo.id} />
-              <input type="hidden" name="destino" value="/app/config-hub" />
               <button type="submit"><IcoSettings width={16} height={16} /> Editar Workspace</button>
             </form>
             <Link href={`/owner/clientes/${alvo.id}`}>

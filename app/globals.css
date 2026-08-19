@@ -29,6 +29,11 @@
 html, body { margin: 0; padding: 0; }
 
 body {
+  /* O console é escuro: avisa o browser para desenhar os controles nativos
+     (lista do select, calendário, scrollbar, spinner do number) no tema escuro.
+     Sem isto eles vêm claros e o texto preto some no navy. O painel /operacao
+     é claro e desliga isto no próprio escopo (.ed2 em groow.css). */
+  color-scheme: dark;
   color: var(--text);
   font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   letter-spacing: -0.011em;
@@ -141,7 +146,12 @@ input, select, textarea { width: 100%; background: rgba(0, 0, 0, 0.22);
 input::placeholder, textarea::placeholder { color: rgba(244, 239, 230, 0.34); }
 input:focus, select:focus, textarea:focus { border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.18); }
-select option { background: #0b1838; }
+/* A lista aberta do <select> é desenhada pelo sistema, não pelo CSS da página:
+   se só o fundo for pintado, o Chrome mantém o texto preto (padrão do tema
+   claro) e as opções somem dentro do navy. Por isso `color` é obrigatório aqui,
+   e o color-scheme abaixo alinha o resto dos controles nativos (date picker,
+   scrollbar, seta do select) ao console escuro. */
+select option, select optgroup { background: #0b1838; color: var(--text); }
 
 /* ============ tabela ============ */
 .table-wrap { overflow-x: auto; }

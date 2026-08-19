@@ -13,7 +13,7 @@ export default async function OwnerLayout({
 }) {
   const s = await getSession();
   if (!s) redirect("/login");
-  if (s.papel !== "owner_plataforma") redirect("/app");
+  if (s.papel !== "owner_plataforma") redirect("/login");
 
   const hid = await hubOpId();
   const hubAtivo = hid ? await nomeDoHub(hid) : null;

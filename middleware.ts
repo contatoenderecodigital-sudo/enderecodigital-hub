@@ -9,6 +9,10 @@ const PUBLIC = [
   "/api/health",
   "/api/lead-capture",
   "/api/whatsapp/webhook",
+  // Landing de indicacao do parceiro. O teste abaixo e por igualdade ou
+  // prefixo "/p/", entao isto NAO libera "/parceiro".
+  "/p",
+  "/api/indicacao",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -17,6 +21,7 @@ export async function middleware(req: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
+    /\.(png|svg|jpg|jpeg|gif|ico|webp|avif|txt|xml|json|woff2?|ttf|otf|map)$/i.test(pathname) ||
     PUBLIC.some((p) => pathname === p || pathname.startsWith(p + "/"))
   ) {
     return NextResponse.next();
@@ -47,7 +52,34 @@ export async function middleware(req: NextRequest) {
   // Console do owner: so owner_plataforma.
   if (pathname.startsWith("/owner") && session.papel !== "owner_plataforma") {
     const url = req.nextUrl.clone();
-    url.pathname = "/app";
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // GROOW OS (operacao + api/admin): so owner_plataforma.
+  if (
+    (pathname.startsWith("/operacao") || pathname.startsWith("/api/admin")) &&
+    session.papel !== "owner_plataforma"
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Painel do parceiro: so papel 'parceiro'. O owner enxerga tudo pelo
+  // /operacao/parceiros, entao nao precisa (nem deve) entrar aqui.
+  if (
+    (pathname.startsWith("/parceiro") || pathname.startsWith("/api/parceiro")) &&
+    session.papel !== "parceiro"
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 

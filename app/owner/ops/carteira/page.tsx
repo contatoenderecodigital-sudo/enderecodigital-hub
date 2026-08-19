@@ -2,6 +2,7 @@ import PageHead from "@/components/page-head";
 import { listOpsClientes, opsCarteiraResumo } from "@/lib/ops";
 import { novoClienteAction, statusClienteAction } from "../actions";
 import { IcoPlus, IcoWhatsapp, IcoBuilding } from "@/components/icons";
+import CampoTelefone from "@/components/campo-telefone";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export default async function CarteiraPage() {
         <form action={novoClienteAction} className="cols-3" style={{ gap: 12, marginTop: 14 }}>
           <div><label>Empresa *</label><input name="empresa" required /></div>
           <div><label>Responsável</label><input name="responsavel" /></div>
-          <div><label>WhatsApp</label><input name="whatsapp" placeholder="5549..." /></div>
+          <div><label>WhatsApp</label><CampoTelefone name="whatsapp" /></div>
           <div><label>E-mail</label><input name="email" type="email" /></div>
           <div><label>Plano</label><input name="plano" placeholder="Ex.: Presença + WhatsApp IA" /></div>
           <div><label>Início do contrato</label><input name="inicio_contrato" type="date" /></div>
