@@ -5,6 +5,8 @@ import tailwindcssAnimate from "tailwindcss-animate";
 const config: Config = {
   content: [
     "./app/operacao/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/parceiro/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/p/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/groow/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {

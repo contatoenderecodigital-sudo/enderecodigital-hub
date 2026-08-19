@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { exec } from "@/lib/groow/db";
+import { construtorSql, clausulaSet } from "@/lib/groow/sql";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +16,15 @@ export async function PATCH(
 
   // Monta UPDATE parcial só com os campos enviados
   const sets: string[] = [];
-  const vals: (string | number | null)[] = [];
-  if (typeof body.titulo === "string") { sets.push("titulo = ?"); vals.push(body.titulo.trim()); }
-  if (body.prioridade && ["alta", "media", "baixa"].includes(body.prioridade)) { sets.push("prioridade = ?"); vals.push(body.prioridade); }
+  const { p, params: sqlParams } = construtorSql();
+  if (typeof body.titulo === "string") { sets.push(`titulo = ${p(body.titulo.trim())}`); }
+  if (body.prioridade && ["alta", "media", "baixa"].includes(body.prioridade)) { sets.push(`prioridade = ${p(body.prioridade)}`); }
   if (body.status === "pendente" || body.status === "concluida") {
-    sets.push("status = ?"); vals.push(body.status);
-    sets.push("concluida_em = ?"); vals.push(body.status === "concluida" ? new Date().toISOString().slice(0, 19).replace("T", " ") : null);
+    sets.push(`status = ${p(body.status)}`);
+    sets.push(`concluida_em = ${p(body.status === "concluida" ? new Date().toISOString().slice(0, 19).replace("T", " ") : null)}`);
   }
-  if ("lead_id" in body) { sets.push("lead_id = ?"); vals.push(body.lead_id || null); }
-  if ("data_vencimento" in body) { sets.push("data_vencimento = ?"); vals.push(body.data_vencimento || null); }
+  if ("lead_id" in body) { sets.push(`lead_id = ${p(body.lead_id || null)}`); }
+  if ("data_vencimento" in body) { sets.push(`data_vencimento = ${p(body.data_vencimento || null)}`); }
   const hasClienteId = "cliente_id" in body;
 
   if (sets.length === 0 && !hasClienteId) {
@@ -34,12 +35,12 @@ export async function PATCH(
     // tenta com cliente_id; se a coluna não existir, refaz sem ela
     if (hasClienteId) {
       try {
-        await exec(`UPDATE tarefas SET ${[...sets, "cliente_id = ?"].join(", ")} WHERE id = ?`, [...vals, body.cliente_id || null, id]);
+        await exec(`UPDATE tarefas ${clausulaSet([...sets, `cliente_id = ${p(body.cliente_id || null)}`])} WHERE id = ${p(id)}`, sqlParams);
         return NextResponse.json({ ok: true });
       } catch { /* coluna cliente_id ausente - cai pro update sem ela */ }
     }
     if (sets.length > 0) {
-      await exec(`UPDATE tarefas SET ${sets.join(", ")} WHERE id = ?`, [...vals, id]);
+      await exec(`UPDATE tarefas ${clausulaSet(sets)} WHERE id = ${p(id)}`, sqlParams);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -54,7 +55,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    await exec(`DELETE FROM tarefas WHERE id = ?`, [id]);
+    await exec(`DELETE FROM tarefas WHERE id = $1`, [id]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/tarefas/[id]]", err);

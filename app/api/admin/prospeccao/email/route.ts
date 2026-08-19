@@ -12,19 +12,7 @@ export const maxDuration = 300;
 // - intervalo de ~700ms entre envios (limite de taxa do Resend).
 
 async function garantirTabela() {
-  await getPool().query(`CREATE TABLE IF NOT EXISTS prospeccao_emails (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    nome_empresa VARCHAR(255) NOT NULL DEFAULT '',
-    email VARCHAR(255) NOT NULL,
-    assunto VARCHAR(255) NOT NULL DEFAULT '',
-    campanha VARCHAR(255) NOT NULL DEFAULT '',
-    status ENUM('enviado','erro') NOT NULL DEFAULT 'enviado',
-    erro VARCHAR(500) NULL,
-    resend_id VARCHAR(80) NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_pe_email (email, created_at)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  // Schema em db/migrations/groow-postgres.sql, aplicado no deploy.
 }
 
 // GET → histórico recente de envios
@@ -33,7 +21,7 @@ export async function GET() {
     await garantirTabela();
     const envios = await query(
       `SELECT id, nome_empresa, email, assunto, campanha, status, erro,
-              DATE_FORMAT(created_at,'%d/%m %H:%i') AS enviado_em
+              to_char(created_at,'DD/MM HH24:MI') AS enviado_em
        FROM prospeccao_emails ORDER BY id DESC LIMIT 100`
     );
     return NextResponse.json({ envios });
@@ -70,7 +58,7 @@ export async function POST(req: Request) {
     // trava anti-spam: quem recebeu nos últimos 30 dias não recebe de novo
     const recentes = await query<{ email: string }>(
       `SELECT DISTINCT email FROM prospeccao_emails
-       WHERE status = 'enviado' AND created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)`
+       WHERE status = 'enviado' AND created_at > NOW() - INTERVAL '30 days'`
     );
     const jaContatados = new Set(recentes.map((r) => r.email.toLowerCase()));
 
@@ -88,7 +76,7 @@ export async function POST(req: Request) {
 
       await query(
         `INSERT INTO prospeccao_emails (nome_empresa, email, assunto, campanha, status, erro, resend_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [nome.slice(0, 250), email, assunto.slice(0, 250), campanha, r.ok ? "enviado" : "erro", r.ok ? null : (r.erro ?? "erro").slice(0, 490), r.id ?? null]
       );
 

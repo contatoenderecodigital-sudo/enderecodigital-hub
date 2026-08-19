@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 async function getConversa(id: number) {
   const rows = await query<{ id: number; whatsapp: string; status: string }>(
-    `SELECT id, whatsapp, status FROM wa_conversas WHERE id = ? LIMIT 1`,
+    `SELECT id, whatsapp, status FROM wa_conversas WHERE id = $1 LIMIT 1`,
     [id]
   );
   return rows[0] ?? null;
@@ -20,12 +20,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const mensagens = await query(
       `SELECT id, origem, tipo, texto, status_entrega, created_at
-       FROM wa_mensagens WHERE conversa_id = ?
+       FROM wa_mensagens WHERE conversa_id = $1
        ORDER BY created_at ASC, id ASC
        LIMIT 500`,
       [convId]
     );
-    await query(`UPDATE wa_conversas SET nao_lidas = 0 WHERE id = ?`, [convId]);
+    await query(`UPDATE wa_conversas SET nao_lidas = 0 WHERE id = $1`, [convId]);
     return NextResponse.json({ mensagens });
   } catch (err) {
     console.error("[admin/conversas/[id]]", err);
@@ -48,11 +48,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { wamid } = await sendWhatsAppText(conversa.whatsapp, texto);
     await query(
       `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega)
-       VALUES (?, 'humano', 'text', ?, ?, 'sent')`,
+       VALUES ($1, 'humano', 'text', $2, $3, 'sent')`,
       [convId, texto, wamid]
     );
     await query(
-      `UPDATE wa_conversas SET ultima_mensagem = ?, ultima_mensagem_em = NOW() WHERE id = ?`,
+      `UPDATE wa_conversas SET ultima_mensagem = $1, ultima_mensagem_em = NOW() WHERE id = $2`,
       [texto, convId]
     );
     return NextResponse.json({ ok: true, wamid });
@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "status inválido" }, { status: 400 });
   }
   await query(
-    `UPDATE wa_conversas SET status = ?, handoff_em = ${status === "handed_off" ? "NOW()" : "handoff_em"} WHERE id = ?`,
+    `UPDATE wa_conversas SET status = $1, handoff_em = ${status === "handed_off" ? "NOW()" : "handoff_em"} WHERE id = $2`,
     [status, convId]
   );
   return NextResponse.json({ ok: true });

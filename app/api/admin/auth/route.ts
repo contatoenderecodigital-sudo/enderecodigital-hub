@@ -44,8 +44,8 @@ export async function POST(request: Request) {
   if (needsUpgrade) {
     try {
       const novo = await hashPassword(password);
-      await exec(`INSERT IGNORE INTO admin_perfil (id, nome) VALUES (1, 'Admin')`);
-      await exec(`UPDATE admin_perfil SET senha_hash = ? WHERE id = 1`, [novo]);
+      await exec(`INSERT INTO admin_perfil (id, nome) VALUES (1, 'Admin') ON CONFLICT (id) DO NOTHING`);
+      await exec(`UPDATE admin_perfil SET senha_hash = $1 WHERE id = 1`, [novo]);
     } catch (err) {
       // não impede o login - só registra
       apiError("auth:upgrade-hash", err);

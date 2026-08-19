@@ -33,8 +33,8 @@ export async function POST(req: Request) {
     const meses = await getSpendMensal(3);
     for (const m of meses) {
       await exec(
-        `INSERT INTO trafego_investimentos (canal, mes, valor) VALUES ('meta_ads', ?, ?)
-         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
+        `INSERT INTO trafego_investimentos (canal, mes, valor) VALUES ('meta_ads', $1, $2)
+         ON CONFLICT (canal, mes) DO UPDATE SET valor = EXCLUDED.valor`,
         [m.mes, Math.round(m.valor * 100) / 100]
       );
     }

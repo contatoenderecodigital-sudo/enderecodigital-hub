@@ -13,21 +13,21 @@ export async function GET() {
 
     const [hoje] = await query<{ chamadas: number; custo: number }>(
       `SELECT COUNT(*) AS chamadas, COALESCE(SUM(custo_usd),0) AS custo
-       FROM ia_logs WHERE DATE(created_at) = CURDATE()`
+       FROM ia_logs WHERE created_at::date = CURRENT_DATE`
     );
     const [mes] = await query<{ chamadas: number; custo: number }>(
       `SELECT COUNT(*) AS chamadas, COALESCE(SUM(custo_usd),0) AS custo
-       FROM ia_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
+       FROM ia_logs WHERE created_at >= NOW() - INTERVAL '30 days'`
     );
     const porModulo = await query<{ modulo: string; chamadas: number; custo: number; erros: number }>(
       `SELECT modulo, COUNT(*) AS chamadas, COALESCE(SUM(custo_usd),0) AS custo,
               SUM(CASE WHEN status='erro' THEN 1 ELSE 0 END) AS erros
-       FROM ia_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+       FROM ia_logs WHERE created_at >= NOW() - INTERVAL '30 days'
        GROUP BY modulo ORDER BY custo DESC`
     );
     const logs = await query(
       `SELECT id, modulo, acao, modelo, input_tokens, output_tokens, buscas_web, custo_usd,
-              duracao_ms, status, detalhe, DATE_FORMAT(created_at,'%d/%m %H:%i') AS quando
+              duracao_ms, status, detalhe, to_char(created_at,'DD/MM HH24:MI') AS quando
        FROM ia_logs ORDER BY id DESC LIMIT 120`
     );
 

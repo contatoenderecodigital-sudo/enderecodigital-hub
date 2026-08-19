@@ -6,22 +6,15 @@
 import { query, exec } from "@/lib/groow/db";
 
 async function garantirTabela() {
-  await exec(
-    `CREATE TABLE IF NOT EXISTS ia_base_conhecimento (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      escopo VARCHAR(64) NOT NULL DEFAULT 'default',
-      conteudo MEDIUMTEXT NULL,
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY uk_escopo (escopo)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
-  );
+  // Schema em db/migrations/groow-postgres.sql, aplicado no deploy. O DDL em
+  // runtime era do tempo do MySQL e não vale mais.
 }
 
 export async function getBaseConhecimento(escopo = "default"): Promise<string> {
   try {
     await garantirTabela();
     const r = await query<{ conteudo: string | null }>(
-      `SELECT conteudo FROM ia_base_conhecimento WHERE escopo = ? LIMIT 1`,
+      `SELECT conteudo FROM ia_base_conhecimento WHERE escopo = $1 LIMIT 1`,
       [escopo]
     );
     return (r[0]?.conteudo ?? "").trim();
@@ -33,8 +26,8 @@ export async function getBaseConhecimento(escopo = "default"): Promise<string> {
 export async function setBaseConhecimento(conteudo: string, escopo = "default"): Promise<void> {
   await garantirTabela();
   await exec(
-    `INSERT INTO ia_base_conhecimento (escopo, conteudo) VALUES (?, ?)
-     ON DUPLICATE KEY UPDATE conteudo = VALUES(conteudo)`,
+    `INSERT INTO ia_base_conhecimento (escopo, conteudo) VALUES ($1, $2)
+     ON CONFLICT (escopo) DO UPDATE SET conteudo = EXCLUDED.conteudo`,
     [escopo, conteudo.slice(0, 60000)]
   );
 }

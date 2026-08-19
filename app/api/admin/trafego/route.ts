@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 async function tabelaExiste(nome: string): Promise<boolean> {
   const rows = await query<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?`,
+    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = 'groow' AND table_name = $1`,
     [nome]
   );
   return Number(rows[0]?.n ?? 0) > 0;
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     if (await tabelaExiste("utm_links")) {
       utms = await query(
         `SELECT id, nome, url_final, utm_source, utm_medium, utm_campaign,
-                DATE_FORMAT(created_at,'%d/%m/%y') AS criado_em
+                to_char(created_at,'DD/MM/YY') AS criado_em
          FROM utm_links ORDER BY id DESC LIMIT 50`
       );
     }
@@ -59,8 +59,8 @@ export async function POST(req: Request) {
       }
       const valor = Math.max(0, Number(body.valor) || 0);
       await exec(
-        `INSERT INTO trafego_investimentos (canal, mes, valor) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
+        `INSERT INTO trafego_investimentos (canal, mes, valor) VALUES ($1, $2, $3)
+         ON CONFLICT (canal, mes) DO UPDATE SET valor = EXCLUDED.valor`,
         [body.canal, body.mes as string, valor]
       );
       return NextResponse.json({ ok: true });
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       }
       const r = await exec(
         `INSERT INTO utm_links (nome, url_final, utm_source, utm_medium, utm_campaign, utm_content, utm_term)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
         [body.nome?.trim() || body.campaign.trim(), final, body.source.trim(), body.medium.trim(), body.campaign.trim(), body.content?.trim() || null, body.term?.trim() || null]
       );
       return NextResponse.json({ ok: true, id: r.insertId, url_final: final });
@@ -103,8 +103,8 @@ export async function DELETE(req: Request) {
     const sp = new URL(req.url).searchParams;
     const utm = sp.get("utm");
     const inv = sp.get("inv");
-    if (utm) { await exec(`DELETE FROM utm_links WHERE id = ?`, [Number(utm)]); return NextResponse.json({ ok: true }); }
-    if (inv) { await exec(`DELETE FROM trafego_investimentos WHERE id = ?`, [Number(inv)]); return NextResponse.json({ ok: true }); }
+    if (utm) { await exec(`DELETE FROM utm_links WHERE id = $1`, [Number(utm)]); return NextResponse.json({ ok: true }); }
+    if (inv) { await exec(`DELETE FROM trafego_investimentos WHERE id = $1`, [Number(inv)]); return NextResponse.json({ ok: true }); }
     return NextResponse.json({ error: "Nada pra excluir" }, { status: 400 });
   } catch (err) {
     console.error("[trafego]", err);

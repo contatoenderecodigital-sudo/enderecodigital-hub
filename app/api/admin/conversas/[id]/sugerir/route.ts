@@ -13,7 +13,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (!Number.isFinite(convId)) return NextResponse.json({ error: "id inválido" }, { status: 400 });
 
   const rows = await query<{ whatsapp: string }>(
-    `SELECT whatsapp FROM wa_conversas WHERE id = ? LIMIT 1`,
+    `SELECT whatsapp FROM wa_conversas WHERE id = $1 LIMIT 1`,
     [convId]
   );
   const conversa = rows[0];

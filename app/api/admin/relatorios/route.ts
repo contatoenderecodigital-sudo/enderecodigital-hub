@@ -24,7 +24,7 @@ export async function GET() {
   try {
     await garantirTabelaRelatorios();
     const relatorios = await query(
-      `SELECT id, cliente, periodo, token, DATE_FORMAT(updated_at,'%d/%m %H:%i') AS atualizado_em
+      `SELECT id, cliente, periodo, token, to_char(updated_at,'DD/MM HH24:MI') AS atualizado_em
        FROM relatorios_cliente ORDER BY updated_at DESC LIMIT 200`
     );
     return NextResponse.json({ relatorios });
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     await garantirTabelaRelatorios();
     const token = randomBytes(16).toString("hex");
     const r = await exec(
-      `INSERT INTO relatorios_cliente (cliente, periodo, dados, token) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO relatorios_cliente (cliente, periodo, dados, token) VALUES ($1, $2, $3, $4) RETURNING id`,
       [cliente.slice(0, 190), periodo.slice(0, 20), JSON.stringify(DADOS_INICIAIS), token]
     );
     return NextResponse.json({ ok: true, id: r.insertId, token });

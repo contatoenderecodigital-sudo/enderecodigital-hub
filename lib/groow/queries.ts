@@ -1,4 +1,5 @@
 import { query } from "./db";
+import { construtorSql, clausulaWhere } from "./sql";
 import type { Cliente, ClienteStatus } from "./types";
 import { normalizeOrigem, LEAD_ORIGEM_LABEL } from "./types";
 
@@ -10,14 +11,13 @@ export async function getColumns(table: string): Promise<Set<string>> {
   const cached = _columnCache.get(table);
   if (cached) return cached;
   try {
-    const rows = await query<{ column_name: string; COLUMN_NAME?: string }>(
+    // Postgres não tem DATABASE(); o equivalente é o schema onde o GROOW vive.
+    const rows = await query<{ column_name: string }>(
       `SELECT column_name FROM information_schema.columns
-       WHERE table_schema = DATABASE() AND table_name = ?`,
+       WHERE table_schema = 'groow' AND table_name = $1`,
       [table]
     );
-    const set = new Set(
-      rows.map((r) => (r.column_name || r.COLUMN_NAME || "").toLowerCase())
-    );
+    const set = new Set(rows.map((r) => (r.column_name || "").toLowerCase()));
     _columnCache.set(table, set);
     return set;
   } catch {
@@ -84,9 +84,9 @@ export async function getPipelineByMonth(months = 6): Promise<PipelineMonth[]> {
     status: string;
     c: number;
   }>(
-    `SELECT DATE_FORMAT(created_at, '%Y-%m') AS mes, status, COUNT(*) AS c
+    `SELECT to_char(created_at, 'YYYY-MM') AS mes, status, COUNT(*) AS c
      FROM leads
-     WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+     WHERE created_at >= CURRENT_DATE - make_interval(months => $1)
      GROUP BY mes, status
      ORDER BY mes ASC`,
     [months]
@@ -141,8 +141,8 @@ export async function getRevenueByMonth(months = 12): Promise<RevenuePoint[]> {
     const recRows = await query<{ total: string | null }>(
       `SELECT COALESCE(SUM(valor_mensal),0) AS total
        FROM clientes
-       WHERE inicio_contrato <= ?
-         AND (fim_contrato IS NULL OR fim_contrato >= ?)
+       WHERE inicio_contrato <= $1
+         AND (fim_contrato IS NULL OR fim_contrato >= $2)
          AND status IN ('ativo','concluido')`,
       [dateStr, dateStr]
     );
@@ -154,7 +154,7 @@ export async function getRevenueByMonth(months = 12): Promise<RevenuePoint[]> {
         `SELECT COALESCE(SUM(valor_setup),0) AS total
          FROM clientes
          WHERE valor_setup > 0
-           AND DATE_FORMAT(inicio_contrato,'%Y-%m') = ?
+           AND to_char(inicio_contrato,'YYYY-MM') = $1
            AND status IN ('ativo','concluido')`,
         [ym]
       );
@@ -196,8 +196,8 @@ export async function getResumoFaturamento(range?: { from?: string | null; to?: 
       const rows = await query<{ total: string | null }>(
         `SELECT COALESCE(SUM(valor_mensal),0) AS total
          FROM clientes
-         WHERE inicio_contrato <= ?
-           AND (fim_contrato IS NULL OR fim_contrato >= ?)
+         WHERE inicio_contrato <= $1
+           AND (fim_contrato IS NULL OR fim_contrato >= $2)
            AND status IN ('ativo','concluido')`,
         [dateStr, dateStr]
       );
@@ -255,11 +255,11 @@ export async function getOrigensNormalizadas(range?: { from?: string | null; to?
   if (!(await tableExists("leads"))) return [];
   if (!(await hasColumn("leads", "origem"))) return [];
 
+  const { p, params } = construtorSql();
   const where: string[] = [];
-  const params: string[] = [];
-  if (range?.from) { where.push("created_at >= ?"); params.push(`${range.from} 00:00:00`); }
-  if (range?.to) { where.push("created_at <= ?"); params.push(`${range.to} 23:59:59`); }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  if (range?.from) where.push(`created_at >= ${p(`${range.from} 00:00:00`)}`);
+  if (range?.to) where.push(`created_at <= ${p(`${range.to} 23:59:59`)}`);
+  const whereSql = clausulaWhere(where);
 
   const rows = await query<{ origem: string | null; c: number }>(
     `SELECT origem, COUNT(*) AS c FROM leads ${whereSql} GROUP BY origem`,
@@ -323,7 +323,7 @@ export interface PagamentoMes {
 export async function getClientePagamentos(clienteId: number): Promise<PagamentoMes[]> {
   if (!(await tableExists("clientes"))) return [];
   const rows = await query<{ valor_mensal: string | null; inicio_contrato: string | Date; fim_contrato: string | Date | null; status: string }>(
-    `SELECT valor_mensal, inicio_contrato, fim_contrato, status FROM clientes WHERE id = ? LIMIT 1`,
+    `SELECT valor_mensal, inicio_contrato, fim_contrato, status FROM clientes WHERE id = $1 LIMIT 1`,
     [clienteId]
   );
   if (!rows[0]) return [];
@@ -340,8 +340,8 @@ export async function getClientePagamentos(clienteId: number): Promise<Pagamento
   let trans: { ym: string; dia: string; valor: string }[] = [];
   if (await tableExists("transacoes")) {
     trans = await query<{ ym: string; dia: string; valor: string }>(
-      `SELECT DATE_FORMAT(data,'%Y-%m') AS ym, DATE_FORMAT(data,'%Y-%m-%d') AS dia, valor
-       FROM transacoes WHERE cliente_id = ? AND tipo = 'recorrente'`,
+      `SELECT to_char(data,'YYYY-MM') AS ym, to_char(data,'YYYY-MM-DD') AS dia, valor
+       FROM transacoes WHERE cliente_id = $1 AND tipo = 'recorrente'`,
       [clienteId]
     );
   }
@@ -408,7 +408,7 @@ export async function getCobrancasMes(ym?: string): Promise<{ cobrancas: Cobranc
   const pagos = new Set<number>();
   if (await tableExists("transacoes")) {
     const t = await query<{ cliente_id: number | null }>(
-      `SELECT DISTINCT cliente_id FROM transacoes WHERE tipo = 'recorrente' AND DATE_FORMAT(data,'%Y-%m') = ? AND cliente_id IS NOT NULL`,
+      `SELECT DISTINCT cliente_id FROM transacoes WHERE tipo = 'recorrente' AND to_char(data,'YYYY-MM') = $1 AND cliente_id IS NOT NULL`,
       [alvo]
     );
     for (const r of t) if (r.cliente_id) pagos.add(Number(r.cliente_id));
@@ -489,7 +489,7 @@ export async function getMeuDia(): Promise<MeuDia> {
   if (await tableExists("social_conteudos")) out.aprovacoesPendentes += await contar(`SELECT COUNT(*) AS n FROM social_conteudos WHERE status='rascunho'`);
   if (await tableExists("wa_campanhas")) out.aprovacoesPendentes += await contar(`SELECT COUNT(*) AS n FROM wa_campanhas WHERE status='rascunho'`);
   if (await tableExists("tarefas")) {
-    out.tarefasVencidas = await contar(`SELECT COUNT(*) AS n FROM tarefas WHERE status <> 'concluida' AND data_vencimento IS NOT NULL AND data_vencimento <= CURDATE()`);
+    out.tarefasVencidas = await contar(`SELECT COUNT(*) AS n FROM tarefas WHERE status <> 'concluida' AND data_vencimento IS NOT NULL AND data_vencimento <= CURRENT_DATE`);
   }
   return out;
 }
@@ -506,7 +506,7 @@ export async function getAtrasadosGlobais(): Promise<{ atrasados: AtrasoGlobal[]
   const pagosPorCliente = new Map<number, Set<string>>();
   if (await tableExists("transacoes")) {
     const t = await query<{ cliente_id: number; ym: string }>(
-      `SELECT cliente_id, DATE_FORMAT(data,'%Y-%m') AS ym FROM transacoes
+      `SELECT cliente_id, to_char(data,'YYYY-MM') AS ym FROM transacoes
        WHERE tipo = 'recorrente' AND cliente_id IS NOT NULL`
     );
     for (const r of t) {
@@ -574,7 +574,7 @@ export async function getCaixaSerie(from: string | null, to: string | null, tipo
   const isSetup = tipo === "setup";
 
   // chave canônica do bucket (igual no SQL e no preenchimento JS) - evita mismatch de label
-  const keyExpr = porDia ? "%Y-%m-%d" : "%Y-%m";
+  const keyExpr = porDia ? "YYYY-MM-DD" : "YYYY-MM";
 
   // Setup = entradas únicas, contadas no mês de início do contrato (fonte: clientes.valor_setup).
   // Recorrente/demais = dinheiro real recebido (fonte: transacoes).
@@ -583,12 +583,12 @@ export async function getCaixaSerie(from: string | null, to: string | null, tipo
     if (!(await hasColumn("clientes", "valor_setup"))) {
       return { granularidade: porDia ? "dia" : "mes", pontos: [], totalPeriodo: 0 };
     }
+    const { p, params } = construtorSql();
     const where: string[] = ["valor_setup > 0"];
-    const params: string[] = [];
-    if (from) { where.push("inicio_contrato >= ?"); params.push(from); }
-    if (to) { where.push("inicio_contrato <= ?"); params.push(`${to} 23:59:59`); }
+    if (from) where.push(`inicio_contrato >= ${p(from)}`);
+    if (to) where.push(`inicio_contrato <= ${p(`${to} 23:59:59`)}`);
     const rows = await query<{ k: string; total: string | null }>(
-      `SELECT DATE_FORMAT(inicio_contrato, '${keyExpr}') AS k, COALESCE(SUM(valor_setup),0) AS total
+      `SELECT to_char(inicio_contrato, '${keyExpr}') AS k, COALESCE(SUM(valor_setup),0) AS total
        FROM clientes WHERE ${where.join(" AND ")} GROUP BY k`,
       params
     );
@@ -597,14 +597,14 @@ export async function getCaixaSerie(from: string | null, to: string | null, tipo
     if (!(await tableExists("transacoes"))) {
       return { granularidade: porDia ? "dia" : "mes", pontos: [], totalPeriodo: 0 };
     }
+    const { p, params } = construtorSql();
     const where: string[] = [];
-    const params: string[] = [];
-    if (from) { where.push("data >= ?"); params.push(from); }
-    if (to) { where.push("data <= ?"); params.push(to); }
-    if (tipo && ["recorrente", "avulso", "manual"].includes(tipo)) { where.push("tipo = ?"); params.push(tipo); }
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    if (from) where.push(`data >= ${p(from)}`);
+    if (to) where.push(`data <= ${p(to)}`);
+    if (tipo && ["recorrente", "avulso", "manual"].includes(tipo)) where.push(`tipo = ${p(tipo)}`);
+    const whereSql = clausulaWhere(where);
     const rows = await query<{ k: string; total: string | null }>(
-      `SELECT DATE_FORMAT(data, '${keyExpr}') AS k, COALESCE(SUM(valor),0) AS total
+      `SELECT to_char(data, '${keyExpr}') AS k, COALESCE(SUM(valor),0) AS total
        FROM transacoes ${whereSql} GROUP BY k`,
       params
     );
@@ -883,8 +883,8 @@ export async function getFinanceiroV2(): Promise<FinanceiroV2Data> {
     const rows = await query<{ total: string | null }>(
       `SELECT COALESCE(SUM(valor_mensal),0) AS total
        FROM clientes
-       WHERE inicio_contrato <= ?
-         AND (fim_contrato IS NULL OR fim_contrato >= ?)
+       WHERE inicio_contrato <= $1
+         AND (fim_contrato IS NULL OR fim_contrato >= $2)
          AND status IN ('ativo','concluido','pausado')`,
       [dateStr, dateStr]
     );
@@ -914,8 +914,10 @@ export async function getFinanceiroV2(): Promise<FinanceiroV2Data> {
   const ativosAnteriorRows = await query<{ c: number; soma: string | null }>(
     `SELECT COUNT(*) AS c, COALESCE(SUM(valor_mensal),0) AS soma
      FROM clientes
-     WHERE inicio_contrato <= LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
-       AND (fim_contrato IS NULL OR fim_contrato >= LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)))
+     -- LAST_DAY(mês anterior) no Postgres: primeiro dia deste mês menos um dia.
+     WHERE inicio_contrato <= (date_trunc('month', CURRENT_DATE) - INTERVAL '1 day')::date
+       AND (fim_contrato IS NULL
+            OR fim_contrato >= (date_trunc('month', CURRENT_DATE) - INTERVAL '1 day')::date)
        AND status IN ('ativo','concluido')`
   );
   const ticketAnterior = Number(ativosAnteriorRows[0]?.c ?? 0) > 0
@@ -1098,8 +1100,8 @@ export async function getFinanceiro(): Promise<FinanceiroData> {
     const rows = await query<{ total: string | null }>(
       `SELECT COALESCE(SUM(valor_mensal),0) AS total
        FROM clientes
-       WHERE inicio_contrato <= ?
-         AND (fim_contrato IS NULL OR fim_contrato >= ?)
+       WHERE inicio_contrato <= $1
+         AND (fim_contrato IS NULL OR fim_contrato >= $2)
          AND status IN ('ativo','concluido')`,
       [dateStr, dateStr]
     );
@@ -1120,7 +1122,7 @@ export async function getFinanceiro(): Promise<FinanceiroData> {
      FROM clientes
      WHERE status = 'ativo'
        AND fim_contrato IS NOT NULL
-       AND fim_contrato BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+       AND fim_contrato BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
      ORDER BY fim_contrato ASC`
   );
 
@@ -1175,7 +1177,7 @@ export interface TaskItem {
 
 async function tableExists(name: string): Promise<boolean> {
   const rows = await query<{ c: number }>(
-    "SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?",
+    "SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = 'groow' AND table_name = $1",
     [name]
   );
   return Number(rows[0]?.c ?? 0) > 0;
@@ -1191,13 +1193,14 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   if (await tableExists("leads")) {
     const cur = await query<{ c: number }>(
+      // YEAR()=YEAR() AND MONTH()=MONTH() vira uma comparação só de mês truncado.
       `SELECT COUNT(*) AS c FROM leads
-       WHERE YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())`
+       WHERE date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)`
     );
     const prev = await query<{ c: number }>(
       `SELECT COUNT(*) AS c FROM leads
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
-         AND created_at <  DATE_FORMAT(CURDATE(), '%Y-%m-01')`
+       WHERE created_at >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
+         AND created_at <  date_trunc('month', CURRENT_DATE)`
     );
     out.leadsMes = Number(cur[0]?.c ?? 0);
     out.leadsDelta = out.leadsMes - Number(prev[0]?.c ?? 0);
@@ -1209,7 +1212,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     );
     const last = await query<{ c: number }>(
       `SELECT COUNT(*) AS c FROM agendamentos
-       WHERE status = 'agendado' AND data_hora >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+       WHERE status = 'agendado' AND data_hora >= NOW() - INTERVAL '7 days'
          AND data_hora < NOW()`
     );
     out.diagnosticosAgendados = Number(r[0]?.c ?? 0);
@@ -1225,7 +1228,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       `SELECT COUNT(*) AS c, COALESCE(SUM(valor_mensal),0) AS soma
        FROM clientes
        WHERE status = 'ativo'
-         AND inicio_contrato >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`
+         AND inicio_contrato >= date_trunc('month', CURRENT_DATE)`
     );
     out.clientesAtivos = Number(r[0]?.c ?? 0);
     out.faturamentoMensal = Number(r[0]?.soma ?? 0);
@@ -1247,11 +1250,11 @@ export async function getFunnelBreakdown(range?: { from?: string | null; to?: st
     { status: "proposta", label: "Proposta" },
     { status: "fechado", label: "Fechado" },
   ];
+  const { p, params } = construtorSql();
   const where: string[] = [];
-  const params: string[] = [];
-  if (range?.from) { where.push("created_at >= ?"); params.push(`${range.from} 00:00:00`); }
-  if (range?.to) { where.push("created_at <= ?"); params.push(`${range.to} 23:59:59`); }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  if (range?.from) where.push(`created_at >= ${p(`${range.from} 00:00:00`)}`);
+  if (range?.to) where.push(`created_at <= ${p(`${range.to} 23:59:59`)}`);
+  const whereSql = clausulaWhere(where);
   const rows = await query<{ status: string; c: number }>(
     `SELECT status, COUNT(*) AS c FROM leads ${whereSql} GROUP BY status`,
     params
@@ -1293,7 +1296,7 @@ export async function getRecentActivity(limit = 8): Promise<ActivityItem[]> {
     id: number; nome: string; empresa: string; status: string; created_at: Date;
   }>(
     `SELECT id, nome, empresa, status, created_at
-     FROM leads ORDER BY created_at DESC LIMIT ?`,
+     FROM leads ORDER BY created_at DESC LIMIT $1`,
     [limit]
   );
   return rows.map((l) => ({
@@ -1339,11 +1342,11 @@ export async function getMetricas(opts?: { from?: string | null; to?: string | n
   const to = opts?.to ?? null;
 
   // WHERE de data reutilizável para created_at
+  const { p: pd, params: dateParams } = construtorSql();
   const dateWhere: string[] = [];
-  const dateParams: string[] = [];
-  if (from) { dateWhere.push("created_at >= ?"); dateParams.push(`${from} 00:00:00`); }
-  if (to) { dateWhere.push("created_at <= ?"); dateParams.push(`${to} 23:59:59`); }
-  const whereSql = dateWhere.length ? `WHERE ${dateWhere.join(" AND ")}` : "";
+  if (from) dateWhere.push(`created_at >= ${pd(`${from} 00:00:00`)}`);
+  if (to) dateWhere.push(`created_at <= ${pd(`${to} 23:59:59`)}`);
+  const whereSql = clausulaWhere(dateWhere);
 
   // Série de leads por semana dentro do range (ou últimas 12 se sem range)
   const leadsPorSemana = await getLeadsByRange(from, to);
@@ -1376,7 +1379,9 @@ export async function getMetricas(opts?: { from?: string | null; to?: string | n
     .sort((a, b) => b.count - a.count);
 
   const tempoRows = await query<{ media: string | null }>(
-    `SELECT AVG(DATEDIFF(updated_at, created_at)) AS media
+    // DATEDIFF(a,b) do MySQL devolve dias inteiros. No Postgres a subtração de
+    // timestamp dá interval, então extrai-se o total em dias.
+    `SELECT AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400) AS media
      FROM leads WHERE status = 'fechado'`
   );
   const tempoMedioFechar = tempoRows[0]?.media != null ? Number(tempoRows[0].media) : null;
@@ -1388,9 +1393,14 @@ export async function getMetricas(opts?: { from?: string | null; to?: string | n
   const hasMsgs = await tableExists("mensagens_whatsapp");
   if (hasMsgs) {
     const hRows = await query<{ dow: number; hour: number; c: number }>(
-      `SELECT DAYOFWEEK(timestamp) AS dow, HOUR(timestamp) AS hour, COUNT(*) AS c
+      // DAYOFWEEK do MySQL é 1=Dom..7=Sáb; o EXTRACT(DOW) do Postgres é
+      // 0=Dom..6=Sáb, daí o +1 para o heatmap continuar lendo igual.
+      // "timestamp" entre aspas: é nome de coluna e também palavra reservada.
+      `SELECT EXTRACT(DOW FROM "timestamp")::int + 1 AS dow,
+              EXTRACT(HOUR FROM "timestamp")::int AS hour,
+              COUNT(*) AS c
        FROM mensagens_whatsapp
-       WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+       WHERE "timestamp" >= NOW() - INTERVAL '90 days'
        GROUP BY dow, hour`
     );
     heatmap = hRows.map((r) => ({ dow: Number(r.dow), hour: Number(r.hour), count: Number(r.c) }));
@@ -1401,8 +1411,11 @@ export async function getMetricas(opts?: { from?: string | null; to?: string | n
   const hasClientes = await tableExists("clientes");
   if (hasClientes) {
     const ltvRows = await query<{ ltv: string | null }>(
+      // TIMESTAMPDIFF(MONTH, a, b) conta meses COMPLETOS. O equivalente no
+      // Postgres é age(b, a) decomposto em anos*12 + meses.
       `SELECT AVG(valor_mensal * GREATEST(1,
-         TIMESTAMPDIFF(MONTH, inicio_contrato, COALESCE(fim_contrato, CURDATE()))
+         (EXTRACT(YEAR FROM age(COALESCE(fim_contrato, CURRENT_DATE), inicio_contrato)) * 12
+          + EXTRACT(MONTH FROM age(COALESCE(fim_contrato, CURRENT_DATE), inicio_contrato)))::int
        )) AS ltv FROM clientes WHERE status IN ('ativo','concluido')`
     );
     ltvMedio = Number(ltvRows[0]?.ltv ?? 0);
@@ -1427,10 +1440,12 @@ export async function getLeadsByWeek(weeks = 8): Promise<WeeklyPoint[]> {
     }));
   }
   const rows = await query<{ semana: string; leads: number }>(
-    `SELECT DATE_FORMAT(DATE_SUB(created_at, INTERVAL WEEKDAY(created_at) DAY), '%d/%m') AS semana,
+    // "início da semana" no MySQL era created_at menos WEEKDAY(created_at) dias.
+    // O date_trunc('week') do Postgres já é exatamente a segunda-feira da semana.
+    `SELECT to_char(date_trunc('week', created_at), 'DD/MM') AS semana,
             COUNT(*) AS leads
      FROM leads
-     WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? WEEK)
+     WHERE created_at >= CURRENT_DATE - make_interval(weeks => $1)
      GROUP BY semana
      ORDER BY MIN(created_at) ASC`,
     [weeks]
@@ -1442,11 +1457,11 @@ export async function getLeadsByWeek(weeks = 8): Promise<WeeklyPoint[]> {
 export async function getLeadsByRange(from: string | null, to: string | null): Promise<WeeklyPoint[]> {
   if (!(await tableExists("leads"))) return [];
 
+  const { p, params } = construtorSql();
   const where: string[] = [];
-  const params: string[] = [];
-  if (from) { where.push("created_at >= ?"); params.push(`${from} 00:00:00`); }
-  if (to) { where.push("created_at <= ?"); params.push(`${to} 23:59:59`); }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  if (from) where.push(`created_at >= ${p(`${from} 00:00:00`)}`);
+  if (to) where.push(`created_at <= ${p(`${to} 23:59:59`)}`);
+  const whereSql = clausulaWhere(where);
 
   // Decide granularidade: <= 45 dias = por dia, senão por semana
   let dias = 90;
@@ -1458,16 +1473,18 @@ export async function getLeadsByRange(from: string | null, to: string | null): P
 
   if (dias <= 45) {
     const rows = await query<{ dia: string; leads: number }>(
-      `SELECT DATE_FORMAT(created_at, '%d/%m') AS dia, COUNT(*) AS leads
+      // O Postgres exige que o SELECT seja derivável do GROUP BY, então o
+      // to_char é aplicado sobre a MESMA expressão agrupada (created_at::date).
+      `SELECT to_char(created_at::date, 'DD/MM') AS dia, COUNT(*) AS leads
        FROM leads ${whereSql}
-       GROUP BY DATE(created_at) ORDER BY DATE(created_at) ASC`,
+       GROUP BY created_at::date ORDER BY created_at::date ASC`,
       params
     );
     return rows.map((r) => ({ semana: r.dia, leads: Number(r.leads) }));
   }
 
   const rows = await query<{ semana: string; leads: number }>(
-    `SELECT DATE_FORMAT(DATE_SUB(created_at, INTERVAL WEEKDAY(created_at) DAY), '%d/%m') AS semana,
+    `SELECT to_char(date_trunc('week', created_at), 'DD/MM') AS semana,
             COUNT(*) AS leads
      FROM leads ${whereSql}
      GROUP BY semana ORDER BY MIN(created_at) ASC`,
@@ -1501,12 +1518,12 @@ export async function getDailyTasks(): Promise<TaskItem[]> {
       dias: number;
     }>(
       `SELECT id, nome, empresa, ${phone},
-              DATEDIFF(NOW(), ${contatoExpr}) AS dias
+              FLOOR(EXTRACT(EPOCH FROM (NOW() - ${contatoExpr})) / 86400)::int AS dias
        FROM leads
        WHERE status IN ('novo','contatado','quente')
          ${origemFilter}
          ${dedupFilter}
-         AND DATEDIFF(NOW(), ${contatoExpr}) >= 3
+         AND NOW() - ${contatoExpr} >= INTERVAL '3 days'
        ORDER BY dias DESC
        LIMIT 10`
     );
@@ -1533,7 +1550,7 @@ export async function getDailyTasks(): Promise<TaskItem[]> {
        FROM agendamentos a
        JOIN leads l ON l.id = a.lead_id
        WHERE a.status = 'agendado'
-         AND DATE(a.data_hora) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+         AND a.data_hora::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'
        ORDER BY a.data_hora ASC`
     );
     for (const a of today) {
@@ -1558,7 +1575,7 @@ export async function getDailyTasks(): Promise<TaskItem[]> {
        FROM clientes
        WHERE status = 'ativo'
          AND fim_contrato IS NOT NULL
-         AND fim_contrato BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+         AND fim_contrato BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
        ORDER BY fim_contrato ASC`
     );
     for (const c of expiring) {
@@ -1600,11 +1617,13 @@ export async function getAtribuicao(mesDe?: string, mesAte?: string): Promise<At
   const temClientes = await tableExists("clientes");
   const temTrans = await tableExists("transacoes");
 
+  // O mesmo whereLead (e os mesmos params) alimenta as duas consultas abaixo,
+  // por isso um construtor só para as duas.
+  const { p, params } = construtorSql();
   const filtroLead: string[] = [];
-  const params: string[] = [];
-  if (mesDe) { filtroLead.push("DATE_FORMAT(l.created_at,'%Y-%m') >= ?"); params.push(mesDe); }
-  if (mesAte) { filtroLead.push("DATE_FORMAT(l.created_at,'%Y-%m') <= ?"); params.push(mesAte); }
-  const whereLead = filtroLead.length ? `WHERE ${filtroLead.join(" AND ")}` : "";
+  if (mesDe) filtroLead.push(`to_char(l.created_at,'YYYY-MM') >= ${p(mesDe)}`);
+  if (mesAte) filtroLead.push(`to_char(l.created_at,'YYYY-MM') <= ${p(mesAte)}`);
+  const whereLead = clausulaWhere(filtroLead);
 
   // leads e clientes por fonte (fonte_trafego vazia = orgânico/não pago)
   const porFonte = await query<{ canal: string; leads: number; clientes: number }>(
@@ -1637,14 +1656,14 @@ export async function getAtribuicao(mesDe?: string, mesAte?: string): Promise<At
   // investimento por canal no período
   const investPorCanal = new Map<string, number>();
   if (temInvest) {
+    const { p: pi, params: paramsInv } = construtorSql();
     const fi: string[] = [];
-    const pi: string[] = [];
-    if (mesDe) { fi.push("mes >= ?"); pi.push(mesDe); }
-    if (mesAte) { fi.push("mes <= ?"); pi.push(mesAte); }
+    if (mesDe) fi.push(`mes >= ${pi(mesDe)}`);
+    if (mesAte) fi.push(`mes <= ${pi(mesAte)}`);
     const inv = await query<{ canal: string; total: string }>(
       `SELECT canal, COALESCE(SUM(valor),0) AS total FROM trafego_investimentos
-       ${fi.length ? `WHERE ${fi.join(" AND ")}` : ""} GROUP BY canal`,
-      pi
+       ${clausulaWhere(fi)} GROUP BY canal`,
+      paramsInv
     );
     for (const r of inv) investPorCanal.set(r.canal, Number(r.total));
   }

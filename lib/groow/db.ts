@@ -1,50 +1,51 @@
-import mysql from "mysql2/promise";
+/**
+ * Camada de dados do GROOW OS. Postgres, schema `groow`.
+ *
+ * Era mysql2. Não existe nenhuma tradução de SQL aqui: o que está escrito nos
+ * arquivos é o que vai para o banco. Placeholder é `$1`, `$2`, e quem precisa
+ * do id gerado escreve `RETURNING id` na própria query. Sem mágica no meio.
+ *
+ * Por que schema `groow`: o `public` deste banco já tem outra tabela `leads`,
+ * a dos tenants do hub, sem relação com a do CRM da agência.
+ */
+import { Pool, type PoolClient } from "pg";
 
-let pool: mysql.Pool | null = null;
+const globalForGroow = globalThis as unknown as { _groowPool?: Pool };
 
-export function getPool(): mysql.Pool {
-  if (pool) return pool;
+export function getPool(): Pool {
+  if (globalForGroow._groowPool) return globalForGroow._groowPool;
 
-  const host = process.env.MYSQL_HOST || "127.0.0.1";
-  const port = Number(process.env.MYSQL_PORT || 3306);
-  const user = process.env.MYSQL_USER || "";
-  const password = process.env.MYSQL_PASSWORD || "";
-  const database = process.env.MYSQL_DATABASE || "";
-
-  if (!user || !password || !database) {
-    throw new Error(
-      "MySQL env vars ausentes (MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE). Configura no .env.local."
-    );
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL ausente. Configure no .env.local / Coolify.");
   }
 
-  pool = mysql.createPool({
-    host,
-    port,
-    user,
-    password,
-    database,
-    waitForConnections: true,
-    connectionLimit: 5,
-    queueLimit: 0,
-    charset: "utf8mb4",
-    timezone: "Z",
-    dateStrings: false,
+  const pool = new Pool({
+    connectionString,
+    max: 5,
+    idleTimeoutMillis: 30_000,
+    ssl: process.env.PGSSL === "1" ? { rejectUnauthorized: false } : undefined,
+    // Resolve nomes sem qualificação: `leads` cai em groow.leads, e o que não
+    // existir lá ainda encontra o public (extensões, funções).
+    options: "-c search_path=groow,public",
   });
 
+  globalForGroow._groowPool = pool;
   return pool;
 }
 
-type QueryParam = string | number | boolean | Date | null;
+export type QueryParam = string | number | boolean | Date | null;
 
 export async function query<T = unknown>(
   sql: string,
   params: QueryParam[] = []
 ): Promise<T[]> {
-  const [rows] = await getPool().execute(sql, params);
-  return rows as T[];
+  const res = await getPool().query(sql, params);
+  return res.rows as T[];
 }
 
 export interface ExecResult {
+  /** Preenchido só quando a query traz `RETURNING id`. Senão, 0. */
   insertId: number;
   affectedRows: number;
 }
@@ -53,25 +54,62 @@ export async function exec(
   sql: string,
   params: QueryParam[] = []
 ): Promise<ExecResult> {
-  const [result] = await getPool().execute(sql, params);
-  const r = result as { insertId?: number; affectedRows?: number };
-  return { insertId: r.insertId ?? 0, affectedRows: r.affectedRows ?? 0 };
+  const res = await getPool().query(sql, params);
+  return {
+    insertId: Number((res.rows[0] as { id?: unknown } | undefined)?.id ?? 0),
+    affectedRows: res.rowCount ?? 0,
+  };
 }
 
-// Migração leve: garante que uma coluna existe antes de usar (checa 1x por
-// processo). Evita ter que rodar ALTER TABLE na mão no servidor.
+/**
+ * Roda várias instruções na mesma transação. Não existia no MySQL desta base;
+ * agora existe, e é o jeito certo de fazer escrita em duas tabelas.
+ */
+export async function transacao<T>(
+  fn: (c: {
+    query: <R = unknown>(sql: string, params?: QueryParam[]) => Promise<R[]>;
+    exec: (sql: string, params?: QueryParam[]) => Promise<ExecResult>;
+  }) => Promise<T>
+): Promise<T> {
+  const cliente: PoolClient = await getPool().connect();
+  try {
+    await cliente.query("BEGIN");
+    const saida = await fn({
+      query: async <R = unknown>(sql: string, params: QueryParam[] = []) =>
+        (await cliente.query(sql, params)).rows as R[],
+      exec: async (sql: string, params: QueryParam[] = []) => {
+        const r = await cliente.query(sql, params);
+        return {
+          insertId: Number((r.rows[0] as { id?: unknown } | undefined)?.id ?? 0),
+          affectedRows: r.rowCount ?? 0,
+        };
+      },
+    });
+    await cliente.query("COMMIT");
+    return saida;
+  } catch (e) {
+    await cliente.query("ROLLBACK");
+    throw e;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
+ * Migração leve de coluna, mantida do tempo do MySQL porque continua útil para
+ * não ter que rodar ALTER na mão no servidor. O tipo é Postgres puro.
+ */
 const colunasGarantidas = new Set<string>();
 
-export async function garantirColuna(tabela: string, coluna: string, ddl: string): Promise<void> {
+export async function garantirColuna(
+  tabela: string,
+  coluna: string,
+  tipo: string
+): Promise<void> {
   const chave = `${tabela}.${coluna}`;
   if (colunasGarantidas.has(chave)) return;
-  const rows = await query<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM information_schema.columns
-     WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
-    [tabela, coluna]
+  await getPool().query(
+    `ALTER TABLE groow."${tabela}" ADD COLUMN IF NOT EXISTS "${coluna}" ${tipo}`
   );
-  if (!Number(rows[0]?.n ?? 0)) {
-    await getPool().query(`ALTER TABLE \`${tabela}\` ADD COLUMN \`${coluna}\` ${ddl}`);
-  }
   colunasGarantidas.add(chave);
 }

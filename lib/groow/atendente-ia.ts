@@ -7,7 +7,7 @@
 // envia a resposta pelo número oficial e grava como origem 'ai'. Se o cliente
 // pede humano ou o assunto foge do script, faz handoff (a conversa vira 'Você'
 // no admin e a IA silencia até alguém devolver).
-import { query } from "@/lib/groow/db";
+import { query, exec } from "@/lib/groow/db";
 import { sendWhatsAppText } from "@/lib/groow/whatsapp";
 import { registrarIA } from "@/lib/groow/ia-log";
 import { calcularCustoUsd } from "@/lib/groow/custo-ia";
@@ -63,21 +63,23 @@ async function contextoCRM(conversaId: number, whatsapp: string): Promise<string
   try {
     // nome do perfil que já está na conversa (veio da Meta)
     const conv = await query<{ nome: string | null; lead_id: number | null }>(
-      `SELECT nome, lead_id FROM wa_conversas WHERE id = ? LIMIT 1`, [conversaId]
+      `SELECT nome, lead_id FROM wa_conversas WHERE id = $1 LIMIT 1`, [conversaId]
     );
     const nomePerfil = conv[0]?.nome?.trim() || "";
 
+    // Só `telefone`: a tabela leads não tem coluna `whatsapp` (é por isso que o
+    // buildLeadSelect de queries.ts faz o mapeamento). Buscar por ela quebrava.
     const leads = await query<{ id: number; nome: string; empresa: string | null; setor: string | null; cidade: string | null; status: string; notas: string | null }>(
       `SELECT id, nome, empresa, setor, cidade, status, notas FROM leads
-       WHERE ${limpa("whatsapp")} LIKE ? OR ${limpa("telefone")} LIKE ?
+       WHERE ${limpa("telefone")} LIKE $1
        ORDER BY id DESC LIMIT 1`,
-      [`%${nucleo}%`, `%${nucleo}%`]
+      [`%${nucleo}%`]
     );
 
     if (leads[0]) {
       const l = leads[0];
       if (conv[0] && conv[0].lead_id !== l.id) {
-        await query(`UPDATE wa_conversas SET lead_id = ? WHERE id = ?`, [l.id, conversaId]).catch(() => {});
+        await exec(`UPDATE wa_conversas SET lead_id = $1 WHERE id = $2`, [l.id, conversaId]).catch(() => {});
       }
       const p = [`nome: ${l.nome}`];
       if (l.empresa) p.push(`empresa: ${l.empresa}`);
@@ -90,16 +92,18 @@ async function contextoCRM(conversaId: number, whatsapp: string): Promise<string
 
     // primeiro contato: cria lead novo (todo mundo do zap vira lead)
     const nome = nomePerfil || `WhatsApp ${dig.slice(-4)}`;
-    const r = await query<{ insertId?: number }>(
-      `INSERT INTO leads (nome, whatsapp, origem, status) VALUES (?, ?, 'whatsapp', 'novo')`,
+    // Com RETURNING id o insert já devolve o lead criado. O código antigo
+    // inseria e depois refazia uma busca porque o mysql2 não expunha o id pelo
+    // query(); essa segunda ida ao banco deixou de existir.
+    const r = await exec(
+      `INSERT INTO leads (nome, telefone, origem, status)
+       VALUES ($1, $2, 'whatsapp', 'novo') RETURNING id`,
       [nome.slice(0, 120), dig]
-    ).then((rows) => rows as unknown as { insertId?: number }).catch(() => ({ insertId: undefined }));
-    // mysql2 devolve insertId no result; como query() retorna rows, refaz o vínculo por busca
-    const novo = await query<{ id: number }>(
-      `SELECT id FROM leads WHERE ${limpa("whatsapp")} LIKE ? ORDER BY id DESC LIMIT 1`, [`%${nucleo}%`]
-    ).catch(() => []);
-    const leadId = novo[0]?.id ?? r.insertId;
-    if (leadId && conv[0]) await query(`UPDATE wa_conversas SET lead_id = ? WHERE id = ?`, [leadId, conversaId]).catch(() => {});
+    ).catch(() => ({ insertId: 0, affectedRows: 0 }));
+    const leadId = r.insertId || null;
+    if (leadId && conv[0]) {
+      await exec(`UPDATE wa_conversas SET lead_id = $1 WHERE id = $2`, [leadId, conversaId]).catch(() => {});
+    }
     return `\n\nCONTEXTO DO CRM: primeiro contato desse número, acabei de criar um lead novo pra ele no sistema${nomePerfil ? ` (nome do perfil: ${nomePerfil})` : ""}. Descubra na conversa o tipo de negócio e o que ele precisa.`;
   } catch (e) {
     console.error("[atendente-ia] contextoCRM", e);
@@ -127,7 +131,7 @@ export async function gerarRespostaIA(
   // o que o cliente já tinha respondido (ex.: quantas pessoas na festa)
   const hist = await query<MsgHist>(
     `SELECT origem, texto FROM wa_mensagens
-     WHERE conversa_id = ? AND origem IN ('user','ai','humano') AND texto IS NOT NULL
+     WHERE conversa_id = $1 AND origem IN ('user','ai','humano') AND texto IS NOT NULL
      ORDER BY id DESC LIMIT 40`,
     [conversaId]
   );
@@ -215,7 +219,7 @@ export async function gerarFollowupIA(conversaId: number, whatsapp: string, toqu
 
   const hist = await query<MsgHist>(
     `SELECT origem, texto FROM wa_mensagens
-     WHERE conversa_id = ? AND origem IN ('user','ai','humano') AND texto IS NOT NULL
+     WHERE conversa_id = $1 AND origem IN ('user','ai','humano') AND texto IS NOT NULL
      ORDER BY id DESC LIMIT 12`,
     [conversaId]
   );
@@ -272,13 +276,13 @@ async function enviarEmBaloes(conversaId: number, whatsapp: string, texto: strin
   for (const parte of baloes) {
     const { wamid } = await sendWhatsAppText(whatsapp, parte);
     await query(
-      `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES (?, 'ai', 'text', ?, ?, 'sent')`,
+      `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES ($1, 'ai', 'text', $2, $3, 'sent')`,
       [conversaId, parte, wamid]
     );
     ultimo = parte;
   }
   if (ultimo) {
-    await query(`UPDATE wa_conversas SET ultima_mensagem = ?, ultima_mensagem_em = NOW() WHERE id = ?`, [ultimo.slice(0, 500), conversaId]);
+    await query(`UPDATE wa_conversas SET ultima_mensagem = $1, ultima_mensagem_em = NOW() WHERE id = $2`, [ultimo.slice(0, 500), conversaId]);
   }
 }
 
@@ -290,7 +294,7 @@ const conversasRespondendo = new Set<number>();
 async function ultimaMsg(conversaId: number): Promise<{ id: number; origem: string } | null> {
   const rows = await query<{ id: number; origem: string }>(
     `SELECT id, origem FROM wa_mensagens
-     WHERE conversa_id = ? AND origem IN ('user','ai','humano') AND texto IS NOT NULL
+     WHERE conversa_id = $1 AND origem IN ('user','ai','humano') AND texto IS NOT NULL
      ORDER BY id DESC LIMIT 1`,
     [conversaId]
   );
@@ -334,14 +338,14 @@ async function enviarResposta(
   // a IA pediu humano: faz handoff e avisa o cliente com uma linha educada
   if (r.handoff) {
     await query(
-      `UPDATE wa_conversas SET status = 'handed_off', handoff_em = NOW(), handoff_motivo = ?, nao_lidas = nao_lidas + 1 WHERE id = ?`,
+      `UPDATE wa_conversas SET status = 'handed_off', handoff_em = NOW(), handoff_motivo = $1, nao_lidas = nao_lidas + 1 WHERE id = $2`,
       [r.handoff, conversaId]
     );
-    await query(`INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto) VALUES (?, 'sistema', 'text', ?)`, [conversaId, `IA transferiu: ${r.handoff}`]);
+    await query(`INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto) VALUES ($1, 'sistema', 'text', $2)`, [conversaId, `IA transferiu: ${r.handoff}`]);
     const aviso = "Perfeito, vou chamar alguém da equipe pra te atender por aqui. Só um instante.";
     try {
       const { wamid } = await sendWhatsAppText(whatsapp, aviso);
-      await query(`INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES (?, 'ai', 'text', ?, ?, 'sent')`, [conversaId, aviso, wamid]);
+      await query(`INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES ($1, 'ai', 'text', $2, $3, 'sent')`, [conversaId, aviso, wamid]);
     } catch { /* fora da janela: humano assume pelo painel mesmo */ }
     return;
   }

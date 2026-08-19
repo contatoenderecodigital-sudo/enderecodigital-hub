@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/groow/db";
+import { construtorSql } from "@/lib/groow/sql";
 import { PIPELINE_COLUMNS, type Lead, type LeadStatus } from "@/lib/groow/types";
 import { buildLeadSelect } from "@/lib/groow/queries";
 
@@ -13,15 +14,15 @@ export async function GET(request: Request) {
     const select = await buildLeadSelect([
       "id", "nome", "empresa", "whatsapp", "email", "status", "created_at", "updated_at",
     ]);
-    const params: (string | number)[] = [...PIPELINE_COLUMNS];
+    const { p, params } = construtorSql();
     const dateWhere: string[] = [];
-    if (from) { dateWhere.push("created_at >= ?"); params.push(`${from} 00:00:00`); }
-    if (to) { dateWhere.push("created_at <= ?"); params.push(`${to} 23:59:59`); }
+    if (from) dateWhere.push(`created_at >= ${p(`${from} 00:00:00`)}`);
+    if (to) dateWhere.push(`created_at <= ${p(`${to} 23:59:59`)}`);
     const dateSql = dateWhere.length ? ` AND ${dateWhere.join(" AND ")}` : "";
     const leads = await query<Lead>(
       `SELECT ${select}
        FROM leads
-       WHERE status IN (${PIPELINE_COLUMNS.map(() => "?").join(",")})${dateSql}
+       WHERE status IN (${PIPELINE_COLUMNS.map((c) => p(c)).join(",")})${dateSql}
        ORDER BY updated_at DESC`,
       params
     );

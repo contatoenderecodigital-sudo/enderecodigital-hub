@@ -5,19 +5,7 @@ import { cifrar } from "@/lib/groow/cofre";
 export const dynamic = "force-dynamic";
 
 async function garantirTabela() {
-  await getPool().query(`CREATE TABLE IF NOT EXISTS senhas_cofre (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    cliente VARCHAR(200) NOT NULL DEFAULT '',
-    servico VARCHAR(200) NOT NULL,
-    url VARCHAR(500) NOT NULL DEFAULT '',
-    usuario VARCHAR(255) NOT NULL DEFAULT '',
-    segredo TEXT NOT NULL,
-    notas VARCHAR(500) NOT NULL DEFAULT '',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_cofre_cliente (cliente)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  // Schema em db/migrations/groow-postgres.sql, aplicado no deploy.
 }
 
 // GET → lista SEM as senhas (só metadados; revelar é rota própria, 1 por vez)
@@ -26,7 +14,7 @@ export async function GET() {
     await garantirTabela();
     const itens = await query(
       `SELECT id, cliente, servico, url, usuario, notas,
-              DATE_FORMAT(updated_at,'%d/%m/%Y') AS atualizado_em
+              to_char(updated_at,'DD/MM/YYYY') AS atualizado_em
        FROM senhas_cofre ORDER BY cliente, servico LIMIT 500`
     );
     const temChave = !!process.env.SENHAS_CHAVE && process.env.SENHAS_CHAVE.length >= 12;
@@ -51,7 +39,7 @@ export async function POST(req: Request) {
     await garantirTabela();
     const segredo = cifrar(senha);
     const r = await exec(
-      `INSERT INTO senhas_cofre (cliente, servico, url, usuario, segredo, notas) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO senhas_cofre (cliente, servico, url, usuario, segredo, notas) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
       [(body.cliente || "").trim().slice(0, 190), servico.slice(0, 190), (body.url || "").trim().slice(0, 490), (body.usuario || "").trim().slice(0, 250), segredo, (body.notas || "").trim().slice(0, 490)]
     );
     return NextResponse.json({ ok: true, id: r.insertId });

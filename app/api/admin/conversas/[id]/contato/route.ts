@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const conv = await query<{ whatsapp: string; nome: string | null; status: string; ultima_mensagem_em: string | null; created_at: string }>(
-      `SELECT whatsapp, nome, status, ultima_mensagem_em, created_at FROM wa_conversas WHERE id = ? LIMIT 1`,
+      `SELECT whatsapp, nome, status, ultima_mensagem_em, created_at FROM wa_conversas WHERE id = $1 LIMIT 1`,
       [convId]
     );
     const c = conv[0];
@@ -25,14 +25,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     const lead = await query<{ id: number; nome: string | null; empresa: string | null; setor: string | null; cidade: string | null; email: string | null; status: string | null; origem: string | null; notas: string | null }>(
       `SELECT id, nome, empresa, setor, cidade, email, status, origem, notas FROM leads
-       WHERE ${limpa("whatsapp")} LIKE ? OR ${limpa("telefone")} LIKE ?
+       WHERE ${limpa("telefone")} LIKE $1
        ORDER BY id DESC LIMIT 1`,
-      [`%${nucleo}%`, `%${nucleo}%`]
+      [`%${nucleo}%`]
     );
 
     const cliente = await query<{ id: number; empresa: string | null; responsavel: string | null; email: string | null; plano: string | null; status: string | null }>(
       `SELECT id, empresa, responsavel, email, plano, status FROM clientes
-       WHERE ${limpa("whatsapp")} LIKE ? ORDER BY id DESC LIMIT 1`,
+       WHERE ${limpa("whatsapp")} LIKE $1 ORDER BY id DESC LIMIT 1`,
       [`%${nucleo}%`]
     );
 

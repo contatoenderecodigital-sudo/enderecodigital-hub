@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 async function tabelaExiste(nome: string): Promise<boolean> {
   const rows = await query<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?`,
+    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = 'groow' AND table_name = $1`,
     [nome]
   );
   return Number(rows[0]?.n ?? 0) > 0;
@@ -22,16 +22,16 @@ export async function GET() {
     } = { blog: [], social: [], campanhas: [] };
 
     if (await tabelaExiste("blog_posts")) {
-      await garantirColuna("blog_posts", "custo_usd", "DECIMAL(8,4) NULL DEFAULT NULL AFTER origem");
+      await garantirColuna("blog_posts", "custo_usd", "NUMERIC(8,4)");
       out.blog = await query(
-        `SELECT id, titulo, resumo, custo_usd, DATE_FORMAT(created_at,'%d/%m %H:%i') AS criado_em
+        `SELECT id, titulo, resumo, custo_usd, to_char(created_at,'DD/MM HH24:MI') AS criado_em
          FROM blog_posts WHERE status = 'rascunho' ORDER BY id DESC LIMIT 20`
       );
     }
     if (await tabelaExiste("social_conteudos")) {
-      await garantirColuna("social_conteudos", "custo_usd", "DECIMAL(8,4) NULL DEFAULT NULL AFTER hashtags");
+      await garantirColuna("social_conteudos", "custo_usd", "NUMERIC(8,4)");
       out.social = await query(
-        `SELECT id, tipo, titulo, custo_usd, DATE_FORMAT(created_at,'%d/%m %H:%i') AS criado_em
+        `SELECT id, tipo, titulo, custo_usd, to_char(created_at,'DD/MM HH24:MI') AS criado_em
          FROM social_conteudos WHERE status = 'rascunho' ORDER BY id DESC LIMIT 20`
       );
     }

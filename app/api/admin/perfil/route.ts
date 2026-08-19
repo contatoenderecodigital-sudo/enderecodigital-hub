@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, exec } from "@/lib/groow/db";
+import { construtorSql, clausulaWhere, clausulaSet } from "@/lib/groow/sql";
 import { hashPassword } from "@/lib/groow/password";
 import { apiError } from "@/lib/groow/http";
 
@@ -25,20 +26,20 @@ export async function PATCH(request: Request) {
   }
 
   const sets: string[] = [];
-  const vals: (string | null)[] = [];
-  if (typeof body.nome === "string") { sets.push("nome = ?"); vals.push(body.nome.trim() || "Admin"); }
-  if (typeof body.email === "string") { sets.push("email = ?"); vals.push(body.email.trim() || null); }
-  if (typeof body.foto === "string") { sets.push("foto = ?"); vals.push(body.foto || null); }
+  const { p, params } = construtorSql();
+  if (typeof body.nome === "string") { sets.push(`nome = ${p(body.nome.trim() || "Admin")}`); }
+  if (typeof body.email === "string") { sets.push(`email = ${p(body.email.trim() || null)}`); }
+  if (typeof body.foto === "string") { sets.push(`foto = ${p(body.foto || null)}`); }
   if (body.senha && body.senha.length >= 8) {
     const h = await hashPassword(body.senha);
-    sets.push("senha_hash = ?"); vals.push(h);
+    sets.push(`senha_hash = ${p(h)}`);
   }
   if (sets.length === 0) return NextResponse.json({ ok: true });
 
   try {
     // garante a linha id=1
-    await exec(`INSERT IGNORE INTO admin_perfil (id, nome) VALUES (1, 'Admin')`);
-    await exec(`UPDATE admin_perfil SET ${sets.join(", ")} WHERE id = 1`, vals);
+    await exec(`INSERT INTO admin_perfil (id, nome) VALUES (1, 'Admin') ON CONFLICT (id) DO NOTHING`);
+    await exec(`UPDATE admin_perfil ${clausulaSet(sets)} WHERE id = 1`, params);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return apiError("perfil:PATCH", err, 500, "Não foi possível salvar o perfil.");

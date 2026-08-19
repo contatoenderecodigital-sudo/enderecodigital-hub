@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     try {
       await exec(
         `INSERT INTO leads (nome, empresa, telefone, whatsapp, email, setor, cidade, site, endereco, place_id, tem_site_proprio, mensagem, origem, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'prospeccao', 'novo')`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'prospeccao', 'novo')`,
         [
           emp.nome.trim(),
           emp.nome.trim(),

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, exec } from "@/lib/groow/db";
+import { construtorSql, clausulaWhere, clausulaSet } from "@/lib/groow/sql";
 import { parseValorBR } from "@/lib/groow/valor";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +19,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const { p, params } = construtorSql();
   const where: string[] = [];
-  const params: string[] = [];
-  if (from) { where.push("data >= ?"); params.push(from); }
-  if (to) { where.push("data <= ?"); params.push(to); }
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  if (from) where.push(`data >= ${p(from)}`);
+  if (to) where.push(`data <= ${p(to)}`);
+  const whereSql = clausulaWhere(where);
   try {
     const rows = await query<TransacaoRow>(
       `SELECT id, cliente_id, tipo, descricao, valor, data, created_at
@@ -55,15 +56,15 @@ export async function POST(request: Request) {
     if (tipo === "recorrente" && body.cliente_id && !body.forcar) {
       const dup = await query<{ id: number }>(
         `SELECT id FROM transacoes
-         WHERE cliente_id = ? AND tipo = 'recorrente'
-           AND DATE_FORMAT(data,'%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+         WHERE cliente_id = $1 AND tipo = 'recorrente'
+           AND to_char(data,'YYYY-MM') = to_char($2::date, 'YYYY-MM')
          LIMIT 1`,
         [body.cliente_id, data]
       );
       if (dup[0]) return NextResponse.json({ ok: true, id: dup[0].id, jaExistia: true });
     }
     const result = await exec(
-      `INSERT INTO transacoes (cliente_id, tipo, descricao, valor, data) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO transacoes (cliente_id, tipo, descricao, valor, data) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
       [body.cliente_id || null, tipo, body.descricao?.trim() || null, valor, data]
     );
     return NextResponse.json({ ok: true, id: result.insertId });

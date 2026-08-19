@@ -25,8 +25,8 @@ async function janelaAbertaHa24h(whatsapp: string): Promise<boolean> {
   const rows = await query<{ recente: number }>(
     `SELECT COUNT(*) AS recente
        FROM wa_mensagens m JOIN wa_conversas c ON c.id = m.conversa_id
-      WHERE c.whatsapp = ? AND m.origem = 'user'
-        AND m.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+      WHERE c.whatsapp = $1 AND m.origem = 'user'
+        AND m.created_at >= NOW() - INTERVAL '24 hours'`,
     [whatsapp]
   );
   return (rows[0]?.recente ?? 0) > 0;
@@ -49,12 +49,14 @@ export async function POST(req: NextRequest) {
     // 1) cria ou reusa a conversa
     await exec(
       `INSERT INTO wa_conversas (canal, whatsapp, nome, status, ultima_mensagem_em, nao_lidas)
-       VALUES ('meta', ?, ?, ?, NOW(), 0)
-       ON DUPLICATE KEY UPDATE nome = COALESCE(nome, VALUES(nome)), status = VALUES(status)`,
+       VALUES ('meta', $1, $2, $3, NOW(), 0)
+       ON CONFLICT (canal, whatsapp) DO UPDATE
+         SET nome = COALESCE(wa_conversas.nome, EXCLUDED.nome),
+             status = EXCLUDED.status`,
       [whatsapp, nome, statusInicial]
     );
     const conv = await query<{ id: number }>(
-      `SELECT id FROM wa_conversas WHERE canal = 'meta' AND whatsapp = ? LIMIT 1`,
+      `SELECT id FROM wa_conversas WHERE canal = 'meta' AND whatsapp = $1 LIMIT 1`,
       [whatsapp]
     );
     const conversaId = conv[0]?.id;
@@ -92,11 +94,11 @@ export async function POST(req: NextRequest) {
     // 3) grava a mensagem e atualiza a conversa
     await exec(
       `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega)
-       VALUES (?, 'humano', ?, ?, ?, 'sent')`,
+       VALUES ($1, 'humano', $2, $3, $4, 'sent')`,
       [conversaId, querTexto ? "text" : "template", textoRegistrado, wamid]
     );
     await exec(
-      `UPDATE wa_conversas SET ultima_mensagem = ?, ultima_mensagem_em = NOW() WHERE id = ?`,
+      `UPDATE wa_conversas SET ultima_mensagem = $1, ultima_mensagem_em = NOW() WHERE id = $2`,
       [textoRegistrado.slice(0, 500), conversaId]
     );
 

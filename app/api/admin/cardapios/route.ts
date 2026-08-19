@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 async function tabelaExiste(): Promise<boolean> {
   try {
     const r = await query<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'cardapio_respostas'`
+      `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = 'groow' AND table_name = 'cardapio_respostas'`
     );
     return Number(r[0]?.n ?? 0) > 0;
   } catch { return false; }
@@ -18,7 +18,7 @@ export async function GET() {
     if (!(await tabelaExiste())) return NextResponse.json({ respostas: [] });
     const respostas = await query(
       `SELECT id, cliente, slug, total_itens, selecionados, observacoes, lida,
-              DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS quando
+              to_char(created_at, 'DD/MM/YYYY HH24:MI') AS quando
        FROM cardapio_respostas ORDER BY id DESC LIMIT 200`
     );
     // marca as não lidas como lidas (o operador está vendo agora)

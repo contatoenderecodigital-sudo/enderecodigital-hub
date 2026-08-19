@@ -29,8 +29,8 @@ export async function GET() {
       const ativosNoMes = await query<{ total: string | null }>(
         `SELECT COALESCE(SUM(valor_mensal),0) AS total
          FROM clientes
-         WHERE inicio_contrato <= ?
-           AND (fim_contrato IS NULL OR fim_contrato >= ?)
+         WHERE inicio_contrato <= $1
+           AND (fim_contrato IS NULL OR fim_contrato >= $2)
            AND status IN ('ativo','concluido')`,
         [d.toISOString().slice(0, 10), d.toISOString().slice(0, 10)]
       );
@@ -55,7 +55,7 @@ export async function GET() {
       const rows = await query<{ total: string | null }>(
         `SELECT COALESCE(SUM(valor_setup),0) AS total
          FROM clientes
-         WHERE inicio_contrato BETWEEN ? AND ?
+         WHERE inicio_contrato BETWEEN $1 AND $2
            AND valor_setup > 0`,
         [d.toISOString().slice(0, 10), fimMes.toISOString().slice(0, 10)]
       );
@@ -78,7 +78,7 @@ export async function GET() {
        FROM clientes
        WHERE status = 'ativo'
          AND fim_contrato IS NOT NULL
-         AND fim_contrato BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+         AND fim_contrato BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
        ORDER BY fim_contrato ASC`
     );
 

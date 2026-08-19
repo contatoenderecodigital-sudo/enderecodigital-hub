@@ -47,6 +47,20 @@ const GUIAS: Guia[] = [
     ],
   },
   {
+    prefixo: "/operacao/parceiros",
+    titulo: "Parceiros",
+    resumo:
+      "Quem faz call fria e ganha percentual quando o indicado dele fecha contrato. Cada parceiro tem link próprio, painel próprio e extrato de comissão.",
+    passos: [
+      "Cadastre o parceiro com e-mail, senha inicial e os percentuais de implantação e mensalidade.",
+      "Mande pra ele o link /p/codigo: quem entrar por ali e pedir diagnóstico já nasce na conta dele.",
+      "Na ficha do parceiro, os leads da call fria aparecem na fila. Só dispara quem tem autorização com prova.",
+      "Disparar promove o lead pra operação, manda o template aprovado e abre a conversa no inbox.",
+      "Apurar mês gera as comissões dos contratos fechados. Depois aprove e marque como pago.",
+    ],
+    dica: "A comissão nasce do contrato, não do lead. Sem cliente cadastrado com valor e data de início, não há o que apurar.",
+  },
+  {
     prefixo: "/operacao/tarefas",
     titulo: "Tarefas",
     resumo: "Teu quadro de pendências do dia a dia da operação.",

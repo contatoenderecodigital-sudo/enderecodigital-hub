@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   try {
     const r = await exec(
       `INSERT INTO wa_campanhas (nome, template_nome, template_idioma, body_params_modo, status, cap_dia, janela_inicio, janela_fim, pular_domingo, inicio_agendado, optin_confirmado)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 1) RETURNING id`,
       [
         body.nome.trim(),
         body.template_nome.trim(),
@@ -85,10 +85,11 @@ export async function POST(req: Request) {
     const CHUNK = 200;
     for (let i = 0; i < validos.length; i += CHUNK) {
       const slice = validos.slice(i, i + CHUNK);
-      const values = slice.map(() => "(?, ?, ?)").join(",");
+      const values = slice.map((_, j) => `($${j * 3 + 1}, $${j * 3 + 2}, $${j * 3 + 3})`).join(",");
       const params = slice.flatMap((d) => [campId, d.whatsapp, d.nome]);
       await exec(
-        `INSERT IGNORE INTO wa_campanha_destinatarios (campanha_id, whatsapp, nome) VALUES ${values}`,
+        `INSERT INTO wa_campanha_destinatarios (campanha_id, whatsapp, nome) VALUES ${values}
+         ON CONFLICT (campanha_id, whatsapp) DO NOTHING`,
         params
       );
     }

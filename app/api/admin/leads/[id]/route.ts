@@ -16,13 +16,13 @@ export async function GET(
 
   try {
     const leads = await query<Lead>(
-      `SELECT * FROM leads WHERE id = ? LIMIT 1`,
+      `SELECT * FROM leads WHERE id = $1 LIMIT 1`,
       [id]
     );
     if (!leads[0]) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
     const follow_ups = await query<FollowUp>(
-      `SELECT * FROM follow_ups WHERE lead_id = ? ORDER BY created_at DESC`,
+      `SELECT * FROM follow_ups WHERE lead_id = $1 ORDER BY created_at DESC`,
       [id]
     );
 
@@ -67,32 +67,32 @@ export async function PATCH(
   try {
     if (body.status && (LEAD_STATUSES as readonly string[]).includes(body.status)) {
       await query(
-        `UPDATE leads SET status = ?, ultimo_contato_em = NOW() WHERE id = ?`,
+        `UPDATE leads SET status = $1, ultimo_contato_em = NOW() WHERE id = $2`,
         [body.status, id]
       );
     }
     if (typeof body.notas === "string") {
-      await query(`UPDATE leads SET notas = ? WHERE id = ?`, [body.notas, id]);
+      await query(`UPDATE leads SET notas = $1 WHERE id = $2`, [body.notas, id]);
     }
     if (typeof body.origem === "string") {
-      await query(`UPDATE leads SET origem = ? WHERE id = ?`, [body.origem, id]);
+      await query(`UPDATE leads SET origem = $1 WHERE id = $2`, [body.origem, id]);
     }
     if (body.fonte_trafego !== undefined) {
-      await query(`UPDATE leads SET fonte_trafego = ? WHERE id = ?`, [body.fonte_trafego || null, id]);
+      await query(`UPDATE leads SET fonte_trafego = $1 WHERE id = $2`, [body.fonte_trafego || null, id]);
     }
     if (typeof body.setor === "string") {
-      await query(`UPDATE leads SET setor = ? WHERE id = ?`, [body.setor, id]);
+      await query(`UPDATE leads SET setor = $1 WHERE id = $2`, [body.setor, id]);
     }
     if (typeof body.faturamento === "string") {
-      await query(`UPDATE leads SET faturamento = ? WHERE id = ?`, [body.faturamento, id]);
+      await query(`UPDATE leads SET faturamento = $1 WHERE id = $2`, [body.faturamento, id]);
     }
     if (typeof body.ultimo_contato_em === "string") {
-      await query(`UPDATE leads SET ultimo_contato_em = NOW() WHERE id = ?`, [id]);
+      await query(`UPDATE leads SET ultimo_contato_em = NOW() WHERE id = $1`, [id]);
     }
     if (body.followUp && body.followUp.descricao) {
       await query(
         `INSERT INTO follow_ups (lead_id, tipo, descricao, resultado)
-         VALUES (?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4)`,
         [
           id,
           body.followUp.tipo,
@@ -100,7 +100,7 @@ export async function PATCH(
           body.followUp.resultado || null,
         ]
       );
-      await query(`UPDATE leads SET ultimo_contato_em = NOW() WHERE id = ?`, [id]);
+      await query(`UPDATE leads SET ultimo_contato_em = NOW() WHERE id = $1`, [id]);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -122,8 +122,8 @@ export async function DELETE(
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
   try {
-    await query(`DELETE FROM follow_ups WHERE lead_id = ?`, [id]);
-    await query(`DELETE FROM leads WHERE id = ?`, [id]);
+    await query(`DELETE FROM follow_ups WHERE lead_id = $1`, [id]);
+    await query(`DELETE FROM leads WHERE id = $1`, [id]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/leads/[id]]", err);

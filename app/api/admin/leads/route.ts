@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, exec } from "@/lib/groow/db";
+import { construtorSql, clausulaWhere } from "@/lib/groow/sql";
 import type { Lead } from "@/lib/groow/types";
 import { LEAD_STATUSES } from "@/lib/groow/types";
 import { buildLeadSelect } from "@/lib/groow/queries";
@@ -12,27 +13,27 @@ export async function GET(request: Request) {
   const q = searchParams.get("q");
   const periodo = searchParams.get("periodo");
 
+  const { p, params } = construtorSql();
   const where: string[] = [];
-  const params: (string | number)[] = [];
 
   if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
-    where.push("status = ?");
-    params.push(status);
+    where.push(`status = ${p(status)}`);
   }
   if (q) {
-    where.push("(nome LIKE ? OR empresa LIKE ? OR email LIKE ?)");
+    // ILIKE e não LIKE: no Postgres o LIKE é sensível a maiúscula, e a busca do
+    // painel sempre foi case-insensitive (no MySQL o collation cuidava disso).
     const term = `%${q}%`;
-    params.push(term, term, term);
+    where.push(`(nome ILIKE ${p(term)} OR empresa ILIKE ${p(term)} OR email ILIKE ${p(term)})`);
   }
   if (periodo === "7d") {
-    where.push("created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+    where.push("created_at >= NOW() - INTERVAL '7 days'");
   } else if (periodo === "30d") {
-    where.push("created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    where.push("created_at >= NOW() - INTERVAL '30 days'");
   } else if (periodo === "90d") {
-    where.push("created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)");
+    where.push("created_at >= NOW() - INTERVAL '90 days'");
   }
 
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const whereSql = clausulaWhere(where);
 
   try {
     const select = await buildLeadSelect([
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   try {
     const result = await exec(
       `INSERT INTO leads (nome, empresa, telefone, email, setor, cidade, faturamento, origem, fonte_trafego, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
       [
         body.nome.trim(),
         body.empresa?.trim() || null,

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       if (nucleo && jaTem.has(nucleo)) { pulados++; continue; }
       await exec(
         `INSERT INTO leads (nome, empresa, telefone, setor, cidade, notas, origem, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'prospeccao', 'novo')`,
+         VALUES ($1, $2, $3, $4, $5, $6, 'prospeccao', 'novo')`,
         [l.nome.slice(0, 120), (l.empresa || l.nome).slice(0, 160), num || null, (l.setor || "").slice(0, 80) || null, (l.cidade || "").slice(0, 80) || null, (l.notas || "").slice(0, 2000) || null]
       );
       if (nucleo) jaTem.add(nucleo);

@@ -11,7 +11,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   try {
     await garantirTabelaMapa();
-    const rows = await query<MapaRow>(`SELECT id, nome, dados, token FROM mapas_ecossistema WHERE id = ? LIMIT 1`, [Number(id)]);
+    const rows = await query<MapaRow>(`SELECT id, nome, dados, token FROM mapas_ecossistema WHERE id = $1 LIMIT 1`, [Number(id)]);
     if (!rows[0]) return NextResponse.json({ error: "Mapa não encontrado" }, { status: 404 });
     let dados: unknown = { nodes: [], edges: [] };
     try { dados = JSON.parse(rows[0].dados); } catch { /* mantém vazio */ }
@@ -33,11 +33,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (body.nome !== undefined) {
       const nome = body.nome.trim();
       if (!nome) return NextResponse.json({ error: "Nome vazio" }, { status: 400 });
-      await exec(`UPDATE mapas_ecossistema SET nome = ? WHERE id = ?`, [nome.slice(0, 190), Number(id)]);
+      await exec(`UPDATE mapas_ecossistema SET nome = $1 WHERE id = $2`, [nome.slice(0, 190), Number(id)]);
     }
     if (body.dados !== undefined) {
       const dados = { nodes: Array.isArray(body.dados.nodes) ? body.dados.nodes : [], edges: Array.isArray(body.dados.edges) ? body.dados.edges : [] };
-      await exec(`UPDATE mapas_ecossistema SET dados = ? WHERE id = ?`, [JSON.stringify(dados), Number(id)]);
+      await exec(`UPDATE mapas_ecossistema SET dados = $1 WHERE id = $2`, [JSON.stringify(dados), Number(id)]);
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -49,7 +49,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   try {
-    await exec(`DELETE FROM mapas_ecossistema WHERE id = ?`, [Number(id)]);
+    await exec(`DELETE FROM mapas_ecossistema WHERE id = $1`, [Number(id)]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[mapa/id DELETE]", err);

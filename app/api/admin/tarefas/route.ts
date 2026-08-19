@@ -72,14 +72,14 @@ export async function POST(request: Request) {
     try {
       result = await exec(
         `INSERT INTO tarefas (titulo, prioridade, lead_id, cliente_id, data_vencimento, status, concluida_em)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
         [body.titulo.trim(), prioridade, body.lead_id || null, body.cliente_id || null, body.data_vencimento || null, concluida ? "concluida" : "pendente", concluidaEm]
       );
     } catch {
       // fallback: coluna cliente_id ainda não criada
       result = await exec(
         `INSERT INTO tarefas (titulo, prioridade, lead_id, data_vencimento, status, concluida_em)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
         [body.titulo.trim(), prioridade, body.lead_id || null, body.data_vencimento || null, concluida ? "concluida" : "pendente", concluidaEm]
       );
     }

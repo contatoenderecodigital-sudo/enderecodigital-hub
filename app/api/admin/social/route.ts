@@ -9,14 +9,14 @@ export async function GET() {
   try {
     const ideias = await query(
       `SELECT i.id, i.pilar, i.tipo, i.hook, i.descricao, i.formato, i.status,
-              DATE_FORMAT(i.created_at,'%d/%m') AS criada_em,
+              to_char(i.created_at,'DD/MM') AS criada_em,
               (SELECT c.id FROM social_conteudos c WHERE c.ideia_id = i.id ORDER BY c.id DESC LIMIT 1) AS conteudo_id
        FROM social_ideias i
        WHERE i.status <> 'descartada'
        ORDER BY i.status = 'nova' DESC, i.id DESC LIMIT 300`
     );
     const conteudos = await query(
-      `SELECT id, ideia_id, tipo, titulo, status, DATE_FORMAT(created_at,'%d/%m %H:%i') AS criado_em
+      `SELECT id, ideia_id, tipo, titulo, status, to_char(created_at,'DD/MM HH24:MI') AS criado_em
        FROM social_conteudos ORDER BY id DESC LIMIT 100`
     );
     return NextResponse.json({ ideias, conteudos });
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     for (const i of ideias) {
       await exec(
-        `INSERT INTO social_ideias (pilar, tipo, hook, descricao, formato) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO social_ideias (pilar, tipo, hook, descricao, formato) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
         [i.pilar, i.tipo, i.hook.slice(0, 250), i.descricao ?? "", (i.formato ?? "").slice(0, 78)]
       );
     }

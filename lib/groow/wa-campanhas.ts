@@ -45,7 +45,7 @@ export function normalizarZapBR(raw: string): string | null {
 
 async function tabelaExiste(nome: string): Promise<boolean> {
   const rows = await query<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?`,
+    `SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = 'groow' AND table_name = $1`,
     [nome]
   );
   return Number(rows[0]?.n ?? 0) > 0;
@@ -66,7 +66,7 @@ function agoraBRT(): { hora: number; domingo: boolean } {
 
 export async function statsDaCampanha(campanhaId: number): Promise<WaCampanhaStats> {
   const rows = await query<{ status: string; n: number }>(
-    `SELECT status, COUNT(*) AS n FROM wa_campanha_destinatarios WHERE campanha_id = ? GROUP BY status`,
+    `SELECT status, COUNT(*) AS n FROM wa_campanha_destinatarios WHERE campanha_id = $1 GROUP BY status`,
     [campanhaId]
   );
   const s: WaCampanhaStats = { total: 0, pendente: 0, enviado: 0, entregue: 0, lido: 0, respondeu: 0, falha: 0, optout: 0 };
@@ -104,7 +104,7 @@ export async function processarTick(): Promise<{ enviadas: number; falhas: numbe
 
     const hoje = await query<{ n: number }>(
       `SELECT COUNT(*) AS n FROM wa_campanha_destinatarios
-       WHERE campanha_id = ? AND enviado_em IS NOT NULL AND DATE(enviado_em) = CURDATE()`,
+       WHERE campanha_id = $1 AND enviado_em IS NOT NULL AND enviado_em::date = CURRENT_DATE`,
       [c.id]
     );
     const restanteHoje = c.cap_dia - Number(hoje[0]?.n ?? 0);
@@ -113,32 +113,33 @@ export async function processarTick(): Promise<{ enviadas: number; falhas: numbe
     // marca opt-outs pendentes antes de enviar (quem pediu SAIR em outra campanha)
     await exec(
       `UPDATE wa_campanha_destinatarios d
-       JOIN wa_optout o ON o.whatsapp = d.whatsapp
-       SET d.status = 'optout'
-       WHERE d.campanha_id = ? AND d.status = 'pendente'`,
+          SET status = 'optout'
+         FROM wa_optout o
+        WHERE o.whatsapp = d.whatsapp
+          AND d.campanha_id = $1 AND d.status = 'pendente'`,
       [c.id]
     );
 
     const lote = await query<{ id: number; whatsapp: string; nome: string | null }>(
       `SELECT id, whatsapp, nome FROM wa_campanha_destinatarios
-       WHERE campanha_id = ? AND status = 'pendente'
-       ORDER BY id LIMIT ?`,
+       WHERE campanha_id = $1 AND status = 'pendente'
+       ORDER BY id LIMIT $2`,
       [c.id, Math.min(restanteHoje, LOTE_POR_TICK)]
     );
 
     if (!lote.length) {
       const pend = await query<{ n: number }>(
-        `SELECT COUNT(*) AS n FROM wa_campanha_destinatarios WHERE campanha_id = ? AND status = 'pendente'`,
+        `SELECT COUNT(*) AS n FROM wa_campanha_destinatarios WHERE campanha_id = $1 AND status = 'pendente'`,
         [c.id]
       );
       if (Number(pend[0]?.n ?? 0) === 0) {
-        await exec(`UPDATE wa_campanhas SET status = 'concluida' WHERE id = ?`, [c.id]);
+        await exec(`UPDATE wa_campanhas SET status = 'concluida' WHERE id = $1`, [c.id]);
       }
       continue;
     }
 
     if (c.status === "agendada") {
-      await exec(`UPDATE wa_campanhas SET status = 'enviando' WHERE id = ?`, [c.id]);
+      await exec(`UPDATE wa_campanhas SET status = 'enviando' WHERE id = $1`, [c.id]);
     }
 
     for (const d of lote) {
@@ -146,13 +147,13 @@ export async function processarTick(): Promise<{ enviadas: number; falhas: numbe
         const params = c.body_params_modo === "nome" ? [d.nome?.trim() || "tudo bem"] : [];
         const { wamid } = await sendWhatsAppTemplate(d.whatsapp, c.template_nome, c.template_idioma, params);
         await exec(
-          `UPDATE wa_campanha_destinatarios SET status = 'enviado', wamid = ?, enviado_em = NOW(), erro = NULL WHERE id = ?`,
+          `UPDATE wa_campanha_destinatarios SET status = 'enviado', wamid = $1, enviado_em = NOW(), erro = NULL WHERE id = $2`,
           [wamid, d.id]
         );
         enviadas++;
       } catch (err) {
         await exec(
-          `UPDATE wa_campanha_destinatarios SET status = 'falha', erro = ? WHERE id = ?`,
+          `UPDATE wa_campanha_destinatarios SET status = 'falha', erro = $1 WHERE id = $2`,
           [(err instanceof Error ? err.message : "erro").slice(0, 250), d.id]
         );
         falhas++;

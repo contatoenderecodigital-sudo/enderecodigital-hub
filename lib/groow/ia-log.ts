@@ -8,23 +8,8 @@ let tabelaOk = false;
 
 async function garantirTabela(): Promise<void> {
   if (tabelaOk) return;
-  await getPool().query(`CREATE TABLE IF NOT EXISTS ia_logs (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    modulo VARCHAR(40) NOT NULL,
-    acao VARCHAR(160) NOT NULL DEFAULT '',
-    modelo VARCHAR(60) NOT NULL DEFAULT '',
-    input_tokens INT UNSIGNED NOT NULL DEFAULT 0,
-    output_tokens INT UNSIGNED NOT NULL DEFAULT 0,
-    buscas_web INT UNSIGNED NOT NULL DEFAULT 0,
-    custo_usd DECIMAL(8,4) NOT NULL DEFAULT 0,
-    duracao_ms INT UNSIGNED NOT NULL DEFAULT 0,
-    status ENUM('ok','erro') NOT NULL DEFAULT 'ok',
-    detalhe VARCHAR(300) NOT NULL DEFAULT '',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_ia_data (created_at),
-    KEY idx_ia_modulo (modulo, created_at)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  // Schema em db/migrations/groow-postgres.sql, aplicado no deploy. O DDL em
+  // runtime era do tempo do MySQL e não vale mais.
   tabelaOk = true;
 }
 
@@ -43,7 +28,7 @@ export async function registrarIA(r: {
     const u = r.usage;
     await exec(
       `INSERT INTO ia_logs (modulo, acao, modelo, input_tokens, output_tokens, buscas_web, custo_usd, duracao_ms, status, detalhe)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [
         r.modulo.slice(0, 38),
         (r.acao ?? "").slice(0, 155),

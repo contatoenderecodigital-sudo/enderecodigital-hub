@@ -19,8 +19,8 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const periodo = url.searchParams.get("periodo") || "90d";
   const wherePeriodo =
-    periodo === "30d" ? "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
-    : periodo === "90d" ? "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)"
+    periodo === "30d" ? "WHERE created_at >= NOW() - INTERVAL '30 days'"
+    : periodo === "90d" ? "WHERE created_at >= NOW() - INTERVAL '90 days'"
     : "";
 
   try {
@@ -56,10 +56,10 @@ export async function GET(req: Request) {
     );
 
     const porMes = await query<{ mes: string; n: number; fechados: number }>(
-      `SELECT DATE_FORMAT(created_at,'%Y-%m') AS mes, COUNT(*) AS n,
+      `SELECT to_char(created_at,'YYYY-MM') AS mes, COUNT(*) AS n,
               SUM(CASE WHEN status IN ('fechado','assinado') THEN 1 ELSE 0 END) AS fechados
-       FROM leads WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY DATE_FORMAT(created_at,'%Y-%m') ORDER BY mes`
+       FROM leads WHERE created_at >= NOW() - INTERVAL '6 months'
+       GROUP BY mes ORDER BY mes`
     );
 
     return NextResponse.json({ total, fechados, perdidos, etapas, porOrigem, porMes });

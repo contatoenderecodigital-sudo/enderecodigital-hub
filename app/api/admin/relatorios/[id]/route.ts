@@ -10,7 +10,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   try {
     await garantirTabelaRelatorios();
-    const rows = await query<RelRow>(`SELECT id, cliente, periodo, dados, token FROM relatorios_cliente WHERE id = ? LIMIT 1`, [Number(id)]);
+    const rows = await query<RelRow>(`SELECT id, cliente, periodo, dados, token FROM relatorios_cliente WHERE id = $1 LIMIT 1`, [Number(id)]);
     if (!rows[0]) return NextResponse.json({ error: "Relatório não encontrado" }, { status: 404 });
     let dados: unknown = {};
     try { dados = JSON.parse(rows[0].dados); } catch { /* */ }
@@ -28,9 +28,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
   try {
-    if (body.cliente !== undefined) await exec(`UPDATE relatorios_cliente SET cliente = ? WHERE id = ?`, [body.cliente.trim().slice(0, 190) || "Cliente", Number(id)]);
-    if (body.periodo !== undefined) await exec(`UPDATE relatorios_cliente SET periodo = ? WHERE id = ?`, [body.periodo.trim().slice(0, 20), Number(id)]);
-    if (body.dados !== undefined) await exec(`UPDATE relatorios_cliente SET dados = ? WHERE id = ?`, [JSON.stringify(body.dados), Number(id)]);
+    if (body.cliente !== undefined) await exec(`UPDATE relatorios_cliente SET cliente = $1 WHERE id = $2`, [body.cliente.trim().slice(0, 190) || "Cliente", Number(id)]);
+    if (body.periodo !== undefined) await exec(`UPDATE relatorios_cliente SET periodo = $1 WHERE id = $2`, [body.periodo.trim().slice(0, 20), Number(id)]);
+    if (body.dados !== undefined) await exec(`UPDATE relatorios_cliente SET dados = $1 WHERE id = $2`, [JSON.stringify(body.dados), Number(id)]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[relatorios/id PATCH]", err);
@@ -41,7 +41,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   try {
-    await exec(`DELETE FROM relatorios_cliente WHERE id = ?`, [Number(id)]);
+    await exec(`DELETE FROM relatorios_cliente WHERE id = $1`, [Number(id)]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[relatorios/id DELETE]", err);

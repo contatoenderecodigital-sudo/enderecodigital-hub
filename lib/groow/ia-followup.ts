@@ -19,16 +19,10 @@ const PADRAO: FollowupConfig = { ativo: false, intervalos: [4, 12] };
 const TETO_POR_RODADA = 15;
 
 async function garantir() {
-  await exec(
-    `CREATE TABLE IF NOT EXISTS ia_followup_config (
-      id TINYINT PRIMARY KEY DEFAULT 1,
-      ativo TINYINT(1) NOT NULL DEFAULT 0,
-      intervalos VARCHAR(120) NOT NULL DEFAULT '4,12',
-      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
-  );
-  await garantirColuna("wa_conversas", "followups_enviados", "INT NOT NULL DEFAULT 0");
-  await garantirColuna("wa_conversas", "ultimo_followup_em", "DATETIME NULL");
+  // Schema em db/migrations/groow-postgres.sql, aplicado no deploy. O DDL em
+  // runtime era do tempo do MySQL e não vale mais.
+  await garantirColuna("wa_conversas", "followups_enviados", "INTEGER NOT NULL DEFAULT 0");
+  await garantirColuna("wa_conversas", "ultimo_followup_em", "TIMESTAMPTZ");
 }
 
 export async function getFollowupConfig(): Promise<FollowupConfig> {
@@ -47,8 +41,8 @@ export async function setFollowupConfig(cfg: FollowupConfig): Promise<void> {
   await garantir();
   const intervalos = (cfg.intervalos ?? []).filter((n) => n > 0 && n <= 24).slice(0, 4);
   await exec(
-    `INSERT INTO ia_followup_config (id, ativo, intervalos) VALUES (1, ?, ?)
-     ON DUPLICATE KEY UPDATE ativo = VALUES(ativo), intervalos = VALUES(intervalos)`,
+    `INSERT INTO ia_followup_config (id, ativo, intervalos) VALUES (1, $1, $2)
+     ON CONFLICT (id) DO UPDATE SET ativo = EXCLUDED.ativo, intervalos = EXCLUDED.intervalos`,
     [cfg.ativo ? 1 : 0, (intervalos.length ? intervalos : PADRAO.intervalos).join(",")]
   );
 }
@@ -97,7 +91,7 @@ export async function processarFollowups(): Promise<number> {
     if (horas(c.ultima_mensagem_em) < cfg.intervalos[toque]) continue;
     // opt-out
     try {
-      const off = await query<{ n: number }>(`SELECT COUNT(*) AS n FROM wa_optout WHERE whatsapp = ?`, [c.whatsapp]);
+      const off = await query<{ n: number }>(`SELECT COUNT(*) AS n FROM wa_optout WHERE whatsapp = $1`, [c.whatsapp]);
       if (Number(off[0]?.n ?? 0) > 0) continue;
     } catch { /* tabela de opt-out pode não existir */ }
 
@@ -106,11 +100,11 @@ export async function processarFollowups(): Promise<number> {
     try {
       const { wamid } = await sendWhatsAppText(c.whatsapp, msg);
       await exec(
-        `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES (?, 'ai', 'text', ?, ?, 'sent')`,
+        `INSERT INTO wa_mensagens (conversa_id, origem, tipo, texto, wamid, status_entrega) VALUES ($1, 'ai', 'text', $2, $3, 'sent')`,
         [c.id, msg, wamid]
       );
       await exec(
-        `UPDATE wa_conversas SET ultima_mensagem = ?, ultima_mensagem_em = NOW(), followups_enviados = followups_enviados + 1, ultimo_followup_em = NOW() WHERE id = ?`,
+        `UPDATE wa_conversas SET ultima_mensagem = $1, ultima_mensagem_em = NOW(), followups_enviados = followups_enviados + 1, ultimo_followup_em = NOW() WHERE id = $2`,
         [msg.slice(0, 500), c.id]
       );
       enviados++;

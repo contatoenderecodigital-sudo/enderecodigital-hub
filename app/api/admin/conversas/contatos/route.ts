@@ -7,6 +7,7 @@
 // vez de sumir num "nenhum contato" enganoso.
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/groow/db";
+import { construtorSql } from "@/lib/groow/sql";
 import { getColumns } from "@/lib/groow/queries";
 import { normalizarNumeroBR } from "@/lib/groow/whatsapp";
 
@@ -45,8 +46,10 @@ export async function GET(req: NextRequest) {
       ].join(", ");
       const phoneNotEmpty = phoneCols.map((c) => `COALESCE(${c},'') <> ''`).join(" OR ");
       const buscaveis = [tem("nome") ? "nome" : null, tem("empresa") ? "empresa" : null, ...phoneCols].filter(Boolean) as string[];
-      const whereBusca = q ? ` AND (${buscaveis.map((c) => `${c} LIKE ?`).join(" OR ")})` : "";
-      const params = q ? buscaveis.map(() => like) : [];
+      // ILIKE: no Postgres o LIKE é sensível a maiúscula, e a busca de contato
+      // sempre foi case-insensitive (no MySQL quem cuidava era o collation).
+      const { p, params } = construtorSql();
+      const whereBusca = q ? ` AND (${buscaveis.map((c) => `${c} ILIKE ${p(like)}`).join(" OR ")})` : "";
 
       const leads = await query<Record<string, string | null>>(
         `SELECT ${sel} FROM leads WHERE (${phoneNotEmpty})${whereBusca} ORDER BY id DESC LIMIT 1000`,
@@ -71,13 +74,14 @@ export async function GET(req: NextRequest) {
 
   // ── CLIENTES ─────────────────────────────────────────────────────────────
   try {
+    const { p: pc, params: paramsCli } = construtorSql();
     const clientes = await query<{ empresa: string | null; responsavel: string | null; whatsapp: string | null }>(
       `SELECT empresa, responsavel, whatsapp
        FROM clientes
        WHERE COALESCE(whatsapp,'') <> ''
-         ${q ? "AND (empresa LIKE ? OR responsavel LIKE ? OR whatsapp LIKE ?)" : ""}
+         ${q ? `AND (empresa ILIKE ${pc(like)} OR responsavel ILIKE ${pc(like)} OR whatsapp ILIKE ${pc(like)})` : ""}
        ORDER BY empresa ASC LIMIT 1000`,
-      q ? [like, like, like] : []
+      paramsCli
     );
     for (const c of clientes) {
       const num = normalizarNumeroBR(c.whatsapp || "");

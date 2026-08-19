@@ -60,7 +60,7 @@ export async function rascunhoPendente(): Promise<{ id: number; titulo: string; 
 export async function aprovarPendente(): Promise<{ ok: boolean; msg: string }> {
   const p = await rascunhoPendente();
   if (!p) return { ok: false, msg: "Nao tem rascunho esperando aprovacao agora." };
-  await exec(`UPDATE blog_posts SET status = 'publicado', published_at = COALESCE(published_at, NOW()) WHERE id = ?`, [p.id]);
+  await exec(`UPDATE blog_posts SET status = 'publicado', published_at = COALESCE(published_at, NOW()) WHERE id = $1`, [p.id]);
   return { ok: true, msg: `No ar!\n${p.titulo}\n${SITE_PUBLICO}/blog/${p.slug}` };
 }
 
@@ -68,6 +68,6 @@ export async function aprovarPendente(): Promise<{ ok: boolean; msg: string }> {
 export async function descartarPendente(): Promise<{ ok: boolean; msg: string }> {
   const p = await rascunhoPendente();
   if (!p) return { ok: false, msg: "Nao tem rascunho esperando aprovacao agora." };
-  await exec(`UPDATE blog_posts SET status = 'arquivado' WHERE id = ?`, [p.id]);
+  await exec(`UPDATE blog_posts SET status = 'arquivado' WHERE id = $1`, [p.id]);
   return { ok: true, msg: "Descartado. Gerando um tema novo, te mando em 1-2 minutos." };
 }

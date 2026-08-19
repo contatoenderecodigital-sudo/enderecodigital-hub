@@ -31,7 +31,7 @@ export async function GET() {
   try {
     await garantirTabelaMapa();
     const mapas = await query(
-      `SELECT id, nome, token, DATE_FORMAT(updated_at,'%d/%m %H:%i') AS atualizado_em
+      `SELECT id, nome, token, to_char(updated_at,'DD/MM HH24:MI') AS atualizado_em
        FROM mapas_ecossistema ORDER BY updated_at DESC LIMIT 100`
     );
     return NextResponse.json({ mapas });
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     await garantirTabelaMapa();
     const token = randomBytes(16).toString("hex");
     const r = await exec(
-      `INSERT INTO mapas_ecossistema (nome, dados, token) VALUES (?, ?, ?)`,
+      `INSERT INTO mapas_ecossistema (nome, dados, token) VALUES ($1, $2, $3) RETURNING id`,
       [nome.slice(0, 190), JSON.stringify(TEMPLATE), token]
     );
     return NextResponse.json({ ok: true, id: r.insertId, token });

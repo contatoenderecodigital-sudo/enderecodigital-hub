@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       `INSERT INTO clientes
         (lead_id, empresa, responsavel, email, whatsapp, plano, valor_mensal, valor_setup,
          inicio_contrato, fim_contrato, status, modulos, notas)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
       [
         body.lead_id ?? null,
         body.empresa,
