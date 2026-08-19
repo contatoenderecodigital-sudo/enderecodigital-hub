@@ -157,7 +157,17 @@ export default function FinanceiroTabs({ data }: { data: FinanceiroV2Data }) {
       </div>
 
       {/* STATS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 18, marginBottom: 20 }}>
+      {/* auto-fit e não repeat(4,1fr): com 4 colunas fixas o último card
+          ("Acumulado histórico") ficava fora da tela no celular, sem scroll
+          para alcançar. Agora quebra em linha quando não cabe. */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: 18,
+          marginBottom: 20,
+        }}
+      >
         {isRecorrente ? (
           <>
             <StatCard label="Mensal recorrente" value={`R$ ${brl0.format(data.mensal)}`} accent={kpiAccent} sub={data.maiorContrato ? `Maior: ${data.maiorContrato.empresa}` : `${data.ativos} contratos`} />
@@ -230,7 +240,11 @@ export default function FinanceiroTabs({ data }: { data: FinanceiroV2Data }) {
             })}
           </div>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        {/* A tabela tem 6 colunas e não cabe em tela de celular. Sem este
+            container ela era cortada e o resto ficava inalcançável, porque a
+            página não rola na horizontal. */}
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 620 }}>
           <thead>
             <tr style={{ background: "var(--ed2-surface-2)", borderBottom: "1px solid var(--ed2-hair)" }}>
               {["Empresa", "Plano", isRecorrente ? "Valor mensal" : "Setup", "Status", isRecorrente ? "Próximo vencimento" : "Cobrança", "Ação"].map((h, i) => (
@@ -287,6 +301,7 @@ export default function FinanceiroTabs({ data }: { data: FinanceiroV2Data }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {novoLancamento && (
