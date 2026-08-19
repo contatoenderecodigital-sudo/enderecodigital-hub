@@ -210,7 +210,7 @@ export async function getResumoFaturamento(range?: { from?: string | null; to?: 
         `SELECT COALESCE(SUM(valor_setup),0) AS total
          FROM clientes
          WHERE valor_setup > 0
-           AND inicio_contrato BETWEEN ? AND ?
+           AND inicio_contrato BETWEEN $1 AND $2
            AND status IN ('ativo','concluido')`,
         [fromD.toISOString().slice(0, 10), toD.toISOString().slice(0, 10)]
       );
@@ -1045,7 +1045,7 @@ export async function getFinanceiroV2(): Promise<FinanceiroV2Data> {
       const fimMes = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       const [sRow] = await query<{ total: string | null }>(
         `SELECT COALESCE(SUM(valor_setup),0) AS total FROM clientes
-         WHERE inicio_contrato BETWEEN ? AND ? AND valor_setup > 0`,
+         WHERE inicio_contrato BETWEEN $1 AND $2 AND valor_setup > 0`,
         [date.toISOString().slice(0, 10), fimMes.toISOString().slice(0, 10)]
       );
       setupSeries.push({ mes, faturamento: Number(sRow?.total ?? 0) });
