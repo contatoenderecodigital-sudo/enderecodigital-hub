@@ -629,6 +629,11 @@ export default function ProspeccaoPage() {
                       {emp.email && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--pill-gold-fg)", fontWeight: 600 }}><Mail size={12} /> {emp.email}</span>}
                       {emp.site && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Globe size={12} /> {emp.site.replace(/^https?:\/\//, "").slice(0, 30)}</span>}
                       {emp.endereco && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {emp.endereco.slice(0, 40)}</span>}
+                      {emp.distanciaKm != null && (
+                        <span title="distância até o centro do mapa" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 600, color: "var(--pill-gold-fg)" }}>
+                          {emp.distanciaKm} km
+                        </span>
+                      )}
                     </div>
                   </div>
                   {!emp.telefone && <span style={{ fontSize: 11, color: "var(--ed2-ink-3)", fontWeight: 600, flexShrink: 0 }}>sem telefone</span>}
