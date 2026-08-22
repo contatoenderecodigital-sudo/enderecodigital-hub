@@ -90,9 +90,14 @@ export default async function AdminPainelPage({ searchParams }: { searchParams: 
   const pipePeak = pipeTotals.reduce((bi, m, i) => (m.value > (pipeTotals[bi]?.value ?? 0) ? i : bi), 0);
 
   // ── Insight: conversão do funil + maior drop-off ────────────────────────
+  // O funil agora e cumulativo, entao a primeira etapa JA e o total de leads.
+  // Somar as etapas (como era antes) contava o mesmo lead varias vezes e ainda
+  // assim deixava de fora quem estava em assinado, perdido, frio ou quente.
   const topo = funnel[0]?.count ?? 0;
-  const fechados = funnel[funnel.length - 1]?.count ?? 0;
-  const totalLeads = funnel.reduce((acc, s) => acc + s.count, 0);
+  const totalLeads = topo;
+  // "Virou cliente" = chegou em fechado OU passou dele (assinado). Pegar so a
+  // ultima etapa contava apenas os assinados e ignorava quem esta em fechado.
+  const fechados = funnel.find((s) => s.status === "fechado")?.count ?? 0;
   const conv = topo > 0 ? fechados / topo : 0;
   let worstDrop: { de: string; para: string; pct: number } | null = null;
   for (let i = 1; i < funnel.length; i++) {

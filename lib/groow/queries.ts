@@ -1243,12 +1243,20 @@ export async function getFunnelBreakdown(range?: { from?: string | null; to?: st
   if (!(await tableExists("leads"))) {
     return [];
   }
-  const order: { status: string; label: string }[] = [
-    { status: "novo", label: "Novo" },
+  // Funil de verdade é CUMULATIVO: cada etapa conta quem chegou nela OU passou
+  // dela. Antes isto contava quem está parado em cada etapa hoje, e por isso
+  // aparecia "Contatado 120% da etapa anterior": conforme o lead avança, a
+  // etapa de trás esvazia e a da frente fica maior. Funil não cresce.
+  //
+  // "assinado" entra na lista. Ficar de fora era o que fazia o painel dizer
+  // 26 leads quando a tela de Leads mostrava 32.
+  const ordem: { status: string; label: string }[] = [
+    { status: "novo", label: "Entrada" },
     { status: "contatado", label: "Contatado" },
     { status: "diagnostico", label: "Diagnóstico" },
     { status: "proposta", label: "Proposta" },
     { status: "fechado", label: "Fechado" },
+    { status: "assinado", label: "Assinado" },
   ];
   const { p, params } = construtorSql();
   const where: string[] = [];
@@ -1259,11 +1267,21 @@ export async function getFunnelBreakdown(range?: { from?: string | null; to?: st
     `SELECT status, COUNT(*) AS c FROM leads ${whereSql} GROUP BY status`,
     params
   );
-  return order.map((o) => ({
-    status: o.status,
-    label: o.label,
-    count: Number(rows.find((r) => r.status === o.status)?.c ?? 0),
-  }));
+
+  const posicao = new Map(ordem.map((o, i) => [o.status, i]));
+  return ordem.map((o, i) => {
+    if (i === 0) {
+      // Entrada = todo mundo que existe no período, inclusive quem está em
+      // perdido, recusado, frio ou quente: essa gente entrou no funil. Onde
+      // exatamente ela parou a base não registra, então ela só conta aqui.
+      return { status: o.status, label: o.label, count: rows.reduce((acc, r) => acc + Number(r.c), 0) };
+    }
+    const count = rows.reduce((acc, r) => {
+      const k = posicao.get(r.status);
+      return acc + (k !== undefined && k >= i ? Number(r.c) : 0);
+    }, 0);
+    return { status: o.status, label: o.label, count };
+  });
 }
 
 export async function getStatusBreakdown(): Promise<StatusBreakdown[]> {
