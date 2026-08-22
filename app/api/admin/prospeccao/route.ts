@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { coordValida, raioValido, retanguloDoCirculo, distanciaKm, type Ponto } from "@/lib/groow/geo";
 import { query } from "@/lib/groow/db";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ interface PlaceResult {
   userRatingCount?: number;
   formattedAddress?: string;
   businessStatus?: string;
+  location?: { latitude?: number; longitude?: number };
 }
 
 /** Considera "sem site próprio" quando não tem site ou é só rede social/agregador/app de agendamento */
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
     nicho?: string; cidade?: string; bairro?: string;
     minRating?: number; minReviews?: number;
     onlyPhone?: boolean; semSite?: boolean; maxPaginas?: number;
+    lat?: number; lng?: number; raioKm?: number;
   };
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
@@ -71,8 +74,12 @@ export async function POST(request: Request) {
   const nicho = (body.nicho || "").trim();
   const cidade = (body.cidade || "").trim();
   const bairro = (body.bairro || "").trim();
-  if (!nicho || !cidade) {
-    return NextResponse.json({ error: "Informe nicho e cidade." }, { status: 400 });
+  const temCentro = coordValida(body.lat, body.lng) !== null;
+  if (!nicho || (!cidade && !temCentro)) {
+    return NextResponse.json(
+      { error: "Informe o nicho e a cidade, ou marque um ponto no mapa." },
+      { status: 400 }
+    );
   }
 
   const minRating = Number(body.minRating ?? 0);
@@ -81,11 +88,22 @@ export async function POST(request: Request) {
   const semSite = !!body.semSite;
   const maxPaginas = Math.min(3, Math.max(1, Number(body.maxPaginas ?? 1))); // até 60
 
-  const textQuery = bairro ? `${nicho} em ${bairro}, ${cidade}` : `${nicho} em ${cidade}`;
+  // Com centro no mapa, a area manda e a cidade vira so contexto do texto.
+  const centro: Ponto | null = coordValida(body.lat, body.lng);
+  const raioKm = centro ? (raioValido(body.raioKm) ?? 10) : null;
+
+  // Com ponto no mapa e sem cidade digitada, o texto vira so o nicho: quem
+  // delimita a area e o retangulo, e repetir cidade so atrapalharia.
+  const textQuery = !cidade
+    ? nicho
+    : bairro
+      ? `${nicho} em ${bairro}, ${cidade}`
+      : `${nicho} em ${cidade}`;
   const fieldMask = [
     "places.id", "places.displayName", "places.nationalPhoneNumber",
     "places.internationalPhoneNumber", "places.websiteUri", "places.rating",
     "places.userRatingCount", "places.formattedAddress", "places.businessStatus",
+    "places.location",
     "nextPageToken",
   ].join(",");
 
@@ -95,6 +113,11 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < maxPaginas; i++) {
       const reqBody: Record<string, unknown> = { textQuery, languageCode: "pt-BR", regionCode: "BR", pageSize: 20 };
+      if (centro && raioKm) {
+        // Retangulo, e nao circulo: o searchText do Places (New) so aceita
+        // rectangle em locationRestriction. O recorte redondo vem depois.
+        reqBody.locationRestriction = { rectangle: retanguloDoCirculo(centro, raioKm) };
+      }
       if (pageToken) reqBody.pageToken = pageToken;
 
       const resp = await fetch("https://places.googleapis.com/v1/places:searchText", {
@@ -153,10 +176,29 @@ export async function POST(request: Request) {
         semSiteProprio: semSiteProprio(site),
         jaImportado: !!statusExistente,
         statusExistente,
+        lat: p.location?.latitude ?? null,
+        lng: p.location?.longitude ?? null,
+        // distancia ate o centro do mapa, quando a busca foi por raio
+        distanciaKm:
+          centro && p.location?.latitude != null && p.location?.longitude != null
+            ? Math.round(
+                distanciaKm(centro, { lat: p.location.latitude, lng: p.location.longitude }) * 10
+              ) / 10
+            : null,
       };
       const q = scoreProspect(base);
       return { ...base, score: q.score, motivos: q.motivos };
     });
+
+    // Recorte redondo: o Google devolveu o retangulo que envolve o circulo,
+    // entao os cantos vem junto e precisam sair. Quem nao tem coordenada fica,
+    // porque cortar por falta de dado seria pior que um resultado a mais.
+    let foraDoRaio = 0;
+    if (centro && raioKm) {
+      const antes = empresas.length;
+      empresas = empresas.filter((e) => e.distanciaKm === null || e.distanciaKm <= raioKm);
+      foraDoRaio = antes - empresas.length;
+    }
 
     // Aplica filtros e ordena do melhor prospect pro pior
     empresas = empresas
@@ -174,7 +216,15 @@ export async function POST(request: Request) {
       empresas.length === 0 && todas.length > 0
         ? `A busca achou ${todas.length} empresas, mas os filtros cortaram todas. Afrouxa os filtros (nota, avaliações, telefone ou "sem site próprio") e busca de novo.`
         : null;
-    return NextResponse.json({ empresas, query: textQuery, totalBruto: todas.length, aviso });
+    return NextResponse.json({
+      empresas,
+      query: textQuery,
+      totalBruto: todas.length,
+      foraDoRaio,
+      centro,
+      raioKm,
+      aviso,
+    });
   } catch (err) {
     console.error("[prospeccao] error:", err);
     return NextResponse.json(

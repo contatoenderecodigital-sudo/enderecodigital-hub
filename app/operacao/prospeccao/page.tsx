@@ -1,15 +1,31 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
+import "leaflet/dist/leaflet.css";
 import { useRouter } from "next/navigation";
 import { Loader2, Search, Star, Globe, MapPin, Check, Target, X, Download, Megaphone, ScanSearch, ChevronDown, Mail, Sparkles, Layout, ExternalLink } from "lucide-react";
 import { NICHOS, TOTAL_NICHOS } from "@/lib/groow/nichos";
+import type { Centro } from "@/components/groow/admin/prospeccao/MapaRaio";
+
+// ssr:false porque o Leaflet toca em window no import e derrubaria a pagina
+// inteira no servidor. Mesma regra do recharts nas telas de grafico.
+const MapaRaio = dynamic(() => import("@/components/groow/admin/prospeccao/MapaRaio"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ height: 320, borderRadius: 16, background: "var(--ed2-surface)", border: "1px solid var(--ed2-hair)" }} />
+  ),
+});
 
 interface Empresa {
   place_id: string;
   nome: string;
   telefone: string;
   site: string;
+  /** vem do Places; usado pra plotar no mapa e medir a distancia do centro */
+  lat?: number | null;
+  lng?: number | null;
+  distanciaKm?: number | null;
   rating: number | null;
   avaliacoes: number;
   endereco: string;
@@ -57,6 +73,8 @@ export default function ProspeccaoPage() {
   const [nicho, setNicho] = useState("");
   const [cidade, setCidade] = useState("");
   const [bairro, setBairro] = useState("");
+  const [centro, setCentro] = useState<Centro | null>(null);
+  const [raioKm, setRaioKm] = useState(10);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
@@ -115,7 +133,7 @@ export default function ProspeccaoPage() {
 
   const buscar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nicho.trim() || !cidade.trim()) return;
+    if (!nicho.trim() || (!cidade.trim() && !centro)) return;
     setLoading(true);
     setError("");
     setEmpresas([]);
@@ -124,7 +142,11 @@ export default function ProspeccaoPage() {
       const res = await fetch("/api/admin/prospeccao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nicho, cidade, bairro, minRating, minReviews, onlyPhone, semSite, maxPaginas: maisResultados ? 3 : 1 }),
+        body: JSON.stringify({
+          nicho, cidade, bairro, minRating, minReviews, onlyPhone, semSite,
+          maxPaginas: maisResultados ? 3 : 1,
+          ...(centro ? { lat: centro.lat, lng: centro.lng, raioKm } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro na busca");
@@ -351,6 +373,17 @@ export default function ProspeccaoPage() {
         </div>
       </div>
 
+      {/* MAPA: centro e raio da busca */}
+      <div style={{ marginBottom: 20, padding: 20, borderRadius: 20, background: "var(--ed2-card)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+        <MapaRaio
+          centro={centro}
+          raioKm={raioKm}
+          onCentroChange={setCentro}
+          onRaioChange={setRaioKm}
+          pins={empresas.map((e) => ({ lat: e.lat ?? null, lng: e.lng ?? null, nome: e.nome }))}
+        />
+      </div>
+
       {/* SEARCH FORM */}
       <form onSubmit={buscar} style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
@@ -364,15 +397,15 @@ export default function ProspeccaoPage() {
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 200 }}>
-          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>CIDADE</label>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>CIDADE {centro ? "(opcional, o mapa manda)" : ""}</label>
           <input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Florianópolis SC" style={inputStyle} />
         </div>
         <div style={{ flex: 1, minWidth: 160 }}>
           <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>BAIRRO (OPCIONAL)</label>
           <input value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Ex: Centro" style={inputStyle} />
         </div>
-        <button type="submit" disabled={loading || !nicho.trim() || !cidade.trim()}
-          style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#C9A961", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: loading ? "wait" : "pointer", opacity: (loading || !nicho.trim() || !cidade.trim()) ? 0.6 : 1, boxShadow: "0 4px 12px rgba(201,169,97,0.28)", height: 46 }}>
+        <button type="submit" disabled={loading || !nicho.trim() || (!cidade.trim() && !centro)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#C9A961", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: loading ? "wait" : "pointer", opacity: (loading || !nicho.trim() || (!cidade.trim() && !centro)) ? 0.6 : 1, boxShadow: "0 4px 12px rgba(201,169,97,0.28)", height: 46 }}>
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
           Buscar
         </button>
