@@ -1,84 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, PhoneOutgoing } from "lucide-react";
 import PageHeader from "@/components/groow/admin/ed2/PageHeader";
-import Card from "@/components/groow/admin/ed2/Card";
 import LeadParceiroModal from "@/components/groow/parceiro/LeadParceiroModal";
-import type { ParceiroLead } from "@/lib/groow/parceiros";
-
-const SITUACAO_LABEL: Record<string, string> = {
-  ligou: "Liguei",
-  vai_chamar: "Vai chamar",
-  autorizou: "Autorizou contato",
-  recusou: "Recusou",
-};
-
-const SITUACAO_COR: Record<string, { bg: string; fg: string }> = {
-  ligou: { bg: "rgba(11,24,56,0.07)", fg: "var(--ed2-ink-2)" },
-  vai_chamar: { bg: "rgba(201,169,97,0.16)", fg: "#8a712d" },
-  autorizou: { bg: "rgba(52,199,89,0.16)", fg: "#1d8a3a" },
-  recusou: { bg: "rgba(255,59,48,0.12)", fg: "#c8261c" },
-};
-
-function Pill({ texto, cor }: { texto: string; cor: { bg: string; fg: string } }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "4px 11px",
-        borderRadius: 999,
-        fontSize: 12.5,
-        fontWeight: 600,
-        background: cor.bg,
-        color: cor.fg,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {texto}
-    </span>
-  );
-}
-
-const th: React.CSSProperties = {
-  textAlign: "left",
-  padding: "0 14px 12px",
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-  color: "var(--ed2-ink-2)",
-  whiteSpace: "nowrap",
-};
-
-const td: React.CSSProperties = {
-  padding: "14px",
-  fontSize: 14.5,
-  color: "var(--ed2-ink)",
-  borderTop: "1px solid var(--ed2-hair)",
-};
-
-function telefoneLegivel(t: string): string {
-  const d = t.replace(/\D/g, "").replace(/^55/, "");
-  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return t;
-}
+import KanbanParceiro from "@/components/groow/parceiro/KanbanParceiro";
+import LeadDrawer from "@/components/groow/parceiro/LeadDrawer";
+import type { ParceiroLead, SituacaoLead } from "@/lib/groow/parceiros-etapas";
 
 export default function LeadsDoParceiro() {
   const [leads, setLeads] = useState<ParceiroLead[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState("");
-  const [aberto, setAberto] = useState(false);
-  const [editando, setEditando] = useState<ParceiroLead | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [modal, setModal] = useState(false);
+  const [aberto, setAberto] = useState<number | null>(null);
 
   const carregar = useCallback(async () => {
-    setCarregando(true);
     try {
       const r = await fetch("/api/parceiro/leads");
-      const d = await r.json();
-      setLeads(Array.isArray(d.leads) ? d.leads : []);
+      if (r.ok) {
+        const j = (await r.json()) as { leads: ParceiroLead[] };
+        setLeads(j.leads || []);
+      }
     } finally {
       setCarregando(false);
     }
@@ -88,196 +31,231 @@ export default function LeadsDoParceiro() {
     carregar();
   }, [carregar]);
 
-  const filtrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter((l) =>
-      [l.nome, l.empresa, l.telefone, l.cidade].some((v) =>
-        String(v || "").toLowerCase().includes(q)
-      )
-    );
-  }, [leads, busca]);
+  /**
+   * Move otimista: o card pula de coluna na hora e só volta se o servidor
+   * recusar. Arrastar e esperar meio segundo pelo banco é o tipo de atrito que
+   * faz o vendedor parar de usar o board.
+   */
+  const mover = useCallback(
+    async (id: number, situacao: SituacaoLead) => {
+      const antes = leads;
+      setLeads((atual) => atual.map((l) => (l.id === id ? { ...l, situacao } : l)));
+      const r = await fetch("/api/parceiro/leads/etapa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, situacao }),
+      });
+      if (!r.ok) setLeads(antes);
+      else carregar();
+    },
+    [leads, carregar]
+  );
 
-  function flash(msg: string) {
-    setAviso(msg);
-    setTimeout(() => setAviso(null), 3200);
-  }
+  /**
+   * A fila do dia: quem tem retorno vencido vem primeiro, depois quem nunca
+   * recebeu ligação, depois quem não atendeu há mais tempo. É o que o "Ligar
+   * para o próximo" segue, para o parceiro não perder tempo escolhendo.
+   */
+  const fila = useMemo(() => {
+    const agora = Date.now();
+    const venceu = (l: ParceiroLead) =>
+      l.proximo_retorno ? new Date(l.proximo_retorno).getTime() <= agora : false;
+
+    const retornos = leads.filter((l) => venceu(l) && l.situacao !== "recusou");
+    const novos = leads.filter((l) => l.situacao === "a_ligar" && !venceu(l));
+    const reagendar = leads
+      .filter((l) => l.situacao === "nao_atendeu" && !venceu(l))
+      .sort((a, b) =>
+        String(a.ultima_tentativa || "").localeCompare(String(b.ultima_tentativa || ""))
+      );
+
+    return { retornos, novos, lista: [...retornos, ...novos, ...reagendar] };
+  }, [leads]);
+
+  const leadAberto = leads.find((l) => l.id === aberto) ?? null;
 
   return (
     <>
       <PageHeader
-        title="Meus leads"
-        sub="Registre aqui quem você ligou. Quem autorizou contato entra na fila de disparo."
+        title="Minhas ligações"
+        sub="Cadastre quem você vai ligar, ligue de dentro do card e deixe tudo gravado."
         right={
+          <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ position: "relative" }}>
+              <Search
+                size={15}
+                style={{
+                  position: "absolute",
+                  left: 13,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--ed2-ink-2)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar por nome, empresa ou cidade"
+                style={{
+                  padding: "9px 15px 9px 34px",
+                  borderRadius: 999,
+                  border: "1px solid var(--ed2-hair)",
+                  background: "var(--ed2-surface)",
+                  color: "var(--ed2-ink)",
+                  fontSize: 13.5,
+                  minWidth: 250,
+                  outline: "none",
+                }}
+              />
+            </div>
+            <button
+              onClick={() => setModal(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "9px 18px",
+                borderRadius: 999,
+                border: "none",
+                background: "#C9A961",
+                color: "#0B1838",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Plus size={16} />
+              Novo lead
+            </button>
+          </div>
+        }
+      />
+
+      {fila.lista.length > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            flexWrap: "wrap",
+            padding: "15px 20px",
+            borderRadius: 16,
+            background: "rgba(201,169,97,0.10)",
+            border: "1px solid rgba(201,169,97,0.34)",
+            marginBottom: 22,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ed2-ink)" }}>
+              {fila.lista.length} na fila de hoje
+            </div>
+            <div style={{ fontSize: 13.5, color: "var(--ed2-ink-2)", marginTop: 3, lineHeight: 1.5 }}>
+              {fila.retornos.length > 0
+                ? `${fila.retornos.length} retorno${fila.retornos.length > 1 ? "s" : ""} no horário`
+                : "Sem retorno vencido"}
+              {" · "}
+              {fila.novos.length} nunca recebeu ligação
+            </div>
+          </div>
           <button
-            onClick={() => {
-              setEditando(null);
-              setAberto(true);
-            }}
+            onClick={() => setAberto(fila.lista[0].id)}
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              padding: "12px 22px",
+              padding: "11px 20px",
+              borderRadius: 999,
+              border: "none",
+              background: "#0B1838",
+              color: "#FFFFFF",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <PhoneOutgoing size={16} />
+            Ligar para {fila.lista[0].nome.split(" ")[0]}
+          </button>
+        </div>
+      ) : null}
+
+      {carregando ? (
+        <div style={{ padding: "60px 0", textAlign: "center", color: "var(--ed2-ink-2)" }}>
+          Carregando...
+        </div>
+      ) : leads.length === 0 ? (
+        <div
+          style={{
+            padding: "70px 24px",
+            textAlign: "center",
+            border: "1px dashed var(--ed2-hair)",
+            borderRadius: 20,
+          }}
+        >
+          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ed2-ink)", marginBottom: 8 }}>
+            Nenhum lead cadastrado ainda
+          </div>
+          <p
+            style={{
+              fontSize: 14.5,
+              color: "var(--ed2-ink-2)",
+              lineHeight: 1.65,
+              maxWidth: 440,
+              margin: "0 auto 20px",
+            }}
+          >
+            Cadastre quem você vai ligar antes de pegar o telefone. A ligação, a
+            gravação e o que ficou combinado ficam salvos dentro do card.
+          </p>
+          <button
+            onClick={() => setModal(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "11px 22px",
               borderRadius: 999,
               border: "none",
               background: "#C9A961",
               color: "#0B1838",
-              fontWeight: 700,
               fontSize: 14.5,
+              fontWeight: 700,
               cursor: "pointer",
             }}
           >
             <Plus size={17} />
-            Novo lead
+            Cadastrar o primeiro
           </button>
-        }
-      />
-
-      {aviso ? (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: 14,
-            background: "rgba(52,199,89,0.12)",
-            color: "#1d8a3a",
-            fontSize: 14,
-            fontWeight: 600,
-            marginBottom: 18,
-          }}
-        >
-          {aviso}
         </div>
-      ) : null}
+      ) : (
+        <KanbanParceiro
+          leads={leads}
+          filtro={busca}
+          onAbrir={(l) => setAberto(l.id)}
+          onMover={mover}
+        />
+      )}
 
-      <Card padding={22}>
-        <div style={{ position: "relative", marginBottom: 18, maxWidth: 380 }}>
-          <Search
-            size={16}
-            style={{
-              position: "absolute",
-              left: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--ed2-ink-2)",
-            }}
-          />
-          <input
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar por nome, empresa ou telefone"
-            style={{
-              width: "100%",
-              padding: "11px 14px 11px 40px",
-              borderRadius: 12,
-              border: "1px solid var(--ed2-hair)",
-              background: "var(--ed2-surface)",
-              color: "var(--ed2-ink)",
-              fontSize: 14.5,
-              outline: "none",
-            }}
-          />
-        </div>
-
-        {carregando ? (
-          <div style={{ padding: "40px 0", textAlign: "center", color: "var(--ed2-ink-2)" }}>
-            Carregando...
-          </div>
-        ) : filtrados.length === 0 ? (
-          <div style={{ padding: "56px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 17, fontWeight: 600, color: "var(--ed2-ink)", marginBottom: 6 }}>
-              {leads.length === 0 ? "Nenhum lead ainda" : "Nada encontrado"}
-            </div>
-            <div style={{ fontSize: 14.5, color: "var(--ed2-ink-2)" }}>
-              {leads.length === 0
-                ? "Assim que terminar uma ligação, cadastre o contato aqui."
-                : "Tente outro termo de busca."}
-            </div>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 780 }}>
-              <thead>
-                <tr>
-                  <th style={th}>Contato</th>
-                  <th style={th}>WhatsApp</th>
-                  <th style={th}>Situação</th>
-                  <th style={th}>Disparo</th>
-                  <th style={th}>Na operação</th>
-                  <th style={th} />
-                </tr>
-              </thead>
-              <tbody>
-                {filtrados.map((l) => (
-                  <tr key={l.id}>
-                    <td style={td}>
-                      <div style={{ fontWeight: 600 }}>{l.nome}</div>
-                      {l.empresa || l.cidade ? (
-                        <div style={{ fontSize: 13, color: "var(--ed2-ink-2)", marginTop: 2 }}>
-                          {[l.empresa, l.cidade].filter(Boolean).join(" · ")}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td style={{ ...td, fontVariantNumeric: "tabular-nums" }}>
-                      {telefoneLegivel(l.telefone)}
-                    </td>
-                    <td style={td}>
-                      <Pill
-                        texto={SITUACAO_LABEL[l.situacao] || l.situacao}
-                        cor={SITUACAO_COR[l.situacao] || SITUACAO_COR.ligou}
-                      />
-                    </td>
-                    <td style={{ ...td, color: "var(--ed2-ink-2)", fontSize: 13.5 }}>
-                      {l.disparo_status === "pendente"
-                        ? l.optin
-                          ? "Na fila"
-                          : "Aguardando autorização"
-                        : l.disparo_status === "enviado"
-                          ? "Enviado"
-                          : l.disparo_status === "respondeu"
-                            ? "Respondeu"
-                            : "Falhou"}
-                    </td>
-                    <td style={{ ...td, color: "var(--ed2-ink-2)", fontSize: 13.5 }}>
-                      {l.lead_id ? l.lead_status || "em atendimento" : "não enviado"}
-                    </td>
-                    <td style={{ ...td, textAlign: "right" }}>
-                      <button
-                        onClick={() => {
-                          setEditando(l);
-                          setAberto(true);
-                        }}
-                        style={{
-                          padding: "7px 15px",
-                          borderRadius: 999,
-                          border: "1px solid var(--ed2-hair)",
-                          background: "transparent",
-                          color: "var(--ed2-ink)",
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      {aberto ? (
+      {modal ? (
         <LeadParceiroModal
-          lead={editando}
-          onFechar={() => setAberto(false)}
+          lead={null}
+          onFechar={() => setModal(false)}
           onSalvo={() => {
-            setAberto(false);
-            flash(editando ? "Lead atualizado." : "Lead cadastrado.");
+            setModal(false);
             carregar();
           }}
+        />
+      ) : null}
+
+      {leadAberto ? (
+        <LeadDrawer
+          key={leadAberto.id}
+          lead={leadAberto}
+          onFechar={() => setAberto(null)}
+          onMudou={carregar}
         />
       ) : null}
     </>

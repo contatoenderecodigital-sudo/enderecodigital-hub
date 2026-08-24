@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Mic, Square, ChevronLeft, ChevronRight, Sparkles, PhoneCall } from "lucide-react";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import type { FaseCall, Objecao } from "@/lib/groow/playbook-vendas";
-import type { ParceiroLead } from "@/lib/groow/parceiros";
+import type { ParceiroLead } from "@/lib/groow/parceiros-etapas";
 
 /** Fatia de áudio mandada ao copiloto. Curta o bastante para acompanhar a fala. */
 const BLOCO_MS = 15000;
@@ -134,24 +134,37 @@ export default function CopilotoCall({
     pararTudo();
     setGravando(false);
 
-    if (anotacao.trim() || duracao > 0) {
-      try {
-        await fetch("/api/parceiro/calls", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            parceiro_lead_id: leadId ? Number(leadId) : null,
-            anotacao: anotacao.trim() || null,
-            transcricao: transcricaoRef.current || null,
-            duracao_seg: duracao,
-          }),
-        });
-        setAviso("Ligação registrada.");
-        setAnotacao("");
-        setTimeout(() => setAviso(null), 3000);
-      } catch {
-        setAviso("Não consegui salvar a anotação.");
+    // A ligação só vira registro se estiver amarrada a um lead: sem isso a
+    // anotação ficaria solta, sem ninguém para ler depois. Quem quer gravar a
+    // ligação usa "Minhas ligações", que salva o áudio dentro do card.
+    if (!anotacao.trim() && duracao === 0) return;
+
+    if (!leadId) {
+      setAviso("Escolha o lead da ligação para eu conseguir salvar a anotação.");
+      return;
+    }
+
+    try {
+      const r = await fetch("/api/parceiro/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parceiro_lead_id: Number(leadId),
+          resultado: "atendeu",
+          anotacao: anotacao.trim() || null,
+          duracao_seg: duracao,
+        }),
+      });
+      if (!r.ok) {
+        const j = (await r.json().catch(() => ({}))) as { error?: string };
+        setAviso(j.error || "Não consegui salvar a anotação.");
+        return;
       }
+      setAviso("Ligação registrada.");
+      setAnotacao("");
+      setTimeout(() => setAviso(null), 3000);
+    } catch {
+      setAviso("Não consegui salvar a anotação.");
     }
   }
 

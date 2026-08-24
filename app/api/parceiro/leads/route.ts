@@ -4,13 +4,14 @@ import {
   listarLeadsDoParceiro,
   salvarLeadDoParceiro,
   getLeadDoParceiro,
+  ETAPAS,
   type SituacaoLead,
 } from "@/lib/groow/parceiros";
 import { exec } from "@/lib/groow/db";
 
 export const dynamic = "force-dynamic";
 
-const SITUACOES_VALIDAS: SituacaoLead[] = ["ligou", "vai_chamar", "autorizou", "recusou"];
+const SITUACOES_VALIDAS: SituacaoLead[] = ETAPAS.map((e) => e.valor);
 
 export async function GET() {
   const auth = await exigirParceiro();
@@ -30,8 +31,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON inválido." }, { status: 400 });
   }
 
-  const situacaoBruta = String(body.situacao || "ligou") as SituacaoLead;
-  const situacao = SITUACOES_VALIDAS.includes(situacaoBruta) ? situacaoBruta : "ligou";
+  const situacaoBruta = String(body.situacao || "a_ligar") as SituacaoLead;
+  const situacao = SITUACOES_VALIDAS.includes(situacaoBruta) ? situacaoBruta : "a_ligar";
   const optin = body.optin === true || situacao === "autorizou";
 
   if (optin && !String(body.optin_prova || "").trim()) {

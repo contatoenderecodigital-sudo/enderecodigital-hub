@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { ParceiroLead, SituacaoLead } from "@/lib/groow/parceiros";
+import {
+  ETAPAS,
+  ETAPA_POR_VALOR,
+  type ParceiroLead,
+  type SituacaoLead,
+} from "@/lib/groow/parceiros-etapas";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -25,16 +30,6 @@ const rotulo: React.CSSProperties = {
   marginBottom: 6,
 };
 
-const SITUACOES: { valor: SituacaoLead; label: string; ajuda: string }[] = [
-  { valor: "ligou", label: "Liguei", ajuda: "Falei, mas não avançou ainda." },
-  { valor: "vai_chamar", label: "Disse que vai chamar", ajuda: "Ficou de entrar em contato." },
-  {
-    valor: "autorizou",
-    label: "Autorizou contato",
-    ajuda: "Deixou a gente chamar no WhatsApp dele.",
-  },
-  { valor: "recusou", label: "Recusou", ajuda: "Não quer ser contatado." },
-];
 
 export default function LeadParceiroModal({
   lead,
@@ -46,11 +41,13 @@ export default function LeadParceiroModal({
   onSalvo: () => void;
 }) {
   const editando = !!lead;
-  const [situacao, setSituacao] = useState<SituacaoLead>(lead?.situacao ?? "ligou");
+  const [situacao, setSituacao] = useState<SituacaoLead>(lead?.situacao ?? "a_ligar");
+  const [autorizou, setAutorizou] = useState(lead?.optin === 1);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const exigeProva = situacao === "autorizou";
+  // Autorizou pela etapa ou pelo checkbox: os dois caminhos exigem a prova.
+  const exigeProva = autorizou || situacao === "autorizou";
 
   async function salvar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
@@ -63,8 +60,8 @@ export default function LeadParceiroModal({
       email: fd.get("email"),
       cidade: fd.get("cidade"),
       setor: fd.get("setor"),
-      situacao,
-      optin: situacao === "autorizou",
+      situacao: exigeProva ? "autorizou" : situacao,
+      optin: exigeProva,
       optin_prova: fd.get("optin_prova"),
       observacao: fd.get("observacao"),
     };
@@ -244,42 +241,75 @@ export default function LeadParceiroModal({
             </div>
           </div>
 
-          <div>
-            <label style={rotulo}>Como ficou a ligação</label>
-            <div style={{ display: "grid", gap: 8 }}>
-              {SITUACOES.map((s) => (
-                <label
-                  key={s.valor}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 11,
-                    padding: "12px 14px",
-                    borderRadius: 14,
-                    border: `1px solid ${situacao === s.valor ? "#C9A961" : "var(--ed2-hair)"}`,
-                    background: situacao === s.valor ? "rgba(201,169,97,0.08)" : "transparent",
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="situacao"
-                    checked={situacao === s.valor}
-                    onChange={() => setSituacao(s.valor)}
-                    style={{ marginTop: 3 }}
-                  />
-                  <span>
-                    <span style={{ display: "block", fontSize: 14.5, fontWeight: 600, color: "var(--ed2-ink)" }}>
-                      {s.label}
-                    </span>
-                    <span style={{ display: "block", fontSize: 13, color: "var(--ed2-ink-2)", marginTop: 1 }}>
-                      {s.ajuda}
-                    </span>
-                  </span>
-                </label>
-              ))}
+          {/* Na edição dá para corrigir a etapa à mão. No cadastro não: o lead
+              nasce em "A ligar" e quem move é o desfecho da ligação. */}
+          {editando ? (
+            <div>
+              <label style={rotulo} htmlFor="situacao">
+                Etapa
+              </label>
+              <select
+                id="situacao"
+                value={situacao}
+                onChange={(e) => setSituacao(e.target.value as SituacaoLead)}
+                style={{ ...campo, cursor: "pointer" }}
+              >
+                {ETAPAS.map((e) => (
+                  <option key={e.valor} value={e.valor}>
+                    {e.label}
+                  </option>
+                ))}
+              </select>
+              <p style={{ margin: "7px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
+                {ETAPA_POR_VALOR.get(situacao)?.ajuda}
+              </p>
             </div>
-          </div>
+          ) : null}
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 11,
+              padding: "14px 16px",
+              borderRadius: 14,
+              border: `1px solid ${autorizou ? "#C9A961" : "var(--ed2-hair)"}`,
+              background: autorizou ? "rgba(201,169,97,0.08)" : "transparent",
+              cursor: "pointer",
+            }}
+          >
+            {/* Largura e altura explícitas: sem isso o input vira item flex sem
+                tamanho próprio e empurra o texto para a direita. */}
+            <input
+              type="checkbox"
+              checked={autorizou}
+              onChange={(e) => setAutorizou(e.target.checked)}
+              style={{ width: 17, height: 17, flex: "0 0 17px", margin: "2px 0 0" }}
+            />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 14.5,
+                  fontWeight: 600,
+                  color: "var(--ed2-ink)",
+                }}
+              >
+                Já autorizou receber contato
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  color: "var(--ed2-ink-2)",
+                  marginTop: 2,
+                  lineHeight: 1.5,
+                }}
+              >
+                Marque só se ele disse na ligação que pode chamar no WhatsApp dele.
+              </span>
+            </span>
+          </label>
 
           {exigeProva ? (
             <div>

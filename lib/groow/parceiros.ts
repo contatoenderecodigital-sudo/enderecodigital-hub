@@ -11,75 +11,24 @@ import { construtorSql, clausulaWhere } from "@/lib/groow/sql";
 
 /* ------------------------------------------------------------------ tipos */
 
-export type ParceiroStatus = "ativo" | "pausado";
-export type SituacaoLead = "ligou" | "vai_chamar" | "autorizou" | "recusou";
-export type DisparoStatus = "pendente" | "enviado" | "falhou" | "respondeu";
-export type TipoComissao = "setup" | "recorrente" | "ajuste" | "fixa";
-export type StatusComissao = "previsto" | "aprovado" | "pago" | "cancelado";
-
-export interface Parceiro {
-  id: number;
-  nome: string;
-  email: string;
-  telefone: string | null;
-  codigo: string;
-  comissao_setup_pct: number;
-  comissao_mensal_pct: number;
-  comissao_meses: number;
-  /** Valor fixo por venda fechada. Quando > 0, manda e os percentuais são ignorados. */
-  comissao_fixa: number;
-  status: ParceiroStatus;
-  criado_em: string;
-}
-
-export interface ParceiroLead {
-  id: number;
-  parceiro_id: number;
-  lead_id: number | null;
-  nome: string;
-  empresa: string | null;
-  telefone: string;
-  email: string | null;
-  cidade: string | null;
-  setor: string | null;
-  situacao: SituacaoLead;
-  optin: number;
-  optin_em: string | null;
-  optin_origem: string | null;
-  optin_prova: string | null;
-  disparo_status: DisparoStatus;
-  disparo_em: string | null;
-  observacao: string | null;
-  criado_em: string;
-  atualizado_em: string;
-  /** vem do JOIN com `leads` quando já foi promovido */
-  lead_status?: string | null;
-}
-
-export interface Comissao {
-  id: number;
-  parceiro_id: number;
-  cliente_id: number | null;
-  lead_id: number | null;
-  tipo: TipoComissao;
-  competencia: string;
-  base_valor: number;
-  percentual: number;
-  valor: number;
-  status: StatusComissao;
-  pago_em: string | null;
-  observacao: string | null;
-  criado_em: string;
-  /** vem do JOIN com `clientes` */
-  empresa?: string | null;
-}
-
-export const SITUACOES: { valor: SituacaoLead; label: string }[] = [
-  { valor: "ligou", label: "Liguei" },
-  { valor: "vai_chamar", label: "Disse que vai chamar" },
-  { valor: "autorizou", label: "Autorizou contato" },
-  { valor: "recusou", label: "Recusou" },
-];
+export * from "@/lib/groow/parceiros-etapas";
+import {
+  ETAPAS,
+  ETAPA_POR_VALOR,
+  RESULTADOS_CALL,
+  type SituacaoLead,
+  type ResultadoCall,
+  type TipoComissao,
+  type StatusComissao,
+  type Parceiro,
+  type ParceiroLead,
+  type ParceiroCall,
+  type Comissao,
+  type PainelParceiro,
+  type ResumoComissao,
+  type ResultadoApuracao,
+  type EntradaLead,
+} from "@/lib/groow/parceiros-etapas";
 
 /* ------------------------------------------------------------------ schema */
 
@@ -232,19 +181,7 @@ export async function contarCliques(parceiroId: number): Promise<number> {
 
 /* ------------------------------------------------------------ fila de leads */
 
-export interface EntradaLead {
-  nome: string;
-  empresa?: string | null;
-  telefone: string;
-  email?: string | null;
-  cidade?: string | null;
-  setor?: string | null;
-  situacao?: SituacaoLead;
-  optin?: boolean;
-  optin_origem?: string | null;
-  optin_prova?: string | null;
-  observacao?: string | null;
-}
+
 
 /**
  * Cria ou atualiza o lead na fila do parceiro. Idempotente por telefone: a
@@ -260,8 +197,10 @@ export async function salvarLeadDoParceiro(
   const nome = String(e.nome || "").trim();
   if (!nome) throw new Error("Nome é obrigatório.");
 
+  // O lead nasce em "a ligar": o parceiro cadastra quem vai ligar e só depois
+  // a ligação acontece. Quem já chega com opt-in pula direto para autorizou.
   const optin = e.optin ? 1 : 0;
-  const situacao: SituacaoLead = e.situacao ?? (optin ? "autorizou" : "ligou");
+  const situacao: SituacaoLead = e.situacao ?? (optin ? "autorizou" : "a_ligar");
 
   const r = await exec(
     `INSERT INTO parceiro_leads
@@ -302,15 +241,187 @@ export async function salvarLeadDoParceiro(
 export async function listarLeadsDoParceiro(parceiroId: number): Promise<ParceiroLead[]> {
   await garantirTabelasParceiros();
   const rows = await query<ParceiroLead>(
-    `SELECT pl.*, l.status AS lead_status
+    `SELECT pl.*, l.status AS lead_status,
+            (SELECT COUNT(*) FROM parceiro_calls c
+              WHERE c.parceiro_lead_id = pl.id AND c.audio_path IS NOT NULL) AS gravacoes
        FROM parceiro_leads pl
        LEFT JOIN leads l ON l.id = pl.lead_id
       WHERE pl.parceiro_id = $1
-      ORDER BY pl.atualizado_em DESC
+      ORDER BY pl.ordem ASC, pl.atualizado_em DESC
       LIMIT 500`,
     [parceiroId]
   );
-  return rows;
+  return rows.map((r) => ({ ...r, gravacoes: num(r.gravacoes) }));
+}
+
+/**
+ * Move o card de coluna no kanban. `ordem` guarda a posição dentro da coluna
+ * para o card não pular de lugar a cada recarga.
+ */
+export async function moverEtapa(
+  id: number,
+  parceiroId: number,
+  situacao: SituacaoLead,
+  ordem = 0
+): Promise<boolean> {
+  await garantirTabelasParceiros();
+  if (!ETAPA_POR_VALOR.has(situacao)) throw new Error("Etapa desconhecida.");
+
+  // Arrastar para "Autorizou contato" não inventa opt-in: sem prova registrada
+  // o disparo continua travado. Aqui só marca a data, a prova vem do formulário.
+  const r = await exec(
+    `UPDATE parceiro_leads
+        SET situacao = $1,
+            ordem = $2,
+            optin = CASE WHEN $1 = 'autorizou' THEN 1 ELSE optin END,
+            optin_em = CASE WHEN $1 = 'autorizou' THEN COALESCE(optin_em, NOW()) ELSE optin_em END,
+            atualizado_em = NOW()
+      WHERE id = $3 AND parceiro_id = $4`,
+    [situacao, ordem, id, parceiroId]
+  );
+  return r.affectedRows > 0;
+}
+
+/** Agenda (ou limpa, com null) o retorno de uma ligação. */
+export async function agendarRetorno(
+  id: number,
+  parceiroId: number,
+  quando: string | null
+): Promise<boolean> {
+  await garantirTabelasParceiros();
+  const r = await exec(
+    `UPDATE parceiro_leads SET proximo_retorno = $1, atualizado_em = NOW()
+      WHERE id = $2 AND parceiro_id = $3`,
+    [quando, id, parceiroId]
+  );
+  return r.affectedRows > 0;
+}
+
+/* ------------------------------------------------------------ ligações */
+
+/**
+ * Registra uma tentativa de ligação no lead. O áudio entra depois, pelo
+ * upload, porque a gravação só termina quando a ligação acaba.
+ *
+ * Além de criar a linha em `parceiro_calls`, empurra o lead para a etapa que
+ * corresponde ao desfecho e incrementa o contador de tentativas. É isso que
+ * responde "liguei quantas vezes para esse cara".
+ */
+export async function registrarCall(
+  parceiroId: number,
+  entrada: {
+    parceiro_lead_id: number;
+    resultado: ResultadoCall;
+    duracao_seg?: number;
+    anotacao?: string | null;
+  }
+): Promise<number> {
+  await garantirTabelasParceiros();
+
+  const lead = await getLeadDoParceiro(entrada.parceiro_lead_id, parceiroId);
+  if (!lead) throw new Error("Lead não é seu ou não existe.");
+
+  const conf = RESULTADOS_CALL.find((r) => r.valor === entrada.resultado);
+  if (!conf) throw new Error("Resultado de ligação desconhecido.");
+
+  const r = await exec(
+    `INSERT INTO parceiro_calls
+       (parceiro_id, parceiro_lead_id, resultado, duracao_seg, anotacao)
+     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [
+      parceiroId,
+      entrada.parceiro_lead_id,
+      entrada.resultado,
+      Math.max(0, Math.min(60 * 60 * 6, num(entrada.duracao_seg))),
+      entrada.anotacao?.slice(0, 8000) || null,
+    ]
+  );
+
+  // A etapa só avança, nunca volta: quem já autorizou não vira "em conversa"
+  // porque o parceiro ligou de novo para confirmar alguma coisa.
+  const jaResolvido = lead.situacao === "autorizou" || lead.situacao === "recusou";
+  const novaEtapa = jaResolvido ? lead.situacao : conf.etapa;
+
+  await exec(
+    `UPDATE parceiro_leads
+        SET tentativas = tentativas + 1,
+            ultima_tentativa = NOW(),
+            situacao = $1,
+            atualizado_em = NOW()
+      WHERE id = $2 AND parceiro_id = $3`,
+    [novaEtapa, entrada.parceiro_lead_id, parceiroId]
+  );
+
+  return r.insertId;
+}
+
+export async function listarCallsDoLead(
+  parceiroLeadId: number,
+  parceiroId: number
+): Promise<ParceiroCall[]> {
+  await garantirTabelasParceiros();
+  const rows = await query<ParceiroCall>(
+    `SELECT * FROM parceiro_calls
+      WHERE parceiro_lead_id = $1 AND parceiro_id = $2
+      ORDER BY criado_em DESC LIMIT 200`,
+    [parceiroLeadId, parceiroId]
+  );
+  return rows.map((c) => ({ ...c, audio_bytes: num(c.audio_bytes) }));
+}
+
+/**
+ * Últimas ligações do parceiro, com o nome do lead junto. É o que eu abro no
+ * meu painel para ouvir como eles estão vendendo.
+ */
+export async function listarCallsDoParceiro(
+  parceiroId: number,
+  limite = 60
+): Promise<(ParceiroCall & { lead_nome: string | null; lead_empresa: string | null })[]> {
+  await garantirTabelasParceiros();
+  const rows = await query<ParceiroCall & { lead_nome: string | null; lead_empresa: string | null }>(
+    `SELECT c.*, pl.nome AS lead_nome, pl.empresa AS lead_empresa
+       FROM parceiro_calls c
+       LEFT JOIN parceiro_leads pl ON pl.id = c.parceiro_lead_id
+      WHERE c.parceiro_id = $1
+      ORDER BY c.criado_em DESC
+      LIMIT $2`,
+    [parceiroId, Math.max(1, Math.min(200, limite))]
+  );
+  return rows.map((c) => ({ ...c, audio_bytes: num(c.audio_bytes) }));
+}
+
+/** Sem filtro de parceiro: só o admin chama, e ele enxerga tudo. */
+export async function getCallAdmin(id: number): Promise<ParceiroCall | null> {
+  await garantirTabelasParceiros();
+  const rows = await query<ParceiroCall>(
+    `SELECT * FROM parceiro_calls WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return rows[0] ?? null;
+}
+
+export async function getCall(id: number, parceiroId: number): Promise<ParceiroCall | null> {
+  await garantirTabelasParceiros();
+  const rows = await query<ParceiroCall>(
+    `SELECT * FROM parceiro_calls WHERE id = $1 AND parceiro_id = $2 LIMIT 1`,
+    [id, parceiroId]
+  );
+  return rows[0] ?? null;
+}
+
+export async function vincularAudio(
+  id: number,
+  parceiroId: number,
+  audio: { path: string; mime: string; bytes: number }
+): Promise<boolean> {
+  await garantirTabelasParceiros();
+  const r = await exec(
+    `UPDATE parceiro_calls SET audio_path = $1, audio_mime = $2, audio_bytes = $3,
+            atualizado_em = NOW()
+      WHERE id = $4 AND parceiro_id = $5`,
+    [audio.path, audio.mime.slice(0, 80), audio.bytes, id, parceiroId]
+  );
+  return r.affectedRows > 0;
 }
 
 export async function getLeadDoParceiro(
@@ -381,12 +492,7 @@ export async function promoverParaLead(
 
 /* --------------------------------------------------------------- comissões */
 
-export interface ResultadoApuracao {
-  competencia: string;
-  criadas: number;
-  atualizadas: number;
-  clientesAvaliados: number;
-}
+
 
 interface LinhaCliente {
   cliente_id: number;
@@ -590,11 +696,7 @@ export async function listarComissoes(
   }));
 }
 
-export interface ResumoComissao {
-  previsto: number;
-  aprovado: number;
-  pago: number;
-}
+
 
 export async function resumoComissoes(parceiroId: number): Promise<ResumoComissao> {
   await garantirTabelasParceiros();
@@ -616,14 +718,7 @@ export async function resumoComissoes(parceiroId: number): Promise<ResumoComissa
 
 /* ------------------------------------------------------------- indicadores */
 
-export interface PainelParceiro {
-  cliques: number;
-  leads: number;
-  autorizados: number;
-  promovidos: number;
-  clientes: number;
-  comissao: ResumoComissao;
-}
+
 
 export async function painelDoParceiro(parceiroId: number): Promise<PainelParceiro> {
   await garantirTabelasParceiros();

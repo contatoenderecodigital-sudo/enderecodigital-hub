@@ -2,11 +2,19 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Check, Wallet } from "lucide-react";
+import { ArrowLeft, Send, Check, Wallet, Download } from "lucide-react";
 import PageHeader from "@/components/groow/admin/ed2/PageHeader";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import StatCard from "@/components/groow/admin/ed2/StatCard";
-import type { ParceiroLead, Comissao, PainelParceiro, Parceiro } from "@/lib/groow/parceiros";
+import {
+  ETAPA_POR_VALOR,
+  RESULTADOS_CALL,
+  type ParceiroLead,
+  type Comissao,
+  type PainelParceiro,
+  type Parceiro,
+  type ParceiroCall,
+} from "@/lib/groow/parceiros-etapas";
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -29,11 +37,24 @@ const td: React.CSSProperties = {
   borderTop: "1px solid var(--ed2-hair)",
 };
 
-const SITUACAO_LABEL: Record<string, string> = {
-  ligou: "Liguei",
-  vai_chamar: "Vai chamar",
-  autorizou: "Autorizou",
-  recusou: "Recusou",
+type CallComLead = ParceiroCall & { lead_nome: string | null; lead_empresa: string | null };
+
+const mmss = (seg: number) =>
+  `${String(Math.floor(seg / 60)).padStart(2, "0")}:${String(seg % 60).padStart(2, "0")}`;
+
+const tamanho = (b: number) =>
+  b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+
+const quandoLegivel = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 };
 
 interface Detalhe {
@@ -41,6 +62,7 @@ interface Detalhe {
   leads: ParceiroLead[];
   comissoes: Comissao[];
   painel: PainelParceiro;
+  calls: CallComLead[];
 }
 
 export default function DetalheParceiro({ params }: { params: Promise<{ id: string }> }) {
@@ -229,7 +251,13 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
                       </div>
                     </td>
                     <td style={{ ...td, color: "var(--ed2-ink-2)" }}>
-                      {SITUACAO_LABEL[l.situacao] || l.situacao}
+                      {ETAPA_POR_VALOR.get(l.situacao)?.label || l.situacao}
+                      {l.tentativas > 0 ? (
+                        <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
+                          {l.tentativas} tentativa{l.tentativas > 1 ? "s" : ""}
+                          {(l.gravacoes ?? 0) > 0 ? ` · ${l.gravacoes} gravada${(l.gravacoes ?? 0) > 1 ? "s" : ""}` : ""}
+                        </div>
+                      ) : null}
                     </td>
                     <td style={{ ...td, maxWidth: 280, fontSize: 13, color: "var(--ed2-ink-2)" }}>
                       {l.optin_prova ? `"${l.optin_prova}"` : "sem prova"}
@@ -267,6 +295,92 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </Card>
+
+      <Card style={{ marginBottom: 22 }}>
+        <CardHead
+          title="Ligações gravadas"
+          sub="O que ele falou nas calls. Serve para corrigir abordagem e para transcrever depois."
+        />
+        {d.calls.length === 0 ? (
+          <div style={{ padding: "36px 0", textAlign: "center", color: "var(--ed2-ink-2)" }}>
+            Nenhuma ligação registrada ainda.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {d.calls.map((c) => {
+              const res = RESULTADOS_CALL.find((r) => r.valor === c.resultado);
+              return (
+                <article
+                  key={c.id}
+                  style={{
+                    border: "1px solid var(--ed2-hair)",
+                    borderRadius: 14,
+                    padding: "13px 16px",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ed2-ink)" }}>
+                      {c.lead_nome || "lead removido"}
+                    </span>
+                    {c.lead_empresa ? (
+                      <span style={{ fontSize: 13, color: "var(--ed2-ink-2)" }}>{c.lead_empresa}</span>
+                    ) : null}
+                    <span style={{ fontSize: 12.5, color: "var(--ed2-ink-2)", marginLeft: "auto" }}>
+                      {res?.label || c.resultado} · {quandoLegivel(c.criado_em)}
+                      {c.duracao_seg > 0 ? ` · ${mmss(c.duracao_seg)}` : ""}
+                    </span>
+                  </div>
+
+                  {c.anotacao ? (
+                    <p
+                      style={{
+                        margin: "9px 0 0",
+                        fontSize: 13.5,
+                        color: "var(--ed2-ink-2)",
+                        lineHeight: 1.6,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {c.anotacao}
+                    </p>
+                  ) : null}
+
+                  {c.audio_path ? (
+                    <div style={{ marginTop: 11 }}>
+                      <audio
+                        controls
+                        preload="none"
+                        src={`/api/admin/parceiros/calls/${c.id}/audio`}
+                        style={{ width: "100%", height: 36 }}
+                      />
+                      <a
+                        href={`/api/admin/parceiros/calls/${c.id}/audio?download=1`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          marginTop: 8,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "var(--ed2-ink-2)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <Download size={14} />
+                        Baixar ({tamanho(c.audio_bytes)})
+                      </a>
+                    </div>
+                  ) : (
+                    <p style={{ margin: "9px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", opacity: 0.75 }}>
+                      Sem gravação nesta ligação.
+                    </p>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
       </Card>
