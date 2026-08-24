@@ -28,8 +28,11 @@ export async function GET(req: Request) {
   }
   if (!hub) return irPara("/owner");
 
-  // Ao entrar num hub, o dono cai direto na interface GROOW (nível operação).
-  const res = irPara("/operacao");
+  // Entrar no hub abre o HUB: os clientes daquele hub, os workspaces, as contas
+  // e a configuração dele. Antes isto caía em /operacao, que é o GROOW OS (o
+  // CRM da agência) e é outra coisa: dava a impressão de que "Entrar no hub" e
+  // "Operação (GROOW OS)" faziam o mesmo, porque terminavam na mesma tela.
+  const res = irPara("/operacao/hub/clientes");
   res.cookies.set(HUB_COOKIE, hub.id, {
     httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 30,
   });
