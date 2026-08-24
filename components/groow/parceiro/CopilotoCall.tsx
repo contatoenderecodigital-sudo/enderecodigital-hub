@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Square, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Mic, Square, ChevronLeft, ChevronRight, Sparkles, PhoneCall } from "lucide-react";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import type { FaseCall, Objecao } from "@/lib/groow/playbook-vendas";
 import type { ParceiroLead } from "@/lib/groow/parceiros";
@@ -67,6 +67,20 @@ export default function CopilotoCall({
 
   async function iniciar() {
     setErroMic(null);
+
+    // Com a IA desligada o audio nao serve pra nada: era pedido, gravado na
+    // memoria a cada 15s e jogado fora. Pedir microfone a toa numa tela que o
+    // parceiro abre na frente do cliente e ruim, entao so liga o cronometro.
+    if (!iaAtiva) {
+      setGravando(true);
+      setSegundos(0);
+      setSugestoes([]);
+      setAlerta(null);
+      transcricaoRef.current = "";
+      timerRef.current = setInterval(() => setSegundos((s) => s + 1), 1000);
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true },
@@ -166,8 +180,9 @@ export default function CopilotoCall({
                 cursor: "pointer",
               }}
             >
-              {gravando ? <Square size={16} fill="currentColor" /> : <Mic size={17} />}
-              {gravando ? "Encerrar ligação" : "Iniciar ligação"}
+              {/* microfone so quando o microfone e realmente usado, senao engana */}
+              {gravando ? <Square size={16} fill="currentColor" /> : iaAtiva ? <Mic size={17} /> : <PhoneCall size={17} />}
+              {gravando ? "Encerrar ligação" : iaAtiva ? "Iniciar ligação" : "Começar a ligação"}
             </button>
 
             {gravando ? (
@@ -251,8 +266,8 @@ export default function CopilotoCall({
 
           <p style={{ margin: "16px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.6 }}>
             {iaAtiva
-              ? "O áudio é analisado durante a ligação e as sugestões aparecem ao lado. A gravação não é guardada, só a transcrição e a sua anotação."
-              : "As sugestões automáticas ainda estão desligadas. O cronômetro e o roteiro abaixo funcionam normalmente, e a sua anotação é salva no lead ao encerrar."}
+              ? "O áudio é ouvido em trechos e vira texto na hora. A gravação NÃO é guardada em lugar nenhum: fica salva só a transcrição e a sua anotação."
+              : "Sugestões automáticas desligadas, então nem pedimos o seu microfone. O cronômetro e o roteiro funcionam normal, e a sua anotação é salva no lead ao encerrar."}
           </p>
         </Card>
 
