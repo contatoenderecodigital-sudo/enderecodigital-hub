@@ -12,6 +12,7 @@ export interface ParceiroLinha {
   comissao_setup_pct: number;
   comissao_mensal_pct: number;
   comissao_meses: number;
+  comissao_fixa: number;
   status: string;
   cliques?: number;
   leads?: number;
@@ -56,6 +57,10 @@ export default function ParceiroModal({
   const editando = !!parceiro;
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // Os dois modelos nao se somam: ou e valor fixo por venda, ou percentual.
+  const [modelo, setModelo] = useState<"fixa" | "pct">(
+    parceiro && parceiro.comissao_fixa > 0 ? "fixa" : parceiro ? "pct" : "fixa"
+  );
 
   async function salvar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
@@ -70,6 +75,7 @@ export default function ParceiroModal({
       comissao_setup_pct: Number(fd.get("comissao_setup_pct") || 0),
       comissao_mensal_pct: Number(fd.get("comissao_mensal_pct") || 0),
       comissao_meses: Number(fd.get("comissao_meses") || 12),
+      comissao_fixa: modelo === "fixa" ? Number(fd.get("comissao_fixa") || 0) : 0,
       status: fd.get("status"),
       observacao: fd.get("observacao"),
     };
@@ -221,6 +227,53 @@ export default function ParceiroModal({
             </p>
           </div>
 
+          <div>
+            <label style={rotulo}>Como esse parceiro ganha</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+              {([
+                { v: "fixa", t: "Valor fixo por venda fechada" },
+                { v: "pct", t: "Percentual do contrato" },
+              ] as const).map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setModelo(o.v)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 999,
+                    border: `1px solid ${modelo === o.v ? "#C9A961" : "var(--ed2-hair)"}`,
+                    background: modelo === o.v ? "rgba(201,169,97,0.12)" : "transparent",
+                    color: "var(--ed2-ink)",
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {o.t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {modelo === "fixa" ? (
+            <div>
+              <label style={rotulo} htmlFor="comissao_fixa">
+                Valor por venda fechada (R$)
+              </label>
+              <input
+                id="comissao_fixa"
+                name="comissao_fixa"
+                type="number"
+                min={0}
+                step="10"
+                defaultValue={parceiro?.comissao_fixa || 200}
+                style={campo}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
+                Lançado uma vez, no mês em que o contrato do cliente começa.
+              </p>
+            </div>
+          ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
             <div>
               <label style={rotulo} htmlFor="comissao_setup_pct">
@@ -267,6 +320,7 @@ export default function ParceiroModal({
               />
             </div>
           </div>
+          )}
 
           <div>
             <label style={rotulo} htmlFor="status">

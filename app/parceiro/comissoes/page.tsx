@@ -22,6 +22,7 @@ function competenciaLegivel(c: string): string {
 }
 
 const TIPO_LABEL: Record<string, string> = {
+  fixa: "Por venda fechada",
   setup: "Implantação",
   recorrente: "Mensalidade",
   ajuste: "Ajuste",
@@ -65,7 +66,11 @@ export default async function ComissoesDoParceiro() {
     <>
       <PageHeader
         title="Comissões"
-        sub={`${parceiro.comissao_setup_pct}% da implantação e ${parceiro.comissao_mensal_pct}% da mensalidade por ${parceiro.comissao_meses} meses.`}
+        sub={
+          parceiro.comissao_fixa > 0
+            ? `R$ ${brl(parceiro.comissao_fixa)} por cliente que fechar com a gente.`
+            : `${parceiro.comissao_setup_pct}% da implantação e ${parceiro.comissao_mensal_pct}% da mensalidade por ${parceiro.comissao_meses} meses.`
+        }
       />
 
       <div

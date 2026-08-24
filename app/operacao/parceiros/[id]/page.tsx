@@ -143,7 +143,11 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
 
       <PageHeader
         title={d.parceiro.nome}
-        sub={`${d.parceiro.email} · código ${d.parceiro.codigo} · ${d.parceiro.comissao_setup_pct}% implantação e ${d.parceiro.comissao_mensal_pct}% mensalidade por ${d.parceiro.comissao_meses} meses`}
+        sub={`${d.parceiro.email} · código ${d.parceiro.codigo} · ${
+          d.parceiro.comissao_fixa > 0
+            ? `R$ ${brl(d.parceiro.comissao_fixa)} por venda fechada`
+            : `${d.parceiro.comissao_setup_pct}% implantação e ${d.parceiro.comissao_mensal_pct}% mensalidade por ${d.parceiro.comissao_meses} meses`
+        }`}
       />
 
       {aviso ? (

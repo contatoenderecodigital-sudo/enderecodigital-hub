@@ -94,8 +94,8 @@ export async function POST(req: Request) {
     const r = await exec(
       `INSERT INTO parceiros
          (nome, email, telefone, codigo, senha_hash, comissao_setup_pct, comissao_mensal_pct,
-          comissao_meses, status, observacao)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+          comissao_meses, comissao_fixa, status, observacao)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
       [
         nome.slice(0, 160),
         email.slice(0, 190),
@@ -105,6 +105,7 @@ export async function POST(req: Request) {
         num(body.comissao_setup_pct),
         num(body.comissao_mensal_pct),
         Math.max(1, Math.min(120, num(body.comissao_meses) || 12)),
+        Math.max(0, num(body.comissao_fixa)),
         body.status === "pausado" ? "pausado" : "ativo",
         String(body.observacao || "").slice(0, 2000) || null,
       ]
@@ -150,6 +151,7 @@ export async function PATCH(req: Request) {
       `comissao_setup_pct = ${p(num(body.comissao_setup_pct))}`,
       `comissao_mensal_pct = ${p(num(body.comissao_mensal_pct))}`,
       `comissao_meses = ${p(Math.max(1, Math.min(120, num(body.comissao_meses) || 12)))}`,
+      `comissao_fixa = ${p(Math.max(0, num(body.comissao_fixa)))}`,
       `status = ${p(body.status === "pausado" ? "pausado" : "ativo")}`,
       `observacao = ${p(String(body.observacao || "").slice(0, 2000) || null)}`,
     ];

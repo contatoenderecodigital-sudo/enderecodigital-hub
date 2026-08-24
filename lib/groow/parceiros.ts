@@ -14,7 +14,7 @@ import { construtorSql, clausulaWhere } from "@/lib/groow/sql";
 export type ParceiroStatus = "ativo" | "pausado";
 export type SituacaoLead = "ligou" | "vai_chamar" | "autorizou" | "recusou";
 export type DisparoStatus = "pendente" | "enviado" | "falhou" | "respondeu";
-export type TipoComissao = "setup" | "recorrente" | "ajuste";
+export type TipoComissao = "setup" | "recorrente" | "ajuste" | "fixa";
 export type StatusComissao = "previsto" | "aprovado" | "pago" | "cancelado";
 
 export interface Parceiro {
@@ -26,6 +26,8 @@ export interface Parceiro {
   comissao_setup_pct: number;
   comissao_mensal_pct: number;
   comissao_meses: number;
+  /** Valor fixo por venda fechada. Quando > 0, manda e os percentuais são ignorados. */
+  comissao_fixa: number;
   status: ParceiroStatus;
   criado_em: string;
 }
@@ -154,7 +156,7 @@ export async function listarParceiros(): Promise<Parceiro[]> {
   await garantirTabelasParceiros();
   const rows = await query<Parceiro>(
     `SELECT id, nome, email, telefone, codigo, comissao_setup_pct, comissao_mensal_pct,
-            comissao_meses, status, criado_em
+            comissao_meses, comissao_fixa, status, criado_em
        FROM parceiros
       ORDER BY status = 'ativo' DESC, nome ASC`
   );
@@ -163,6 +165,7 @@ export async function listarParceiros(): Promise<Parceiro[]> {
     comissao_setup_pct: num(p.comissao_setup_pct),
     comissao_mensal_pct: num(p.comissao_mensal_pct),
     comissao_meses: num(p.comissao_meses),
+    comissao_fixa: num(p.comissao_fixa),
   }));
 }
 
@@ -170,7 +173,7 @@ export async function getParceiro(id: number): Promise<Parceiro | null> {
   await garantirTabelasParceiros();
   const rows = await query<Parceiro>(
     `SELECT id, nome, email, telefone, codigo, comissao_setup_pct, comissao_mensal_pct,
-            comissao_meses, status, criado_em
+            comissao_meses, comissao_fixa, status, criado_em
        FROM parceiros WHERE id = $1 LIMIT 1`,
     [id]
   );
@@ -181,6 +184,7 @@ export async function getParceiro(id: number): Promise<Parceiro | null> {
     comissao_setup_pct: num(p.comissao_setup_pct),
     comissao_mensal_pct: num(p.comissao_mensal_pct),
     comissao_meses: num(p.comissao_meses),
+    comissao_fixa: num(p.comissao_fixa),
   };
 }
 
@@ -189,7 +193,7 @@ export async function getParceiroPorCodigo(codigo: string): Promise<Parceiro | n
   await garantirTabelasParceiros();
   const rows = await query<Parceiro>(
     `SELECT id, nome, email, telefone, codigo, comissao_setup_pct, comissao_mensal_pct,
-            comissao_meses, status, criado_em
+            comissao_meses, comissao_fixa, status, criado_em
        FROM parceiros WHERE codigo = $1 AND status = 'ativo' LIMIT 1`,
     [codigo.toLowerCase()]
   );
@@ -397,6 +401,7 @@ interface LinhaCliente {
   comissao_setup_pct: unknown;
   comissao_mensal_pct: unknown;
   comissao_meses: unknown;
+  comissao_fixa: unknown;
 }
 
 /**
@@ -432,7 +437,7 @@ export async function apurarComissoes(competencia: string): Promise<ResultadoApu
     `SELECT c.id AS cliente_id, c.lead_id, c.parceiro_id, c.empresa,
             c.valor_mensal, c.valor_setup, c.status,
             to_char(c.inicio_contrato, 'YYYY-MM') AS inicio_comp,
-            p.comissao_setup_pct, p.comissao_mensal_pct, p.comissao_meses
+            p.comissao_setup_pct, p.comissao_mensal_pct, p.comissao_meses, p.comissao_fixa
        FROM clientes c
        JOIN parceiros p ON p.id = c.parceiro_id
       WHERE c.parceiro_id IS NOT NULL`
@@ -449,6 +454,28 @@ export async function apurarComissoes(competencia: string): Promise<ResultadoApu
     const pctSetup = num(c.comissao_setup_pct);
     const pctMensal = num(c.comissao_mensal_pct);
     const meses = num(c.comissao_meses);
+    const fixa = num(c.comissao_fixa);
+
+    // Valor fixo por venda fechada: um lançamento só, no mês em que o contrato
+    // começa. Quando existe, os percentuais nem entram na conta, senão o
+    // parceiro receberia duas vezes pela mesma venda.
+    if (fixa > 0) {
+      if (alvo === inicio && c.status !== "cancelado") {
+        const r = await gravarComissao({
+          parceiro_id: c.parceiro_id,
+          cliente_id: c.cliente_id,
+          lead_id: c.lead_id,
+          tipo: "fixa",
+          competencia,
+          base_valor: 0,
+          percentual: 0,
+          valorFixo: fixa,
+        });
+        if (r === "criada") criadas++;
+        else if (r === "atualizada") atualizadas++;
+      }
+      continue;
+    }
 
     // Setup: só na competência de início do contrato.
     if (alvo === inicio && num(c.valor_setup) > 0 && pctSetup > 0 && c.status !== "cancelado") {
@@ -493,8 +520,13 @@ async function gravarComissao(c: {
   competencia: string;
   base_valor: number;
   percentual: number;
+  /** quando vem, o valor é este e não o resultado do percentual */
+  valorFixo?: number;
 }): Promise<"criada" | "atualizada" | "intocada"> {
-  const valor = Math.round(c.base_valor * (c.percentual / 100) * 100) / 100;
+  const valor =
+    c.valorFixo != null
+      ? Math.round(c.valorFixo * 100) / 100
+      : Math.round(c.base_valor * (c.percentual / 100) * 100) / 100;
 
   // Confere antes de gravar. O affectedRows do INSERT ... ON DUPLICATE KEY não
   // serve para distinguir criada de atualizada aqui: dependendo da flag

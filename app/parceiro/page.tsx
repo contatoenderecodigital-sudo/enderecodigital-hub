@@ -98,19 +98,30 @@ export default async function PainelParceiro() {
       <Card style={{ marginTop: 26 }}>
         <CardHead title="Como você ganha" />
         <div style={{ display: "grid", gap: 12, fontSize: 14.5, color: "var(--ed2-ink-2)", lineHeight: 1.65 }}>
-          <div>
-            <strong style={{ color: "var(--ed2-ink)" }}>
-              {parceiro.comissao_setup_pct}% da implantação
-            </strong>{" "}
-            no mês em que o contrato começa.
-          </div>
-          <div>
-            <strong style={{ color: "var(--ed2-ink)" }}>
-              {parceiro.comissao_mensal_pct}% da mensalidade
-            </strong>{" "}
-            todo mês, durante {parceiro.comissao_meses} meses, enquanto o cliente
-            estiver ativo.
-          </div>
+          {parceiro.comissao_fixa > 0 ? (
+            <div>
+              <strong style={{ color: "var(--ed2-ink)" }}>
+                R$ {brl(parceiro.comissao_fixa)} por cliente que fechar
+              </strong>{" "}
+              com a gente, lançado no mês em que o contrato começa.
+            </div>
+          ) : (
+            <>
+              <div>
+                <strong style={{ color: "var(--ed2-ink)" }}>
+                  {parceiro.comissao_setup_pct}% da implantação
+                </strong>{" "}
+                no mês em que o contrato começa.
+              </div>
+              <div>
+                <strong style={{ color: "var(--ed2-ink)" }}>
+                  {parceiro.comissao_mensal_pct}% da mensalidade
+                </strong>{" "}
+                todo mês, durante {parceiro.comissao_meses} meses, enquanto o cliente
+                estiver ativo.
+              </div>
+            </>
+          )}
           <div style={{ fontSize: 13.5, opacity: 0.85 }}>
             A comissão nasce quando o contrato é fechado, não quando o lead entra.
             O valor de cada linha é congelado no dia da apuração.
