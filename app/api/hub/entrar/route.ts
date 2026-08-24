@@ -28,11 +28,14 @@ export async function GET(req: Request) {
   }
   if (!hub) return irPara("/owner");
 
-  // Entrar no hub abre o HUB: os clientes daquele hub, os workspaces, as contas
-  // e a configuração dele. Antes isto caía em /operacao, que é o GROOW OS (o
-  // CRM da agência) e é outra coisa: dava a impressão de que "Entrar no hub" e
-  // "Operação (GROOW OS)" faziam o mesmo, porque terminavam na mesma tela.
-  const res = irPara("/operacao/hub/clientes");
+  // Entrar no hub abre o HUB dentro do CONSOLE (/owner), que e onde mora o
+  // menu completo: clientes, workspaces, sites, modelos, WhatsApp, contas e
+  // assentos Claude, tokens, suporte, auditoria, seguranca, alertas, flags.
+  //
+  // Nao vai pra /operacao (que e o GROOW OS, o CRM da agencia, outra coisa)
+  // nem pra /operacao/hub/*, que e uma copia parcial dessas telas com so 5
+  // das 17 e mora no shell claro do GROOW.
+  const res = irPara("/owner/clientes");
   res.cookies.set(HUB_COOKIE, hub.id, {
     httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 30,
   });
