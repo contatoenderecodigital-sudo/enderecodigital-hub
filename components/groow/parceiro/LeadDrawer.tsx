@@ -18,6 +18,7 @@ import {
   type ParceiroCall,
   type ResultadoCall,
 } from "@/lib/groow/parceiros-etapas";
+import { formatarTelefone } from "@/lib/groow/telefone";
 
 /**
  * O lead aberto: dados, a ligação acontecendo agora e o histórico do que já
@@ -344,7 +345,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
         <section style={{ ...secao, borderTop: "1px solid var(--ed2-hair)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <a
-              href={`tel:${lead.telefone}`}
+              href={`tel:+${lead.telefone}`}
               style={{
                 fontSize: 19,
                 fontWeight: 700,
@@ -353,7 +354,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {lead.telefone}
+              {formatarTelefone(lead.telefone)}
             </a>
             {lead.optin === 1 ? (
               <span style={{ fontSize: 12.5, fontWeight: 600, color: "#1d8a3a" }}>

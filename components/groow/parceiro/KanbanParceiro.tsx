@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Phone, Mic, CalendarClock, CheckCircle2, Repeat } from "lucide-react";
 import { ETAPAS, type ParceiroLead, type SituacaoLead } from "@/lib/groow/parceiros-etapas";
+import { formatarTelefone } from "@/lib/groow/telefone";
 
 /**
  * Kanban da call fria. Cada coluna é uma etapa de ETAPAS, que é a mesma lista
@@ -249,7 +250,7 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {l.telefone}
+                        {formatarTelefone(l.telefone)}
                       </div>
 
                       <div
