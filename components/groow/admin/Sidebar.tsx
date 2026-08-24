@@ -15,13 +15,27 @@ import {
 import type { LucideIcon } from "lucide-react";
 import AdminActions from "@/components/groow/admin/AdminActions";
 
-type Item = { href?: string; label: string; icon: LucideIcon; exact?: boolean; soon?: boolean; badge?: string };
+type Item = {
+  href?: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  soon?: boolean;
+  badge?: string;
+  /**
+   * Rota FORA do /operacao. Tem que ser navegacao cheia (<a>), nao <Link>: o
+   * groow.css fica carregado numa navegacao client-side e pinta o console de
+   * navy sobre navy, deixando o texto invisivel. O link "Voltar ao console"
+   * do layout ja usava <a> por esse mesmo motivo.
+   */
+  externo?: boolean;
+};
 
 const GRUPOS: { titulo: string; itens: Item[] }[] = [
   {
     titulo: "Endereço Digital",
     itens: [
-      { href: "/owner", label: "Todos os hubs", icon: Boxes, exact: true },
+      { href: "/owner", label: "Todos os hubs", icon: Boxes, exact: true, externo: true },
       { href: "/operacao/hub/clientes", label: "Clientes", icon: Building2 },
       { href: "/operacao/hub/workspaces", label: "Workspaces", icon: LayoutGrid },
       { href: "/operacao/hub/contas-claude", label: "Contas Claude", icon: Sparkles },
@@ -143,8 +157,9 @@ export default function Sidebar() {
                   </div>
                 );
               }
+              const Tag = (it.externo ? "a" : Link) as typeof Link;
               return (
-                <Link
+                <Tag
                   key={it.label}
                   href={it.href}
                   aria-current={active ? "page" : undefined}
@@ -160,7 +175,7 @@ export default function Sidebar() {
                     <span aria-hidden style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 99, background: "#C9A961" }} />
                   )}
                   {inner}
-                </Link>
+                </Tag>
               );
             })}
           </div>
