@@ -69,7 +69,7 @@ export default function LeadsDoParceiro() {
         String(a.ultima_tentativa || "").localeCompare(String(b.ultima_tentativa || ""))
       );
 
-    return { retornos, novos, lista: [...retornos, ...novos, ...reagendar] };
+    return { retornos, novos, reagendar, lista: [...retornos, ...novos, ...reagendar] };
   }, [leads]);
 
   const leadAberto = leads.find((l) => l.id === aberto) ?? null;
@@ -152,11 +152,15 @@ export default function LeadsDoParceiro() {
               {fila.lista.length} na fila de hoje
             </div>
             <div style={{ fontSize: 13.5, color: "var(--ed2-ink-2)", marginTop: 3, lineHeight: 1.5 }}>
-              {fila.retornos.length > 0
-                ? `${fila.retornos.length} retorno${fila.retornos.length > 1 ? "s" : ""} no horário`
-                : "Sem retorno vencido"}
-              {" · "}
-              {fila.novos.length} nunca recebeu ligação
+              {[
+                fila.retornos.length > 0
+                  ? `${fila.retornos.length} retorno${fila.retornos.length > 1 ? "s" : ""} no horário`
+                  : null,
+                fila.novos.length > 0 ? `${fila.novos.length} nunca recebeu ligação` : null,
+                fila.reagendar.length > 0 ? `${fila.reagendar.length} para tentar de novo` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </div>
           </div>
           <button
