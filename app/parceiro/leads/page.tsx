@@ -78,7 +78,7 @@ export default function LeadsDoParceiro() {
     <>
       <PageHeader
         title="Minhas ligações"
-        sub="Cadastre quem você vai ligar, ligue de dentro do card e deixe tudo gravado."
+        sub="Anote quem você vai ligar. Depois é só abrir e ligar por aqui, que fica tudo guardado."
         right={
           <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ position: "relative" }}>
@@ -127,7 +127,7 @@ export default function LeadsDoParceiro() {
               }}
             >
               <Plus size={16} />
-              Novo lead
+              Nova pessoa
             </button>
           </div>
         }
@@ -156,7 +156,7 @@ export default function LeadsDoParceiro() {
                 fila.retornos.length > 0
                   ? `${fila.retornos.length} retorno${fila.retornos.length > 1 ? "s" : ""} no horário`
                   : null,
-                fila.novos.length > 0 ? `${fila.novos.length} nunca recebeu ligação` : null,
+                fila.novos.length > 0 ? `${fila.novos.length} você ainda não ligou` : null,
                 fila.reagendar.length > 0 ? `${fila.reagendar.length} para tentar de novo` : null,
               ]
                 .filter(Boolean)
@@ -181,7 +181,7 @@ export default function LeadsDoParceiro() {
             }}
           >
             <PhoneOutgoing size={16} />
-            Ligar para {fila.lista[0].nome.split(" ")[0]}
+            Começar pelo {fila.lista[0].nome.split(" ")[0]}
           </button>
         </div>
       ) : null}
@@ -200,7 +200,7 @@ export default function LeadsDoParceiro() {
           }}
         >
           <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ed2-ink)", marginBottom: 8 }}>
-            Nenhum lead cadastrado ainda
+            Nenhuma pessoa anotada ainda
           </div>
           <p
             style={{
@@ -211,8 +211,8 @@ export default function LeadsDoParceiro() {
               margin: "0 auto 20px",
             }}
           >
-            Cadastre quem você vai ligar antes de pegar o telefone. A ligação, a
-            gravação e o que ficou combinado ficam salvos dentro do card.
+            Anote quem você vai ligar antes de pegar o telefone. Depois a
+            ligação, a gravação e o que ficou combinado ficam guardados ali.
           </p>
           <button
             onClick={() => setModal(true)}
@@ -231,7 +231,7 @@ export default function LeadsDoParceiro() {
             }}
           >
             <Plus size={17} />
-            Cadastrar o primeiro
+            Anotar a primeira
           </button>
         </div>
       ) : (

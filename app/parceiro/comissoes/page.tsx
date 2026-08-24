@@ -98,7 +98,7 @@ export default async function ComissoesDoParceiro() {
               Nenhuma comissão ainda
             </div>
             <div style={{ fontSize: 14.5, color: "var(--ed2-ink-2)", lineHeight: 1.6, maxWidth: 460, margin: "0 auto" }}>
-              A comissão aparece aqui quando um lead que você trouxe fecha contrato.
+              A comissão aparece aqui quando alguém que você trouxe fecha com a gente.
               Ela é apurada no fechamento de cada mês.
             </div>
           </div>

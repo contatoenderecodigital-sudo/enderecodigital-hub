@@ -144,12 +144,12 @@ export default function LeadParceiroModal({
                 color: "var(--ed2-ink)",
               }}
             >
-              {editando ? "Editar lead" : "Novo lead da call"}
+              {editando ? "Editar contato" : "Nova pessoa para ligar"}
             </h2>
             <p style={{ margin: "5px 0 0", fontSize: 14, color: "var(--ed2-ink-2)" }}>
               {editando
                 ? "Atualize o que mudou depois do último contato."
-                : "Cadastre logo depois de desligar, enquanto está fresco."}
+                : "Anote antes de ligar. Depois é só abrir e ligar por aqui."}
             </p>
           </div>
           <button
@@ -321,7 +321,7 @@ export default function LeadParceiroModal({
                   color: "var(--ed2-ink)",
                 }}
               >
-                Já autorizou receber contato
+                Ela já deixou a gente chamar no WhatsApp
               </span>
               <span
                 style={{
@@ -332,7 +332,7 @@ export default function LeadParceiroModal({
                   lineHeight: 1.5,
                 }}
               >
-                Marque só se ele disse na ligação que pode chamar no WhatsApp dele.
+                Marque só se ela falou isso com você.
               </span>
             </span>
           </label>
@@ -340,7 +340,7 @@ export default function LeadParceiroModal({
           {exigeProva ? (
             <div>
               <label style={rotulo} htmlFor="optin_prova">
-                O que ele disse, com as palavras dele
+                O que ela disse, com as palavras dela
               </label>
               <textarea
                 id="optin_prova"
@@ -353,15 +353,15 @@ export default function LeadParceiroModal({
                 style={{ ...campo, resize: "vertical", fontFamily: "inherit" }}
               />
               <p style={{ margin: "7px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
-                Isto é a prova da autorização. Sem ela a gente não pode abrir conversa
-                no WhatsApp, é regra da Meta e não é negociável.
+                Guarde as palavras dela. Sem isso a gente não pode chamar no
+                WhatsApp dela.
               </p>
             </div>
           ) : null}
 
           <div>
             <label style={rotulo} htmlFor="observacao">
-              Anotações da ligação
+              Anotações
             </label>
             <textarea
               id="observacao"
@@ -369,7 +369,7 @@ export default function LeadParceiroModal({
               rows={3}
               maxLength={2000}
               defaultValue={lead?.observacao ?? ""}
-              placeholder="Dor que ele citou, plataforma que usa, quanto perde por mês..."
+              placeholder="O que ela reclamou, o que usa hoje, quanto perde por mês..."
               style={{ ...campo, resize: "vertical", fontFamily: "inherit" }}
             />
           </div>

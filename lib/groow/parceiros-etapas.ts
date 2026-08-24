@@ -119,19 +119,19 @@ export const ETAPAS: {
   {
     valor: "a_ligar",
     label: "A ligar",
-    ajuda: "Cadastrado, ainda não recebeu ligação.",
+    ajuda: "Você ainda não ligou para essa pessoa.",
     cor: "#7c8698",
   },
   {
     valor: "nao_atendeu",
     label: "Não atendeu",
-    ajuda: "Tentou e não falou com ninguém. Volta para a fila.",
+    ajuda: "Ninguém atendeu. Ela volta para a fila de hoje.",
     cor: "#c2833a",
   },
   {
     valor: "ligou",
     label: "Em conversa",
-    ajuda: "Falou com a pessoa e a conversa está de pé.",
+    ajuda: "Você falou com ela e a conversa está de pé.",
     cor: "#2f6fb0",
   },
   {
@@ -142,15 +142,15 @@ export const ETAPAS: {
   },
   {
     valor: "autorizou",
-    label: "Autorizou contato",
-    ajuda: "Deu o opt-in. Pronto para o disparo do template.",
+    label: "Deixou a gente chamar",
+    ajuda: "Ela deixou a gente chamar no WhatsApp. Daqui em diante é com a nossa equipe.",
     cor: "#C9A961",
     terminal: true,
   },
   {
     valor: "recusou",
     label: "Recusou",
-    ajuda: "Disse não. Fim de linha.",
+    ajuda: "Não quer. Pode deixar de lado.",
     cor: "#b0505a",
     terminal: true,
   },

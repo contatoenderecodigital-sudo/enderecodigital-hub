@@ -345,7 +345,7 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
                         }}
                       >
                         <Phone size={13} />
-                        Ligar
+                        Abrir
                       </button>
                     </article>
                   );

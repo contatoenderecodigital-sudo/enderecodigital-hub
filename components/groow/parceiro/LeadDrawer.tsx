@@ -358,7 +358,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
             </a>
             {lead.optin === 1 ? (
               <span style={{ fontSize: 12.5, fontWeight: 600, color: "#1d8a3a" }}>
-                autorizou contato
+                deixou a gente chamar
               </span>
             ) : null}
           </div>
@@ -382,7 +382,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
                   onChange={(e) => setQuerGravar(e.target.checked)}
                   style={{ width: 16, height: 16, flexShrink: 0, margin: 0 }}
                 />
-                Gravar a ligação (viva voz perto do celular)
+                Gravar a ligação (deixe o celular no viva voz)
               </label>
 
               <button
@@ -482,7 +482,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
                   ))}
                 </select>
                 <p style={{ margin: "7px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.5 }}>
-                  O lead vai para a coluna{" "}
+                  Ela vai para a coluna{" "}
                   <strong style={{ color: "var(--ed2-ink)" }}>
                     {ETAPA_POR_VALOR.get(
                       RESULTADOS_CALL.find((r) => r.valor === resultado)?.etapa ?? "ligou"
@@ -498,7 +498,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
                   value={anotacao}
                   onChange={(e) => setAnotacao(e.target.value)}
                   rows={4}
-                  placeholder="O que a pessoa falou, objeção, próximo passo."
+                  placeholder="O que ela falou, o que reclamou, o que ficou combinado."
                   style={{ ...campo, resize: "vertical", lineHeight: 1.55 }}
                 />
               </div>
@@ -626,8 +626,8 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
             <p style={{ fontSize: 14, color: "var(--ed2-ink-2)" }}>Carregando...</p>
           ) : calls.length === 0 ? (
             <p style={{ fontSize: 14, color: "var(--ed2-ink-2)", lineHeight: 1.6, margin: 0 }}>
-              Nenhuma ligação registrada ainda. A primeira aparece aqui assim que
-              você encerrar.
+              Nenhuma ligação ainda. A primeira aparece aqui assim que você
+              encerrar.
             </p>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
@@ -695,7 +695,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
                           }}
                         >
                           <Download size={14} />
-                          Baixar para transcrever
+                          Baixar a gravação
                           <span style={{ opacity: 0.7, fontWeight: 400 }}>
                             ({tamanho(c.audio_bytes)})
                           </span>
@@ -712,7 +712,7 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
         {/* -------------------------------------------------------- opt-in */}
         {lead.optin_prova ? (
           <section style={secao}>
-            <label style={rotulo}>Autorização registrada</label>
+            <label style={rotulo}>O que ela te disse</label>
             <p
               style={{
                 margin: 0,

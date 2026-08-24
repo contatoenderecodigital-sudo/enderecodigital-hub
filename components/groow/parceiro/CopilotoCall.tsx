@@ -140,7 +140,7 @@ export default function CopilotoCall({
     if (!anotacao.trim() && duracao === 0) return;
 
     if (!leadId) {
-      setAviso("Escolha o lead da ligação para eu conseguir salvar a anotação.");
+      setAviso("Escolha para quem é a ligação para eu conseguir salvar a anotação.");
       return;
     }
 
@@ -236,7 +236,7 @@ export default function CopilotoCall({
                 minWidth: 210,
               }}
             >
-              <option value="">Ligação sem lead vinculado</option>
+              <option value="">Escolha para quem você vai ligar</option>
               {leads.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.nome}
@@ -280,7 +280,7 @@ export default function CopilotoCall({
           <p style={{ margin: "16px 0 0", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.6 }}>
             {iaAtiva
               ? "O áudio é ouvido em trechos e vira texto na hora. A gravação NÃO é guardada em lugar nenhum: fica salva só a transcrição e a sua anotação."
-              : "Sugestões automáticas desligadas, então nem pedimos o seu microfone. O cronômetro e o roteiro funcionam normal, e a sua anotação é salva no lead ao encerrar."}
+              : "Sugestões automáticas desligadas, então nem pedimos o seu microfone. O cronômetro e o roteiro funcionam normal, e a sua anotação fica guardada ao encerrar."}
           </p>
         </Card>
 
@@ -367,7 +367,7 @@ export default function CopilotoCall({
         <Card>
           <CardHead
             title="Anotação da ligação"
-            sub="Salva no lead quando você encerrar. Escreva a dor com as palavras dele."
+            sub="Fica guardado quando você encerrar. Escreva com as palavras dela."
           />
           <textarea
             value={anotacao}

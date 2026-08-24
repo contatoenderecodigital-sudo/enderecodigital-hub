@@ -24,13 +24,13 @@ export default async function PainelParceiro() {
     <>
       <PageHeader
         title={`Olá, ${parceiro.nome.split(" ")[0]}`}
-        sub="Seu link de indicação, seus leads e quanto você já tem a receber."
+        sub="Seu link, suas ligações e quanto você já tem a receber."
       />
 
       <Card style={{ marginBottom: 26 }}>
         <CardHead
           title="Seu link de indicação"
-          sub="Quem entrar por aqui e pedir o diagnóstico entra na sua conta automaticamente."
+          sub="Quem entrar por aqui e preencher já entra na sua conta, sem você precisar avisar ninguém."
         />
         <CopiarLink link={link} />
         {whats ? (
@@ -57,17 +57,17 @@ export default async function PainelParceiro() {
       >
         <StatCard label="Cliques no link" value={String(p.cliques)} />
         <StatCard
-          label="Leads cadastrados"
+          label="Pessoas anotadas"
           value={String(p.leads)}
-          desc={`${p.autorizados} autorizaram contato`}
+          desc={`${p.autorizados} deixaram a gente chamar`}
         />
         <StatCard
-          label="Já na operação"
+          label="Com a nossa equipe"
           value={String(p.promovidos)}
-          desc="entraram no atendimento"
+          desc="a gente assumiu daqui"
         />
         <StatCard
-          label="Viraram cliente"
+          label="Fecharam com a gente"
           value={String(p.clientes)}
           pill={p.clientes > 0 ? { text: "comissão ativa", tone: "gold" } : null}
         />
@@ -123,7 +123,7 @@ export default async function PainelParceiro() {
             </>
           )}
           <div style={{ fontSize: 13.5, opacity: 0.85 }}>
-            A comissão nasce quando o contrato é fechado, não quando o lead entra.
+            A comissão nasce quando o contrato é fechado, não quando a pessoa entra.
             O valor de cada linha é congelado no dia da apuração.
           </div>
         </div>
