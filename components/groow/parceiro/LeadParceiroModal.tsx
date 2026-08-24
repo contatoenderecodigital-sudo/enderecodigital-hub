@@ -8,6 +8,7 @@ import {
   type ParceiroLead,
   type SituacaoLead,
 } from "@/lib/groow/parceiros-etapas";
+import { mascaraTelefone, telefoneValido } from "@/lib/groow/telefone";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -43,8 +44,10 @@ export default function LeadParceiroModal({
   const editando = !!lead;
   const [situacao, setSituacao] = useState<SituacaoLead>(lead?.situacao ?? "a_ligar");
   const [autorizou, setAutorizou] = useState(lead?.optin === 1);
+  const [telefone, setTelefone] = useState(mascaraTelefone(lead?.telefone ?? ""));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroTel, setErroTel] = useState<string | null>(null);
 
   // Autorizou pela etapa ou pelo checkbox: os dois caminhos exigem a prova.
   const exigeProva = autorizou || situacao === "autorizou";
@@ -52,6 +55,16 @@ export default function LeadParceiroModal({
   async function salvar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setErro(null);
+
+    if (!editando) {
+      const v = telefoneValido(telefone);
+      if (!v.ok) {
+        setErroTel(v.motivo ?? "Telefone inválido.");
+        return;
+      }
+    }
+    setErroTel(null);
+
     const fd = new FormData(ev.currentTarget);
     const corpo: Record<string, unknown> = {
       nome: fd.get("nome"),
@@ -176,12 +189,25 @@ export default function LeadParceiroModal({
                 id="telefone"
                 name="telefone"
                 required
-                maxLength={24}
-                placeholder="49 99999 9999"
-                defaultValue={lead?.telefone ?? ""}
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="(49) 99999-9999"
+                value={telefone}
+                // A máscara roda a cada tecla, então não tem como digitar letra
+                // nem passar de 11 dígitos. O 9 do celular é conferido no envio.
+                onChange={(e) => setTelefone(mascaraTelefone(e.target.value))}
                 readOnly={editando}
-                style={{ ...campo, opacity: editando ? 0.6 : 1 }}
+                style={{
+                  ...campo,
+                  opacity: editando ? 0.6 : 1,
+                  borderColor: erroTel ? "#c8261c" : "var(--ed2-hair)",
+                }}
               />
+              {erroTel ? (
+                <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "#c8261c", lineHeight: 1.5 }}>
+                  {erroTel}
+                </p>
+              ) : null}
             </div>
           </div>
 
