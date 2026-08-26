@@ -202,7 +202,9 @@ export default async function LandingIndicacao({
                 lineHeight: 1.6,
               }}
             >
-              Leva menos de um minuto. A gente chama no WhatsApp e conduz a partir daí.
+              {calLink
+                ? "Leva menos de um minuto. Depois você escolhe o horário da conversa."
+                : "Leva menos de um minuto. A gente chama no WhatsApp e conduz a partir daí."}
             </p>
 
             <FormIndicacao codigo={parceiro.codigo} linkWhats={whats} calLink={calLink} />

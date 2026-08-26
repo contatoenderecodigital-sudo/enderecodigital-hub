@@ -52,3 +52,16 @@ export function telefoneValido(bruto: string): { ok: boolean; motivo?: string } 
   }
   return { ok: true };
 }
+
+/**
+ * Formato internacional E.164 ("+5549988887766").
+ *
+ * E o que o campo de telefone do Cal.com exige. Mandando o que a pessoa digitou
+ * ("49 99123 4567") ele cai no seletor "International" e recusa com "Numero de
+ * telefone invalido", travando o agendamento na ultima tela.
+ */
+export function telefoneE164(bruto: string): string {
+  const d = digitosTelefone(bruto);
+  if (d.length < 10) return "";
+  return `+55${d}`;
+}

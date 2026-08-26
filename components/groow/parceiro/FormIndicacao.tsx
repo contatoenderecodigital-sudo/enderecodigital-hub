@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AgendaCal from "./AgendaCal";
+import { telefoneE164 } from "@/lib/groow/telefone";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -112,7 +113,8 @@ export default function FormIndicacao({
             prefill={{
               name: dados.nome,
               email: dados.email,
-              attendeePhoneNumber: dados.telefone,
+              // E.164 obrigatorio: o campo do Cal recusa numero sem DDI.
+              attendeePhoneNumber: telefoneE164(dados.telefone),
               empresa: dados.empresa,
               cidade: dados.cidade,
               notes: dados.dor,
