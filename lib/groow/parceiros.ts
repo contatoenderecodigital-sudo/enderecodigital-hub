@@ -339,7 +339,9 @@ export async function registrarCall(
 
   // A etapa só avança, nunca volta: quem já autorizou não vira "em conversa"
   // porque o parceiro ligou de novo para confirmar alguma coisa.
-  const jaResolvido = lead.situacao === "autorizou" || lead.situacao === "recusou";
+  // Sai do proprio ETAPAS: etapa terminal nova (agendou) entrava aqui de fora e
+  // uma ligacao de confirmacao jogava o lead de volta para "em conversa".
+  const jaResolvido = ETAPA_POR_VALOR.get(lead.situacao)?.terminal === true;
   const novaEtapa = jaResolvido ? lead.situacao : conf.etapa;
 
   await exec(
@@ -353,6 +355,34 @@ export async function registrarCall(
   );
 
   return r.insertId;
+}
+
+/**
+ * Respostas do diagnostico que o parceiro faz durante a ligacao.
+ *
+ * Grava em JSONB e nao em coluna por pergunta: as perguntas mudam com o
+ * roteiro, e aqui migracao e rodada na mao. Filtra pelo parceiro_id junto do
+ * id: sem isso um parceiro escreveria no lead do outro.
+ */
+export async function salvarDiagnostico(
+  id: number,
+  parceiroId: number,
+  respostas: Record<string, string>
+): Promise<boolean> {
+  await garantirTabelasParceiros();
+  const limpo: Record<string, string> = {};
+  for (const [k, v] of Object.entries(respostas || {})) {
+    const chave = String(k).slice(0, 60);
+    const valor = String(v ?? "").trim().slice(0, 2000);
+    if (valor) limpo[chave] = valor;
+  }
+  const r = await exec(
+    `UPDATE parceiro_leads
+        SET diagnostico = $1::jsonb, atualizado_em = NOW()
+      WHERE id = $2 AND parceiro_id = $3`,
+    [JSON.stringify(limpo), id, parceiroId]
+  );
+  return r.affectedRows > 0;
 }
 
 export async function listarCallsDoLead(

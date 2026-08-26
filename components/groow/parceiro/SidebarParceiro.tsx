@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet, Headphones, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, Headphones, Tag, LogOut } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const W = 236;
@@ -11,6 +11,7 @@ const ITENS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[
   { href: "/parceiro", label: "Painel", icon: LayoutDashboard, exact: true },
   { href: "/parceiro/leads", label: "Minhas ligações", icon: Users },
   { href: "/parceiro/comissoes", label: "Comissões", icon: Wallet },
+  { href: "/parceiro/oferta", label: "O que você vende", icon: Tag },
   { href: "/parceiro/copiloto", label: "Roteiro da ligação", icon: Headphones },
 ];
 

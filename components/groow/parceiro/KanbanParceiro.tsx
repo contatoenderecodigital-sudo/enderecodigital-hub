@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Phone, Mic, CalendarClock, CheckCircle2, Repeat } from "lucide-react";
+import { Phone, Mic, CalendarClock, CheckCircle2, Repeat, Video } from "lucide-react";
 import { ETAPAS, type ParceiroLead, type SituacaoLead } from "@/lib/groow/parceiros-etapas";
 import { formatarTelefone } from "@/lib/groow/telefone";
 
@@ -198,6 +198,9 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
                 lista.map((l) => {
                   const retorno = retornoLegivel(l.proximo_retorno);
                   const dias = diasDesde(l.ultima_tentativa);
+                  // A reuniao marcada e a informacao mais importante do card:
+                  // e o unico estado em que o parceiro ja fez o trabalho dele.
+                  const reuniao = retornoLegivel(l.reuniao_em);
                   return (
                     <article
                       key={l.id}
@@ -285,6 +288,13 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
                           >
                             <CalendarClock size={11} />
                             {retorno.texto}
+                          </Selo>
+                        ) : null}
+
+                        {reuniao ? (
+                          <Selo cor="#1d8a3a" fundo="rgba(52,199,89,0.14)">
+                            <Video size={11} />
+                            {reuniao.texto}
                           </Selo>
                         ) : null}
 

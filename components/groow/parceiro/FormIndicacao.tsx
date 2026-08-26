@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AgendaCal from "./AgendaCal";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -23,42 +24,58 @@ const rotulo: React.CSSProperties = {
   marginBottom: 7,
 };
 
+interface Dados {
+  nome: string;
+  telefone: string;
+  email: string;
+  empresa: string;
+  cidade: string;
+  dor: string;
+}
+
 export default function FormIndicacao({
   codigo,
   linkWhats,
+  calLink,
 }: {
   codigo: string;
   linkWhats: string | null;
+  /** "enderecodigital/diagnostico". Sem isto o passo do calendário não aparece. */
+  calLink: string | null;
 }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [pronto, setPronto] = useState(false);
+  const [dados, setDados] = useState<Dados | null>(null);
   const [whatsFinal, setWhatsFinal] = useState<string | null>(linkWhats);
 
   async function enviar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setErro(null);
     const fd = new FormData(ev.currentTarget);
+    const d: Dados = {
+      nome: String(fd.get("nome") || "").trim(),
+      telefone: String(fd.get("telefone") || "").trim(),
+      email: String(fd.get("email") || "").trim(),
+      empresa: String(fd.get("empresa") || "").trim(),
+      cidade: String(fd.get("cidade") || "").trim(),
+      dor: String(fd.get("dor") || "").trim(),
+    };
     setEnviando(true);
     try {
       const resp = await fetch("/api/indicacao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codigo,
-          nome: fd.get("nome"),
-          telefone: fd.get("telefone"),
-          empresa: fd.get("empresa"),
-          cidade: fd.get("cidade"),
-        }),
+        body: JSON.stringify({ codigo, ...d }),
       });
-      const dados = await resp.json().catch(() => ({}));
+      const resposta = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setErro(dados.error || "Não consegui enviar. Tente de novo.");
+        setErro(resposta.error || "Não consegui enviar. Tente de novo.");
         return;
       }
-      if (dados.whatsapp) setWhatsFinal(dados.whatsapp);
-      setPronto(true);
+      if (resposta.whatsapp) setWhatsFinal(resposta.whatsapp);
+      // Guarda o que ela digitou: é isso que vai preencher o calendário abaixo,
+      // pra ela não digitar a mesma coisa duas vezes.
+      setDados(d);
     } catch {
       setErro("Sem conexão. Tente de novo em instantes.");
     } finally {
@@ -66,39 +83,62 @@ export default function FormIndicacao({
     }
   }
 
-  if (pronto) {
+  if (dados) {
     return (
-      <div
-        style={{
-          padding: "28px 26px",
-          borderRadius: 20,
-          background: "rgba(201,169,97,0.10)",
-          border: "1px solid rgba(201,169,97,0.30)",
-        }}
-      >
-        <h3 style={{ margin: "0 0 8px", fontSize: 21, fontWeight: 600, color: "#F5F2EA" }}>
-          Recebido. Vamos te chamar.
-        </h3>
-        <p style={{ margin: "0 0 20px", color: "rgba(245,242,234,0.72)", fontSize: 15, lineHeight: 1.6 }}>
-          Seu diagnóstico já entrou na fila. Se quiser adiantar, chame agora no WhatsApp
-          e a gente começa pela sua operação hoje mesmo.
-        </p>
-        {whatsFinal ? (
-          <a
-            href={whatsFinal}
-            style={{
-              display: "inline-block",
-              padding: "14px 26px",
-              borderRadius: 999,
-              background: "#C9A961",
-              color: "#0B1838",
-              fontWeight: 700,
-              fontSize: 15,
-              textDecoration: "none",
+      <div>
+        <div
+          style={{
+            padding: "22px 24px",
+            borderRadius: 20,
+            background: "rgba(201,169,97,0.10)",
+            border: "1px solid rgba(201,169,97,0.30)",
+            marginBottom: calLink ? 22 : 0,
+          }}
+        >
+          <h3 style={{ margin: "0 0 8px", fontSize: 21, fontWeight: 600, color: "#F5F2EA" }}>
+            {calLink ? "Recebido. Agora escolha um horário." : "Recebido. Vamos te chamar."}
+          </h3>
+          <p style={{ margin: 0, color: "rgba(245,242,234,0.72)", fontSize: 15, lineHeight: 1.6 }}>
+            {calLink
+              ? "São trinta minutos por vídeo. Seus dados já estão preenchidos, é só marcar o dia."
+              : "Seu diagnóstico já entrou na fila e a gente te chama em breve."}
+          </p>
+        </div>
+
+        {calLink ? (
+          <AgendaCal
+            calLink={calLink}
+            altura={620}
+            prefill={{
+              name: dados.nome,
+              email: dados.email,
+              attendeePhoneNumber: dados.telefone,
+              empresa: dados.empresa,
+              cidade: dados.cidade,
+              notes: dados.dor,
+              codigo,
             }}
-          >
-            Chamar no WhatsApp
-          </a>
+          />
+        ) : null}
+
+        {whatsFinal ? (
+          <div style={{ marginTop: calLink ? 20 : 18, textAlign: calLink ? "center" : "left" }}>
+            <a
+              href={whatsFinal}
+              style={{
+                display: "inline-block",
+                padding: "13px 24px",
+                borderRadius: 999,
+                border: "1px solid rgba(201,169,97,0.42)",
+                color: "#D9BE7E",
+                fontWeight: 600,
+                fontSize: 14.5,
+                textDecoration: "none",
+              }}
+            >
+              {calLink ? "Prefiro falar no WhatsApp" : "Chamar no WhatsApp"}
+            </a>
+          </div>
         ) : null}
       </div>
     );
@@ -127,19 +167,46 @@ export default function FormIndicacao({
           autoComplete="tel"
         />
       </div>
+      <div>
+        <label style={rotulo} htmlFor="email">
+          E-mail
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          maxLength={190}
+          style={campo}
+          autoComplete="email"
+        />
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <div>
           <label style={rotulo} htmlFor="empresa">
             Empresa
           </label>
-          <input id="empresa" name="empresa" maxLength={160} style={campo} />
+          <input id="empresa" name="empresa" required maxLength={160} style={campo} />
         </div>
         <div>
           <label style={rotulo} htmlFor="cidade">
             Cidade
           </label>
-          <input id="cidade" name="cidade" maxLength={120} style={campo} />
+          <input id="cidade" name="cidade" required maxLength={120} style={campo} />
         </div>
+      </div>
+      <div>
+        <label style={rotulo} htmlFor="dor">
+          O que mais te incomoda hoje <span style={{ opacity: 0.6 }}>(opcional)</span>
+        </label>
+        <textarea
+          id="dor"
+          name="dor"
+          rows={3}
+          maxLength={2000}
+          placeholder="Escreva do seu jeito. É o que a gente vai olhar primeiro."
+          style={{ ...campo, resize: "vertical", fontFamily: "inherit" }}
+        />
       </div>
 
       {erro ? (
@@ -171,7 +238,7 @@ export default function FormIndicacao({
           cursor: enviando ? "default" : "pointer",
         }}
       >
-        {enviando ? "Enviando..." : "Quero meu diagnóstico"}
+        {enviando ? "Enviando..." : calLink ? "Continuar e escolher horário" : "Quero meu diagnóstico"}
       </button>
 
       <p style={{ margin: 0, fontSize: 12.5, color: "rgba(245,242,234,0.45)", lineHeight: 1.6 }}>

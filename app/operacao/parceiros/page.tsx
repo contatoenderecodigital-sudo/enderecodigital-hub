@@ -7,6 +7,7 @@ import PageHeader from "@/components/groow/admin/ed2/PageHeader";
 import Card from "@/components/groow/admin/ed2/Card";
 import StatCard from "@/components/groow/admin/ed2/StatCard";
 import ParceiroModal, { type ParceiroLinha } from "@/components/groow/admin/ParceiroModal";
+import FilaReunioes from "@/components/groow/admin/FilaReunioes";
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -171,6 +172,8 @@ export default function ParceirosPage() {
           pill={totalAprovado > 0 ? { text: "aprovado", tone: "up" } : null}
         />
       </div>
+
+      <FilaReunioes />
 
       <Card padding={22}>
         {carregando ? (

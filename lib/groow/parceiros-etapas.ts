@@ -13,7 +13,12 @@ export type SituacaoLead =
   | "nao_atendeu"
   | "ligou"
   | "vai_chamar"
+  | "agendou"
   | "autorizou"
+  | "compareceu"
+  | "nao_compareceu"
+  | "fechou"
+  | "nao_fechou"
   | "recusou";
 export type ResultadoCall =
   | "atendeu"
@@ -61,6 +66,14 @@ export interface ParceiroLead {
   tentativas: number;
   ultima_tentativa: string | null;
   proximo_retorno: string | null;
+  /** quando a reuniao esta marcada; vem do webhook do Cal */
+  reuniao_em: string | null;
+  cal_uid: string | null;
+  reuniao_link: string | null;
+  desfecho_em: string | null;
+  desfecho_nota: string | null;
+  /** respostas do diagnostico que o parceiro preenche durante a ligacao */
+  diagnostico: Record<string, string> | null;
   criado_em: string;
   atualizado_em: string;
   /** vem do JOIN com `leads` quando já foi promovido */
@@ -141,10 +154,43 @@ export const ETAPAS: {
     cor: "#7a5bb5",
   },
   {
+    valor: "agendou",
+    label: "Reunião marcada",
+    ajuda:
+      "Ela escolheu dia e hora no seu link. Daqui em diante quem conduz é a nossa equipe.",
+    cor: "#C9A961",
+  },
+  {
     valor: "autorizou",
     label: "Deixou a gente chamar",
     ajuda: "Ela deixou a gente chamar no WhatsApp. Daqui em diante é com a nossa equipe.",
     cor: "#C9A961",
+    terminal: true,
+  },
+  {
+    valor: "compareceu",
+    label: "Compareceu",
+    ajuda: "A reunião aconteceu. Falta dizer se fechou ou não.",
+    cor: "#2f6fb0",
+  },
+  {
+    valor: "nao_compareceu",
+    label: "Não compareceu",
+    ajuda: "Marcou e não apareceu. Dá pra remarcar pelo próprio convite.",
+    cor: "#c2833a",
+  },
+  {
+    valor: "fechou",
+    label: "Fechou",
+    ajuda: "Virou cliente. A comissão nasce quando o cliente for cadastrado e pagar.",
+    cor: "#1d8a3a",
+    terminal: true,
+  },
+  {
+    valor: "nao_fechou",
+    label: "Não fechou",
+    ajuda: "A reunião aconteceu e não deu em contrato.",
+    cor: "#7c8698",
     terminal: true,
   },
   {
@@ -204,3 +250,54 @@ export interface EntradaLead {
   optin_prova?: string | null;
   observacao?: string | null;
 }
+
+/* --------------------------------------------------- diagnostico na ligacao */
+
+/**
+ * As 7 perguntas que o parceiro faz enquanto conversa. Nao sao para o prospect
+ * preencher sozinho: o formulario publico e curto de proposito, porque cada
+ * campo a mais derruba agendamento. Aqui quem digita e o parceiro, entao cabe.
+ *
+ * As respostas vao para a coluna `diagnostico` (JSONB) em parceiro_leads. Uma
+ * coluna so, e nao onze: mudar as perguntas nao pode exigir migracao nova.
+ */
+export const PERGUNTAS_DIAGNOSTICO: { campo: string; texto: string; ajuda?: string }[] = [
+  {
+    campo: "origem_clientes",
+    texto: "Como chega cliente pra voces hoje?",
+    ajuda: "Indicacao, Instagram, Google, passa na frente.",
+  },
+  {
+    campo: "quem_responde_whatsapp",
+    texto: "Quem responde o WhatsApp, e em quanto tempo?",
+  },
+  {
+    campo: "mensagens_perdidas_dia",
+    texto: "Num dia corrido, quantas mensagens ficam sem resposta?",
+  },
+  {
+    campo: "tem_site",
+    texto: "Tem site hoje? Ele traz cliente ou esta so pra existir?",
+  },
+  {
+    campo: "maior_ladrao_de_tempo",
+    texto: "O que mais toma o seu tempo hoje e nao devia?",
+  },
+  {
+    campo: "prioridade_30_dias",
+    texto: "Se desse pra resolver uma coisa so nos proximos 30 dias, qual seria?",
+  },
+  {
+    campo: "outro_decisor",
+    texto: "Quem decide isso junto com voce?",
+    ajuda: "Se tem socio ou conjuge, a reuniao precisa dos dois.",
+  },
+];
+
+/** Campo livre, e o mais importante da lista. */
+export const CAMPO_PALAVRAS_DELA = {
+  campo: "nas_palavras_dela",
+  label: "Nas palavras dela",
+  ajuda:
+    "Escreva com as palavras que a pessoa usou, nao com as suas. E daqui que sai a conversa da reuniao.",
+};

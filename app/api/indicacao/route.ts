@@ -53,6 +53,9 @@ export async function POST(req: Request) {
       optin: true,
       optin_origem: "landing",
       optin_prova: `Preencheu o formulário em /p/${codigo} pedindo contato.`,
+      // Nas palavras dela. E o campo que da a conversa da reuniao, entao entra
+      // cru, sem a gente reescrever.
+      observacao: String(body.dor || "").trim().slice(0, 2000) || null,
     });
   } catch (err) {
     console.error("[indicacao] falha ao gravar lead:", err);

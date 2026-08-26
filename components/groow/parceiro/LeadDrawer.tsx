@@ -18,6 +18,7 @@ import {
   type ParceiroCall,
   type ResultadoCall,
 } from "@/lib/groow/parceiros-etapas";
+import DiagnosticoLead from "./DiagnosticoLead";
 import { formatarTelefone } from "@/lib/groow/telefone";
 
 /**
@@ -617,6 +618,11 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
             </div>
           </section>
         ) : null}
+
+        {/* -------------------------------------------------- diagnóstico */}
+        <section style={secao}>
+          <DiagnosticoLead lead={lead} />
+        </section>
 
         {/* ---------------------------------------------------- histórico */}
         <section style={secao}>

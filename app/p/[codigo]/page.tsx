@@ -58,6 +58,10 @@ export default async function LandingIndicacao({
   }
 
   const whats = linkWhatsApp(parceiro.codigo, parceiro.nome);
+  // O embed do Cal quer "usuario/evento", nao a URL inteira.
+  const calLink =
+    (process.env.CAL_URL || "").trim().replace(/^https?:\/\/(app\.)?cal\.com\//, "").replace(/\/+$/, "") ||
+    null;
   const primeiroNome = parceiro.nome.trim().split(/\s+/)[0];
 
   return (
@@ -201,7 +205,7 @@ export default async function LandingIndicacao({
               Leva menos de um minuto. A gente chama no WhatsApp e conduz a partir daí.
             </p>
 
-            <FormIndicacao codigo={parceiro.codigo} linkWhats={whats} />
+            <FormIndicacao codigo={parceiro.codigo} linkWhats={whats} calLink={calLink} />
 
             {whats ? (
               <>

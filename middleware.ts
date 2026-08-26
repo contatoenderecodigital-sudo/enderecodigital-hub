@@ -13,6 +13,9 @@ const PUBLIC = [
   // prefixo "/p/", entao isto NAO libera "/parceiro".
   "/p",
   "/api/indicacao",
+  // Webhook do Cal.com. Nao tem sessao: quem autentica e a assinatura HMAC
+  // conferida dentro da rota, contra CAL_WEBHOOK_SECRET.
+  "/api/cal",
 ];
 
 export async function middleware(req: NextRequest) {
