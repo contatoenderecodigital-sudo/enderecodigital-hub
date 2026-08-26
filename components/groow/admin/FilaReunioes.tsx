@@ -103,6 +103,34 @@ export default function FilaReunioes() {
   const pendentes = passadas.filter((r) => r.status === "marcada" || r.status === "remarcada");
   const anotadas = passadas.filter((r) => r.status !== "marcada" && r.status !== "remarcada");
 
+  // Os botoes aparecem em qualquer reuniao sem desfecho, inclusive nas que ainda
+  // vao acontecer. Presos so ao passado, nao dava para anotar "fechou" no fim da
+  // propria call, que e justamente quando a gente sabe.
+  const semDesfecho = (r: Reuniao) => r.status === "marcada" || r.status === "remarcada";
+  const botoes = (r: Reuniao) => (
+    <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 10 }}>
+      {DESFECHOS.map((d) => (
+        <button
+          key={d.valor}
+          onClick={() => marcar(r.cal_uid, d.valor)}
+          disabled={salvando === r.cal_uid + d.valor}
+          style={{
+            padding: "7px 14px",
+            borderRadius: 999,
+            border: `1px solid ${d.cor}55`,
+            background: `${d.cor}18`,
+            color: d.cor,
+            fontWeight: 600,
+            fontSize: 12.5,
+            cursor: "pointer",
+          }}
+        >
+          {d.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <Card style={{ marginBottom: 22 }}>
       <CardHead
@@ -133,7 +161,7 @@ export default function FilaReunioes() {
       {futuras.length ? (
         <Secao titulo="Vão acontecer">
           {futuras.map((r) => (
-            <Linha key={r.cal_uid} r={r} />
+            <Linha key={r.cal_uid} r={r} acoes={semDesfecho(r) ? botoes(r) : undefined} />
           ))}
         </Secao>
       ) : null}
@@ -141,33 +169,7 @@ export default function FilaReunioes() {
       {pendentes.length ? (
         <Secao titulo="Aconteceram, falta anotar">
           {pendentes.map((r) => (
-            <Linha
-              key={r.cal_uid}
-              r={r}
-              acoes={
-                <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 10 }}>
-                  {DESFECHOS.map((d) => (
-                    <button
-                      key={d.valor}
-                      onClick={() => marcar(r.cal_uid, d.valor)}
-                      disabled={salvando === r.cal_uid + d.valor}
-                      style={{
-                        padding: "7px 14px",
-                        borderRadius: 999,
-                        border: `1px solid ${d.cor}55`,
-                        background: `${d.cor}18`,
-                        color: d.cor,
-                        fontWeight: 600,
-                        fontSize: 12.5,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-              }
-            />
+            <Linha key={r.cal_uid} r={r} acoes={botoes(r)} />
           ))}
         </Secao>
       ) : null}
