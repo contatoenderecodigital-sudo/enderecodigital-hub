@@ -309,13 +309,15 @@ export default async function LandingIndicacao({
               .ind-args {
                 order: 3;
                 gap: 0 !important;
-                max-width: none !important;
-                margin-top: 30px;
-                padding: 4px 6px 0;
+                max-width: 340px !important;
+                margin: 30px auto 0;
+                padding: 4px 0 0;
               }
               .ind-dot { display: none !important; }
               .ind-arg {
-                padding: 15px 2px !important;
+                display: block !important;
+                text-align: center;
+                padding: 16px 4px !important;
                 border-top: 1px solid rgba(245,242,234,0.09);
               }
               .ind-arg:first-child { border-top: none; }
@@ -338,6 +340,15 @@ export default async function LandingIndicacao({
               from { opacity: 0; transform: translateY(14px); }
               to { opacity: 1; transform: none; }
             }
+
+            .ind-cta { transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease; }
+            .ind-cta:not(:disabled):hover {
+              filter: brightness(1.05);
+              transform: translateY(-1px);
+              box-shadow: 0 16px 34px -10px rgba(201,169,97,0.65), inset 0 1px 0 rgba(255,255,255,0.6);
+            }
+            .ind-cta:not(:disabled):active { transform: translateY(1px); filter: brightness(0.97); }
+            .ind-cta:focus-visible { outline: 2px solid #EBD6A2; outline-offset: 3px; }
 
             input::placeholder { color: rgba(245,242,234,0.3); }
           `,

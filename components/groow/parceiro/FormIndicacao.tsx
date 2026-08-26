@@ -240,22 +240,41 @@ export default function FormIndicacao({
 
       <button
         type="submit"
+        className="ind-cta"
         disabled={enviando}
         style={{
-          padding: "15px 26px",
+          marginTop: 4,
+          padding: "16px 26px",
           borderRadius: 999,
-          border: "none",
-          background: enviando ? "rgba(201,169,97,0.5)" : "#C9A961",
+          border: "1px solid rgba(255,255,255,0.20)",
+          // Dourado com volume, nao chapado: claro em cima, escuro embaixo, e um
+          // fio de luz na aresta superior. Chapado ficava com cara de bege.
+          background: enviando
+            ? "linear-gradient(180deg, rgba(201,169,97,0.45), rgba(176,143,68,0.45))"
+            : "linear-gradient(180deg, #EBD6A2 0%, #C9A961 54%, #AC8B41 100%)",
           color: "#0B1838",
           fontWeight: 700,
           fontSize: 16,
+          letterSpacing: "0.005em",
           cursor: enviando ? "default" : "pointer",
+          boxShadow: enviando
+            ? "none"
+            : "0 12px 28px -10px rgba(201,169,97,0.55), inset 0 1px 0 rgba(255,255,255,0.55)",
         }}
       >
         {enviando ? "Enviando..." : calLink ? "Continuar e escolher horário" : "Quero meu diagnóstico"}
       </button>
 
-      <p style={{ margin: 0, fontSize: 12.5, color: "rgba(245,242,234,0.45)", lineHeight: 1.6 }}>
+      <p
+        style={{
+          margin: "2px auto 0",
+          maxWidth: 330,
+          textAlign: "center",
+          fontSize: 12,
+          color: "rgba(245,242,234,0.42)",
+          lineHeight: 1.55,
+        }}
+      >
         Ao enviar, você autoriza a Endereço Digital a entrar em contato pelo WhatsApp
         informado. Sem custo e sem compromisso.
       </p>
