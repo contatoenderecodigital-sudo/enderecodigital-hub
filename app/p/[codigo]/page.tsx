@@ -68,15 +68,37 @@ export default async function LandingIndicacao({
   return (
     <main
       style={{
+        position: "relative",
         minHeight: "100vh",
-        background: "linear-gradient(160deg, #070F26 0%, #0B1838 55%, #101F44 100%)",
+        // Tres camadas: brilho dourado no topo, um azul mais claro fora de eixo
+        // e a base navy. Fundo chapado deixava a pagina com cara de rascunho.
+        background: `
+          radial-gradient(900px 520px at 50% -12%, rgba(201,169,97,0.16), transparent 62%),
+          radial-gradient(760px 520px at 92% 18%, rgba(60,96,180,0.20), transparent 66%),
+          linear-gradient(160deg, #060D22 0%, #0B1838 52%, #0E1B3D 100%)
+        `,
         color: "#F5F2EA",
-        padding: "0 20px 80px",
+        fontFamily: "var(--font-jakarta), system-ui, sans-serif",
+        padding: "0 20px 72px",
+        overflowX: "hidden",
       }}
     >
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-        <header style={{ padding: "34px 0 0" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+      {/* Grao por cima de tudo. Tira o aspecto de gradiente digital chapado. */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundImage: "url(/noise.svg)",
+          opacity: 0.035,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1 }}>
+      <div className="ind-wrap" style={{ maxWidth: 1080, margin: "0 auto" }}>
+        <header className="ind-header" style={{ padding: "34px 0 0" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, verticalAlign: "middle" }}>
             <Image
               src="/logo-mark.png"
               alt=""
@@ -141,8 +163,9 @@ export default async function LandingIndicacao({
 
             <div className="ind-args" style={{ display: "grid", gap: 22, maxWidth: 520 }}>
               {ARGUMENTOS.map((a) => (
-                <div key={a.titulo} style={{ display: "flex", gap: 15 }}>
+                <div key={a.titulo} className="ind-arg" style={{ display: "flex", gap: 15 }}>
                   <div
+                    className="ind-dot"
                     style={{
                       flexShrink: 0,
                       width: 7,
@@ -243,31 +266,79 @@ export default async function LandingIndicacao({
           </div>
         </div>
       </div>
+      </div>
 
       <style
         dangerouslySetInnerHTML={{
           __html: `
+            /* ------------------------------------------------- celular */
             @media (max-width: 880px) {
-              .ind-grid { grid-template-columns: 1fr !important; gap: 26px !important; padding-top: 26px !important; }
-              .ind-grid h1 { font-size: 31px !important; margin-bottom: 14px !important; }
-              .ind-grid p { font-size: 16px !important; }
-              /* No celular o formulario tem que vir ANTES dos argumentos. Medido:
-                 sem isto ele so comeca a 940px de altura, uma tela inteira de
-                 rolagem antes de a pessoa achar onde preencher. */
+              /* A pagina inteira vira uma coluna centrada e estreita. Em tablet
+                 e celular grande ela para de esparramar de borda a borda. */
+              .ind-wrap { max-width: 470px; }
+              .ind-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0 !important;
+                padding-top: 14px !important;
+              }
+              .ind-header { padding: 26px 0 0 !important; text-align: center; }
+
+              /* Quem abre esse link ja falou com o vendedor no telefone. Titulo
+                 e texto de abertura so empurravam o campo pra baixo. */
               .ind-texto { display: contents; }
-              .ind-form { order: 2; padding: 24px 20px !important; }
-              .ind-args { order: 3; gap: 16px !important; }
+              .ind-grid h1, .ind-intro { display: none !important; }
+
+              /* O cartao e a pagina: borda dourada de leve, brilho por dentro e
+                 sombra funda pra ele descolar do fundo. */
+              .ind-form {
+                order: 2;
+                padding: 26px 22px 24px !important;
+                border-radius: 26px !important;
+                border-color: rgba(201,169,97,0.26) !important;
+                background:
+                  linear-gradient(180deg, rgba(255,255,255,0.085), rgba(255,255,255,0.022)) !important;
+                box-shadow:
+                  0 26px 64px -28px rgba(0,0,0,0.85),
+                  inset 0 1px 0 rgba(255,255,255,0.07) !important;
+              }
+              .ind-form h2 { font-size: 22px !important; }
+
+              /* Argumentos viram prova discreta: sem marcador, separados por
+                 fio, com respiro nas laterais. Antes ficavam colados na borda
+                 da tela e as bolinhas douradas escapavam do alinhamento. */
+              .ind-args {
+                order: 3;
+                gap: 0 !important;
+                max-width: none !important;
+                margin-top: 30px;
+                padding: 4px 6px 0;
+              }
+              .ind-dot { display: none !important; }
+              .ind-arg {
+                padding: 15px 2px !important;
+                border-top: 1px solid rgba(245,242,234,0.09);
+              }
+              .ind-arg:first-child { border-top: none; }
+              .ind-arg > div > div:first-child { font-size: 15px !important; }
+              .ind-arg > div > div:last-child { font-size: 13.5px !important; }
+
               /* O card de "Recebido" empurrava o botao de escolher horario
-                 para fora da tela no celular. */
+                 para fora da tela. */
               .ind-recebido { padding: 15px 17px !important; margin-bottom: 14px !important; }
               .ind-recebido h3 { font-size: 18px !important; margin-bottom: 5px !important; }
               .ind-recebido p { font-size: 14px !important; line-height: 1.5 !important; }
-              /* No celular a pagina e o formulario. Titulo e texto de abertura
-                 saem: eles empurravam o campo pra baixo e quem chega aqui ja
-                 veio de uma ligacao, nao precisa ser convencido de novo. */
-              .ind-grid h1, .ind-intro { display: none !important; }
-              .ind-form { padding-top: 22px !important; }
             }
+
+            /* Entrada suave, uma vez so. Nada de micro-animacao espalhada. */
+            @media (prefers-reduced-motion: no-preference) {
+              .ind-form { animation: sobe 520ms cubic-bezier(.16,.84,.44,1) both; }
+              .ind-args { animation: sobe 520ms cubic-bezier(.16,.84,.44,1) 120ms both; }
+            }
+            @keyframes sobe {
+              from { opacity: 0; transform: translateY(14px); }
+              to { opacity: 1; transform: none; }
+            }
+
             input::placeholder { color: rgba(245,242,234,0.3); }
           `,
         }}
