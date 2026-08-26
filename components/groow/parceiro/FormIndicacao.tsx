@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AgendaCal from "./AgendaCal";
 import { mascaraTelefone, telefoneE164, telefoneValido } from "@/lib/groow/telefone";
+import { emailValido, nomeValido } from "@/lib/groow/validacao";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -64,10 +65,13 @@ export default function FormIndicacao({
       cidade: String(fd.get("cidade") || "").trim(),
       dor: String(fd.get("dor") || "").trim(),
     };
-    const conferido = telefoneValido(d.telefone);
-    if (!conferido.ok) {
-      setErro(conferido.motivo || "WhatsApp inválido.");
-      return;
+    // Ordem igual a dos campos na tela: o erro aponta pro primeiro problema que
+    // a pessoa ve, nao pro ultimo.
+    for (const c of [nomeValido(d.nome), telefoneValido(d.telefone), emailValido(d.email)]) {
+      if (!c.ok) {
+        setErro(c.motivo || "Confira os dados.");
+        return;
+      }
     }
 
     setEnviando(true);

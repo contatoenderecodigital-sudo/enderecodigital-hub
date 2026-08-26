@@ -17,11 +17,14 @@ import { useEffect, useRef, useState } from "react";
  * Tambem evita @calcom/embed-react, que exigiria npm install (neste projeto
  * trava com o ERESOLVE do eslint).
  *
- * NO CELULAR NAO USA EMBED. Medido: dentro de um iframe estreito o Cal recebe
- * viewport de ~980px, renderiza o layout de desktop e o navegador encolhe tudo
- * num quadradinho ilegivel. Nenhum valor de `layout` corrige. A pagina do Cal,
- * aberta direto, e responsiva de verdade, entao no celular a gente manda pra la
- * com o mesmo prefill na URL.
+ * NO CELULAR NAO USA O EMBED.JS. Medido: a pagina /embed do Cal nao traz meta
+ * viewport, entao dentro de um iframe estreito ela recebe 980px, renderiza o
+ * layout de desktop e o navegador encolhe tudo num quadradinho ilegivel.
+ * Nenhum valor de `layout` corrige.
+ *
+ * A pagina NORMAL do Cal e responsiva de verdade. Entao no celular vai um
+ * iframe simples apontando pra ela, com o mesmo prefill. Continua dentro da
+ * nossa pagina, sem mandar a pessoa embora.
  */
 
 type Prefill = Record<string, string | undefined | null>;
@@ -107,23 +110,25 @@ export default function AgendaCal({
       const s = String(v ?? "").trim();
       if (s) params.set(k, s);
     }
+    params.set("layout", "mobile");
     return (
-      <a
-        href={`https://cal.com/${calLink}${params.toString() ? `?${params}` : ""}`}
+      <iframe
+        src={`https://cal.com/${calLink}?${params}`}
+        title="Escolha um horário"
+        loading="eager"
+        // Alto de proposito: iframe de outro dominio nao avisa a altura do
+        // conteudo, entao ou sobra espaco ou a pessoa rola dentro de uma caixa
+        // dentro da pagina, que no celular e pior.
         style={{
+          width: "100%",
+          height: 1040,
+          border: "none",
+          borderRadius: 18,
           display: "block",
-          textAlign: "center",
-          padding: "17px 24px",
-          borderRadius: 999,
-          background: "#C9A961",
-          color: "#0B1838",
-          fontWeight: 700,
-          fontSize: 16.5,
-          textDecoration: "none",
+          background: "transparent",
+          colorScheme: "normal",
         }}
-      >
-        Escolher meu horário
-      </a>
+      />
     );
   }
 

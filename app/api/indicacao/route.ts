@@ -6,6 +6,7 @@ import {
   normalizarTelefone,
 } from "@/lib/groow/parceiros";
 import { linkWhatsApp } from "@/lib/groow/indicacao";
+import { emailValido } from "@/lib/groow/validacao";
 
 export const dynamic = "force-dynamic";
 
@@ -39,12 +40,20 @@ export async function POST(req: Request) {
     );
   }
 
+  // O e-mail e o que leva o convite de calendario. Se entrar torto, a pessoa
+  // marca a reuniao e nunca recebe nada, e a gente so descobre no no-show.
+  const email = String(body.email || "").trim();
+  const conferido = emailValido(email);
+  if (!conferido.ok) {
+    return NextResponse.json({ error: conferido.motivo }, { status: 400 });
+  }
+
   try {
     await salvarLeadDoParceiro(parceiro.id, {
       nome,
       empresa: String(body.empresa || "").trim() || null,
       telefone,
-      email: String(body.email || "").trim() || null,
+      email,
       cidade: String(body.cidade || "").trim() || null,
       setor: String(body.setor || "").trim() || null,
       // Quem preencheu o formulário se cadastrou sozinho: isso é opt-in de
