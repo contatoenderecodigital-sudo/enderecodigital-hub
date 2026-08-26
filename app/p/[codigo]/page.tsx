@@ -125,6 +125,7 @@ export default async function LandingIndicacao({
             </h1>
 
             <p
+              className="ind-intro"
               style={{
                 fontSize: 18.5,
                 lineHeight: 1.62,
@@ -261,6 +262,11 @@ export default async function LandingIndicacao({
               .ind-recebido { padding: 15px 17px !important; margin-bottom: 14px !important; }
               .ind-recebido h3 { font-size: 18px !important; margin-bottom: 5px !important; }
               .ind-recebido p { font-size: 14px !important; line-height: 1.5 !important; }
+              /* No celular a pagina e o formulario. Titulo e texto de abertura
+                 saem: eles empurravam o campo pra baixo e quem chega aqui ja
+                 veio de uma ligacao, nao precisa ser convencido de novo. */
+              .ind-grid h1, .ind-intro { display: none !important; }
+              .ind-form { padding-top: 22px !important; }
             }
             input::placeholder { color: rgba(245,242,234,0.3); }
           `,
