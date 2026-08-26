@@ -246,7 +246,7 @@ export default function FormIndicacao({
           marginTop: 4,
           padding: "16px 26px",
           borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.20)",
+          border: "none",
           // Dourado com volume, nao chapado: claro em cima, escuro embaixo, e um
           // fio de luz na aresta superior. Chapado ficava com cara de bege.
           background: enviando
@@ -257,9 +257,6 @@ export default function FormIndicacao({
           fontSize: 16,
           letterSpacing: "0.005em",
           cursor: enviando ? "default" : "pointer",
-          boxShadow: enviando
-            ? "none"
-            : "0 12px 28px -10px rgba(201,169,97,0.55), inset 0 1px 0 rgba(255,255,255,0.55)",
         }}
       >
         {enviando ? "Enviando..." : calLink ? "Continuar e escolher horário" : "Quero meu diagnóstico"}

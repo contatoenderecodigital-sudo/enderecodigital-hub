@@ -341,12 +341,8 @@ export default async function LandingIndicacao({
               to { opacity: 1; transform: none; }
             }
 
-            .ind-cta { transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease; }
-            .ind-cta:not(:disabled):hover {
-              filter: brightness(1.05);
-              transform: translateY(-1px);
-              box-shadow: 0 16px 34px -10px rgba(201,169,97,0.65), inset 0 1px 0 rgba(255,255,255,0.6);
-            }
+            .ind-cta { transition: transform 140ms ease, filter 140ms ease; }
+            .ind-cta:not(:disabled):hover { filter: brightness(1.05); transform: translateY(-1px); }
             .ind-cta:not(:disabled):active { transform: translateY(1px); filter: brightness(0.97); }
             .ind-cta:focus-visible { outline: 2px solid #EBD6A2; outline-offset: 3px; }
 
