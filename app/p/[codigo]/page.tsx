@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import FormIndicacao from "@/components/groow/parceiro/FormIndicacao";
@@ -75,16 +76,27 @@ export default async function LandingIndicacao({
     >
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
         <header style={{ padding: "34px 0 0" }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "#C9A961",
-            }}
-          >
-            Endereço Digital
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <Image
+              src="/logo-mark.png"
+              alt=""
+              width={30}
+              height={30}
+              unoptimized
+              style={{ borderRadius: 8, display: "block" }}
+              aria-hidden
+            />
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "#C9A961",
+              }}
+            >
+              Endereço Digital
+            </span>
           </div>
         </header>
 
@@ -99,23 +111,6 @@ export default async function LandingIndicacao({
           className="ind-grid"
         >
           <div className="ind-texto">
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 9,
-                padding: "8px 16px",
-                borderRadius: 999,
-                background: "rgba(201,169,97,0.12)",
-                border: "1px solid rgba(201,169,97,0.32)",
-                fontSize: 13.5,
-                fontWeight: 600,
-                color: "#D9BE7E",
-                marginBottom: 26,
-              }}
-            >
-              Indicação de {parceiro.nome}
-            </div>
 
             <h1
               style={{
@@ -261,6 +256,11 @@ export default async function LandingIndicacao({
               .ind-texto { display: contents; }
               .ind-form { order: 2; padding: 24px 20px !important; }
               .ind-args { order: 3; gap: 16px !important; }
+              /* O card de "Recebido" empurrava o botao de escolher horario
+                 para fora da tela no celular. */
+              .ind-recebido { padding: 15px 17px !important; margin-bottom: 14px !important; }
+              .ind-recebido h3 { font-size: 18px !important; margin-bottom: 5px !important; }
+              .ind-recebido p { font-size: 14px !important; line-height: 1.5 !important; }
             }
             input::placeholder { color: rgba(245,242,234,0.3); }
           `,

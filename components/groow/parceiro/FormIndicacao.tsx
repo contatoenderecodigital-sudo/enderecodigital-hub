@@ -97,6 +97,7 @@ export default function FormIndicacao({
     return (
       <div>
         <div
+          className="ind-recebido"
           style={{
             padding: "22px 24px",
             borderRadius: 20,
