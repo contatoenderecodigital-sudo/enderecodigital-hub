@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AgendaCal from "./AgendaCal";
-import { telefoneE164 } from "@/lib/groow/telefone";
+import { mascaraTelefone, telefoneE164, telefoneValido } from "@/lib/groow/telefone";
 
 const campo: React.CSSProperties = {
   width: "100%",
@@ -47,6 +47,9 @@ export default function FormIndicacao({
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [dados, setDados] = useState<Dados | null>(null);
+  // Controlado por causa da mascara. Solto, o campo aceitava
+  // "49441422411241241241241" e so quebrava la no Cal, na ultima tela.
+  const [telefone, setTelefone] = useState("");
   const [whatsFinal, setWhatsFinal] = useState<string | null>(linkWhats);
 
   async function enviar(ev: React.FormEvent<HTMLFormElement>) {
@@ -55,12 +58,18 @@ export default function FormIndicacao({
     const fd = new FormData(ev.currentTarget);
     const d: Dados = {
       nome: String(fd.get("nome") || "").trim(),
-      telefone: String(fd.get("telefone") || "").trim(),
+      telefone,
       email: String(fd.get("email") || "").trim(),
       empresa: String(fd.get("empresa") || "").trim(),
       cidade: String(fd.get("cidade") || "").trim(),
       dor: String(fd.get("dor") || "").trim(),
     };
+    const conferido = telefoneValido(d.telefone);
+    if (!conferido.ok) {
+      setErro(conferido.motivo || "WhatsApp inválido.");
+      return;
+    }
+
     setEnviando(true);
     try {
       const resp = await fetch("/api/indicacao", {
@@ -163,8 +172,10 @@ export default function FormIndicacao({
           name="telefone"
           required
           inputMode="tel"
-          placeholder="49 99999 9999"
-          maxLength={24}
+          placeholder="(49) 99999-9999"
+          value={telefone}
+          onChange={(e) => setTelefone(mascaraTelefone(e.target.value))}
+          maxLength={16}
           style={campo}
           autoComplete="tel"
         />

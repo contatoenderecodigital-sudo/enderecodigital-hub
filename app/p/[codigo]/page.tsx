@@ -98,7 +98,7 @@ export default async function LandingIndicacao({
           }}
           className="ind-grid"
         >
-          <div>
+          <div className="ind-texto">
             <div
               style={{
                 display: "inline-flex",
@@ -143,7 +143,7 @@ export default async function LandingIndicacao({
               caminho. Comece pelo diagnóstico, é de graça.
             </p>
 
-            <div style={{ display: "grid", gap: 22, maxWidth: 520 }}>
+            <div className="ind-args" style={{ display: "grid", gap: 22, maxWidth: 520 }}>
               {ARGUMENTOS.map((a) => (
                 <div key={a.titulo} style={{ display: "flex", gap: 15 }}>
                   <div
@@ -176,6 +176,7 @@ export default async function LandingIndicacao({
           </div>
 
           <div
+            className="ind-form"
             style={{
               background: "rgba(255,255,255,0.035)",
               border: "1px solid rgba(245,242,234,0.10)",
@@ -251,8 +252,15 @@ export default async function LandingIndicacao({
         dangerouslySetInnerHTML={{
           __html: `
             @media (max-width: 880px) {
-              .ind-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding-top: 36px !important; }
-              .ind-grid h1 { font-size: 38px !important; }
+              .ind-grid { grid-template-columns: 1fr !important; gap: 26px !important; padding-top: 26px !important; }
+              .ind-grid h1 { font-size: 31px !important; margin-bottom: 14px !important; }
+              .ind-grid p { font-size: 16px !important; }
+              /* No celular o formulario tem que vir ANTES dos argumentos. Medido:
+                 sem isto ele so comeca a 940px de altura, uma tela inteira de
+                 rolagem antes de a pessoa achar onde preencher. */
+              .ind-texto { display: contents; }
+              .ind-form { order: 2; padding: 24px 20px !important; }
+              .ind-args { order: 3; gap: 16px !important; }
             }
             input::placeholder { color: rgba(245,242,234,0.3); }
           `,
