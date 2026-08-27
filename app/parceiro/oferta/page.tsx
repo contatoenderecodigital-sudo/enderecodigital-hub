@@ -4,6 +4,7 @@ import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import ChecagemPerfil from "@/components/groow/parceiro/ChecagemPerfil";
 import CopiarLink from "@/components/groow/parceiro/CopiarLink";
 import { parceiroDaSessao } from "@/lib/groow/parceiro-sessao";
+import { linkDeIndicacao } from "@/lib/groow/indicacao";
 import {
   A_LINHA_QUE_AMARRA,
   FRASE_DE_UMA_LINHA,
@@ -26,13 +27,13 @@ export default async function OfertaDoParceiro() {
   // O parceiro não precisa traduzir o placeholder na hora da ligação.
   const comNome = (s: string) => s.replaceAll("{seu nome}", primeiroNome);
 
-  // Link do Cal.com. O codigo do parceiro viaja na URL para a atribuicao nao se
-  // perder entre a ligacao e o agendamento. Sem a env, a tela avisa em vez de
-  // mostrar um botao quebrado.
-  const baseCal = (process.env.CAL_URL || "").trim().replace(/\/+$/, "");
-  const linkCal = baseCal
-    ? `${baseCal}?codigo=${encodeURIComponent(parceiro.codigo)}`
-    : null;
+  // O link que ele manda e o DELE, nao o do Cal.
+  //
+  // Mandar o link cru do Cal pula o nosso formulario. E como os campos estao
+  // escondidos la, a pessoa preenche so nome e e-mail: sem telefone o webhook
+  // nao consegue criar o card no funil, porque a chave do lead e o telefone. A
+  // reuniao apareceria para o dono e o parceiro ficaria sem card nenhum.
+  const linkCal = linkDeIndicacao(parceiro.codigo);
 
   return (
     <>
@@ -139,14 +140,7 @@ export default async function OfertaDoParceiro() {
                 ) : null}
                 {p.n === 7 ? (
                   <div style={{ marginTop: 14 }}>
-                    {linkCal ? (
-                      <CopiarLink link={linkCal} />
-                    ) : (
-                      <div style={{ fontSize: 13.5, color: "#b45309", lineHeight: 1.6 }}>
-                        O link de agendamento ainda não está ligado. Avise o time para
-                        configurar.
-                      </div>
-                    )}
+                    <CopiarLink link={linkCal} />
                   </div>
                 ) : null}
               </div>
