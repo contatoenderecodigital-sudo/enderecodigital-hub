@@ -6,7 +6,6 @@ import CopiarLink from "@/components/groow/parceiro/CopiarLink";
 import { parceiroDaSessao } from "@/lib/groow/parceiro-sessao";
 import {
   A_LINHA_QUE_AMARRA,
-  EXTRAS,
   FRASE_DE_UMA_LINHA,
   IMPLANTACAO,
   MENSAIS,
@@ -166,24 +165,6 @@ export default async function OfertaDoParceiro() {
           ))}
         </div>
 
-        <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--ed2-hair)" }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ed2-ink)", marginBottom: 10 }}>
-            Extras, somam em qualquer plano
-          </div>
-          <div style={{ display: "grid", gap: 7 }}>
-            {EXTRAS.map((e) => (
-              <div
-                key={e.item}
-                style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 14 }}
-              >
-                <span style={{ color: "var(--ed2-ink-2)" }}>{e.item}</span>
-                <span style={{ color: "var(--ed2-ink)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                  {e.valor}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </Card>
 
       <Card style={{ marginBottom: 22 }}>

@@ -35,42 +35,30 @@ export const IMPLANTACAO: LinhaPreco = {
 
 export const MENSAIS: LinhaPreco[] = [
   {
-    nome: "Suporte",
-    valor: "R$ 97",
+    // Um plano so, de proposito. Dois planos lado a lado fazem o cliente caçar
+    // o mais barato e diluem a venda, e o de R$ 97 sozinho nao entrega o que o
+    // vendedor esta prometendo na ligação, que é o Google trabalhando.
+    nome: "Suporte + Google Meu Negócio",
+    valor: "R$ 247",
     quando: "por mês",
+    destaque: true,
     entrega: [
+      "Perfil do Google otimizado e mantido",
+      "Publicações no Google e fotos novas",
+      "Estratégia de avaliações montada pro negócio dele",
+      "Resposta às avaliações que chegarem",
+      "Relatório todo mês",
       "Site no ar 24h e certificado de segurança",
       "Backup semanal",
       "Alterações ilimitadas de texto, foto, horário e serviços",
       "Atendimento direto no WhatsApp",
     ],
   },
-  {
-    nome: "Google Meu Negócio",
-    valor: "R$ 247",
-    quando: "por mês",
-    destaque: true,
-    entrega: [
-      "Tudo do Suporte",
-      "Perfil do Google otimizado e mantido",
-      "Publicações no Google e fotos novas",
-      "Estratégia de avaliações montada pro negócio dele",
-      "Resposta às avaliações que chegarem",
-      "Relatório todo mês",
-    ],
-  },
-];
-
-export const EXTRAS: { item: string; valor: string }[] = [
-  { item: "4 carrosséis por mês no Instagram", valor: "R$ 197/mês" },
-  { item: "8 carrosséis por mês", valor: "R$ 397/mês" },
-  { item: "SEO e blog, 4 artigos por mês", valor: "R$ 397/mês" },
-  { item: "Logo nova", valor: "R$ 500, uma vez" },
 ];
 
 export const NOTA_PRECO =
-  "Sem fidelidade, cancela quando quiser. O plano de R$ 247 é o que você oferece. " +
-  "O de R$ 97 existe só pra quem já tem o perfil do Google redondo, que é raro.";
+  "Sem fidelidade, cancela quando quiser. É um preço só: não ofereça opção, " +
+  "senão ele para de decidir se compra e passa a decidir qual é o mais barato.";
 
 /* -------------------------------------------------------- o que vendemos */
 
