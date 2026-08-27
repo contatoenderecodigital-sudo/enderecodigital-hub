@@ -78,9 +78,11 @@ export default function MapaRaio({
       LRef.current = L;
 
       const mapa = L.map(divRef.current, { zoomControl: true }).setView([-27.0, -52.0], 7);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      // OpenStreetMap e nao CARTO: o basemap do CARTO passou a exigir chave e
+      // escrevia "API KEY REQUIRED" em marca d'agua por cima do mapa inteiro.
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        attribution: "&copy; OpenStreetMap",
       }).addTo(mapa);
 
       mapa.on("click", (ev: { latlng: { lat: number; lng: number } }) => {
