@@ -45,7 +45,17 @@ export default function AgendaMes({
   onSelecionarDia: (dia: string | null) => void;
 }) {
   const hoje = new Date();
-  const [cursor, setCursor] = useState(() => new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+  // Abre no mes da proxima reuniao, nao no mes de hoje. Com as reunioes em
+  // setembro e o calendario aberto em agosto, os unicos dias marcados eram as
+  // casinhas apagadas da ultima semana, e a tela parecia vazia.
+  const [cursor, setCursor] = useState(() => {
+    const futuras = itens
+      .map((i) => new Date(i.reuniao_em))
+      .filter((d) => !Number.isNaN(d.getTime()) && d.getTime() >= hoje.getTime())
+      .sort((a, b) => a.getTime() - b.getTime());
+    const alvo = futuras[0] ?? hoje;
+    return new Date(alvo.getFullYear(), alvo.getMonth(), 1);
+  });
 
   const contagem = useMemo(() => {
     const m = new Map<string, number>();
@@ -142,7 +152,7 @@ export default function AgendaMes({
                 border: ehHoje && !escolhido ? "1px solid rgba(201,169,97,0.7)" : "1px solid transparent",
                 background: escolhido ? "#0B1838" : n ? "rgba(201,169,97,0.18)" : "transparent",
                 color: escolhido ? "#F5F2EA" : doMes ? "var(--ed2-ink)" : "var(--ed2-ink-2)",
-                opacity: doMes ? 1 : 0.3,
+                opacity: doMes ? 1 : n ? 0.7 : 0.28,
                 fontSize: 13,
                 fontWeight: n ? 700 : 400,
                 cursor: "pointer",
@@ -171,11 +181,19 @@ export default function AgendaMes({
         })}
       </div>
 
-      {diaSelecionado ? (
-        <button onClick={() => onSelecionarDia(null)} style={limpar}>
-          ver todas as reuniões
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button
+          onClick={() => setCursor(new Date(hoje.getFullYear(), hoje.getMonth(), 1))}
+          style={{ ...limpar, marginTop: 0 }}
+        >
+          hoje
         </button>
-      ) : null}
+        {diaSelecionado ? (
+          <button onClick={() => onSelecionarDia(null)} style={{ ...limpar, marginTop: 0 }}>
+            ver todas
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
