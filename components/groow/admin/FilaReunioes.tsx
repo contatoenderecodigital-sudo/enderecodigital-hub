@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, RefreshCw, Video } from "lucide-react";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
+import AgendaMes from "@/components/groow/admin/AgendaMes";
 
 /** Espelha lib/groow/reunioes.ts. Tipo local para nao arrastar o `pg` pro bundle. */
 interface Reuniao {
@@ -60,6 +61,7 @@ export default function FilaReunioes() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [dia, setDia] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -99,9 +101,20 @@ export default function FilaReunioes() {
     }
   }
 
+  // Chave local, igual a do calendario. toISOString converteria para UTC e a
+  // reuniao das 21h cairia no dia seguinte.
+  const chaveDia = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+  };
+  const doDia = (r: Reuniao) => !dia || chaveDia(r.reuniao_em) === dia;
+
   // Quem ja aconteceu e ainda esta como "marcada" e o que precisa de anotacao.
   const pendentes = passadas.filter((r) => r.status === "marcada" || r.status === "remarcada");
   const anotadas = passadas.filter((r) => r.status !== "marcada" && r.status !== "remarcada");
+  const todas = [...futuras, ...passadas];
 
   // Os botoes aparecem em qualquer reuniao sem desfecho, inclusive nas que ainda
   // vao acontecer. Presos so ao passado, nao dava para anotar "fechou" no fim da
@@ -158,25 +171,42 @@ export default function FilaReunioes() {
         </p>
       ) : null}
 
-      {futuras.length ? (
-        <Secao titulo="Vão acontecer">
-          {futuras.map((r) => (
+      {todas.length ? (
+        <div style={{ marginTop: 4, marginBottom: 8 }}>
+          <AgendaMes
+            itens={todas.map((r) => ({
+              cal_uid: r.cal_uid,
+              nome: r.nome,
+              empresa: r.empresa,
+              reuniao_em: r.reuniao_em,
+              parceiro_nome: r.parceiro_nome,
+              status: r.status,
+            }))}
+            diaSelecionado={dia}
+            onSelecionarDia={setDia}
+          />
+        </div>
+      ) : null}
+
+      {futuras.filter(doDia).length ? (
+        <Secao titulo={dia ? "Nesse dia" : "Vão acontecer"}>
+          {futuras.filter(doDia).map((r) => (
             <Linha key={r.cal_uid} r={r} acoes={semDesfecho(r) ? botoes(r) : undefined} />
           ))}
         </Secao>
       ) : null}
 
-      {pendentes.length ? (
+      {pendentes.filter(doDia).length ? (
         <Secao titulo="Aconteceram, falta anotar">
-          {pendentes.map((r) => (
+          {pendentes.filter(doDia).map((r) => (
             <Linha key={r.cal_uid} r={r} acoes={botoes(r)} />
           ))}
         </Secao>
       ) : null}
 
-      {anotadas.length ? (
+      {anotadas.filter(doDia).length ? (
         <Secao titulo="Já anotadas">
-          {anotadas.slice(0, 20).map((r) => (
+          {anotadas.filter(doDia).slice(0, 20).map((r) => (
             <Linha key={r.cal_uid} r={r} />
           ))}
         </Secao>

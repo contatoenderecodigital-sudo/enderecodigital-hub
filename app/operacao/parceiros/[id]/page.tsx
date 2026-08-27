@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Check, Wallet, Download } from "lucide-react";
 import PageHeader from "@/components/groow/admin/ed2/PageHeader";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import StatCard from "@/components/groow/admin/ed2/StatCard";
+import KanbanParceiro from "@/components/groow/parceiro/KanbanParceiro";
 import {
   ETAPA_POR_VALOR,
   RESULTADOS_CALL,
@@ -14,6 +15,7 @@ import {
   type PainelParceiro,
   type Parceiro,
   type ParceiroCall,
+  type SituacaoLead,
 } from "@/lib/groow/parceiros-etapas";
 
 const brl = (n: number) =>
@@ -72,6 +74,7 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
   const [ocupado, setOcupado] = useState<number | string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [template, setTemplate] = useState("");
+  const [busca, setBusca] = useState("");
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -120,6 +123,26 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
     } finally {
       setOcupado(null);
     }
+  }
+
+  // O dono move o card do parceiro pela rota de admin: a de /api/parceiro e
+  // escopada pela sessao dele e devolveria 401 aqui.
+  async function moverCard(id: number, situacao: SituacaoLead) {
+    if (!d) return;
+    setD({
+      ...d,
+      leads: d.leads.map((l) => (l.id === id ? { ...l, situacao } : l)),
+    });
+    const r = await fetch("/api/admin/parceiros/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, parceiro_id: d.parceiro.id, situacao }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      flash(j.error || "Não consegui mover o card.");
+    }
+    carregar();
   }
 
   async function acaoComissao(acao: "aprovar" | "pagar") {
@@ -203,9 +226,47 @@ export default function DetalheParceiro({ params }: { params: Promise<{ id: stri
         <StatCard label="A pagar" value={brl(d.painel.comissao.aprovado)} currency="R$" />
       </div>
 
+      <Card style={{ marginBottom: 22 }} padding={22}>
+        <CardHead
+          title="Funil dele"
+          sub="O mesmo quadro que o parceiro enxerga. Arrastar aqui move lá também."
+          right={
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="filtrar por nome, empresa ou cidade"
+              style={{
+                padding: "9px 13px",
+                borderRadius: 999,
+                border: "1px solid var(--ed2-hair)",
+                background: "var(--ed2-surface)",
+                color: "var(--ed2-ink)",
+                fontSize: 13.5,
+                minWidth: 250,
+                outline: "none",
+              }}
+            />
+          }
+        />
+        {d.leads.length === 0 ? (
+          <div style={{ padding: "34px 0", textAlign: "center", color: "var(--ed2-ink-2)" }}>
+            Ele ainda não cadastrou nenhum lead.
+          </div>
+        ) : (
+          <KanbanParceiro
+            leads={d.leads}
+            filtro={busca}
+            onMover={moverCard}
+            // O drawer chama rotas de /api/parceiro, que o dono nao acessa.
+            // A tabela logo abaixo ja mostra o detalhe e as acoes dele.
+            onAbrir={() => {}}
+          />
+        )}
+      </Card>
+
       <Card style={{ marginBottom: 22 }}>
         <CardHead
-          title="Fila de leads"
+          title="Disparo do template"
           sub="Só dispara quem tem autorização registrada. Sem prova, o botão fica travado."
           right={
             <input
