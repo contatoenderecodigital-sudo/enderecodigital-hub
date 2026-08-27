@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { exigirParceiro } from "@/lib/groow/parceiro-sessao";
 import { query, exec } from "@/lib/groow/db";
 import { buscarEmpresas, type ParamsBusca } from "@/lib/groow/prospeccao";
+import { salvarBusca, listarBuscas, abrirBusca } from "@/lib/groow/prospeccao-historico";
 
 /**
  * Prospeccao para o parceiro: acha empresa no Google Maps para ele ligar.
@@ -80,11 +81,23 @@ export async function POST(req: Request) {
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
 
   const { ok: _ok, ...dados } = r;
+  const p = body as ParamsBusca;
+  await salvarBusca({
+    parceiroId: parceiro.id,
+    nicho: String(p.nicho || ""),
+    cidade: p.cidade ?? null,
+    bairro: p.bairro ?? null,
+    lat: p.lat ?? null,
+    lng: p.lng ?? null,
+    raioKm: p.raioKm ?? null,
+    resultados: dados.empresas,
+  });
+
   return NextResponse.json({ ...dados, restantes: Math.max(0, teto - usadas - 1) });
 }
 
 /** Quantas buscas ainda restam hoje, para a tela mostrar antes de gastar. */
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await exigirParceiro();
   if (!auth.ok) return auth.resposta;
 
@@ -112,5 +125,19 @@ export async function GET() {
     )[0]?.total ?? 0
   );
 
-  return NextResponse.json({ teto, usadas, restantes: Math.max(0, teto - usadas) });
+  // `abrir` reabre uma busca antiga sem gastar nada, que e o ponto do historico.
+  const url = new URL(req.url);
+  const abrir = Number(url.searchParams.get("abrir") || 0);
+  if (abrir > 0) {
+    const b = await abrirBusca(abrir, auth.parceiro.id);
+    if (!b) return NextResponse.json({ error: "Busca não encontrada." }, { status: 404 });
+    return NextResponse.json({ empresas: b.resultados, nicho: b.nicho, cidade: b.cidade });
+  }
+
+  return NextResponse.json({
+    teto,
+    usadas,
+    restantes: Math.max(0, teto - usadas),
+    historico: await listarBuscas(auth.parceiro.id),
+  });
 }

@@ -87,18 +87,43 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
     : "/api/parceiro/prospeccao/importar";
   const [restantes, setRestantes] = useState<number | null>(null);
   const [teto, setTeto] = useState<number | null>(null);
+  const [historico, setHistorico] = useState<
+    { id: number; nicho: string; cidade: string | null; total: number; criado_em: string }[]
+  >([]);
+
+  // Historico: reabrir uma busca antiga nao custa nada. Sem isso um F5 jogava
+  // fora o resultado com o dinheiro da API do Google ja gasto.
+  const carregarHistorico = useCallback(async () => {
+    try {
+      const r = await fetch(rotaBusca);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (Array.isArray(d.historico)) setHistorico(d.historico);
+      if (typeof d.restantes === "number") setRestantes(d.restantes);
+      if (typeof d.teto === "number") setTeto(d.teto);
+    } catch {
+      // historico e conveniencia: falhar aqui nao pode travar a busca
+    }
+  }, [rotaBusca]);
 
   useEffect(() => {
-    if (ehDono) return;
-    fetch("/api/parceiro/prospeccao")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!d) return;
-        setRestantes(d.restantes);
-        setTeto(d.teto);
-      })
-      .catch(() => {});
-  }, [ehDono]);
+    carregarHistorico();
+  }, [carregarHistorico]);
+
+  const reabrir = async (id: number) => {
+    try {
+      const r = await fetch(`${rotaBusca}?abrir=${id}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setEmpresas(Array.isArray(d.empresas) ? d.empresas : []);
+      if (d.nicho) setNicho(d.nicho);
+      if (d.cidade) setCidade(d.cidade);
+      setSelected(new Set());
+    } catch {
+      // idem
+    }
+  };
+
 
   const router = useRouter();
   const [nicho, setNicho] = useState("");
@@ -143,6 +168,7 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
         const d = JSON.parse(salvo);
         if (Array.isArray(d.empresas) && d.empresas.length) {
           setEmpresas(d.empresas);
+          carregarHistorico();
           setNicho(d.nicho ?? "");
           setCidade(d.cidade ?? "");
           setBairro(d.bairro ?? "");
@@ -528,6 +554,73 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
               </div>
             ))}
             {nichosFiltrados.length === 0 && <div style={{ fontSize: 13, color: "var(--ed2-ink-2)", paddingBottom: 14 }}>Nenhum nicho com esse nome. Digita direto no campo de busca.</div>}
+          </div>
+        </div>
+      )}
+
+      {/* BUSCAS ANTERIORES */}
+      {historico.length > 0 && (
+        <div
+          style={{
+            background: "var(--ed2-card)",
+            borderRadius: 16,
+            padding: "12px 18px",
+            marginBottom: 16,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--ed2-ink-2)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              marginBottom: 9,
+            }}
+          >
+            Buscas anteriores · abrir não gasta busca nova
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {historico.map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => reabrir(h.id)}
+                title={new Date(h.criado_em).toLocaleString("pt-BR")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "7px 13px",
+                  borderRadius: 999,
+                  border: "1px solid var(--ed2-hair)",
+                  background: "var(--ed2-surface)",
+                  color: "var(--ed2-ink)",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {h.nicho}
+                {h.cidade ? (
+                  <span style={{ color: "var(--ed2-ink-2)", fontWeight: 400 }}>· {h.cidade}</span>
+                ) : null}
+                <span
+                  style={{
+                    padding: "1px 7px",
+                    borderRadius: 999,
+                    background: "rgba(201,169,97,0.18)",
+                    color: "#8a712d",
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  {h.total}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       )}
