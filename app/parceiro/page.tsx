@@ -40,9 +40,10 @@ export default async function PainelParceiro() {
             explicar nada, é só mandar o link depois da ligação.
           </p>
         ) : (
-          <p style={{ margin: "16px 0 0", fontSize: 13.5, color: "#b45309", lineHeight: 1.6 }}>
-            O botão de WhatsApp da página ainda não está ligado. Avise o time para
-            configurar o número.
+          <p style={{ margin: "16px 0 0", fontSize: 13.5, color: "var(--ed2-ink-2)", lineHeight: 1.6 }}>
+            Mande esse link pelo seu WhatsApp logo depois da ligação, com a pessoa
+            ainda na linha. A página abre com o seu nome no topo, ela preenche em um
+            minuto e escolhe o horário ali mesmo.
           </p>
         )}
       </Card>

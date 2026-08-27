@@ -126,6 +126,10 @@ export default function AgendaCal({
           borderRadius: 18,
           display: "block",
           background: "transparent",
+          // O tema do calendario vem da conta do Cal, nao daqui. Testados e
+          // descartados: `?theme=dark` na URL e `color-scheme` no iframe, os
+          // dois renderizam identico ao claro. Para deixar escuro e em
+          // Cal > Configuracoes > Aparencia > tema da pagina de agendamento.
           colorScheme: "normal",
         }}
       />
