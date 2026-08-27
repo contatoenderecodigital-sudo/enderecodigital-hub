@@ -176,7 +176,9 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
         body: JSON.stringify({
           nicho, cidade, bairro, minRating, minReviews, onlyPhone, semSite,
           maxPaginas: maisResultados ? 3 : 1,
-          ...(centro ? { lat: centro.lat, lng: centro.lng, raioKm } : {}),
+          // Com ponto no mapa, cidade e bairro nao vao junto: mandar os dois
+          // faria o texto pedir uma cidade e a area restringir a outra.
+          ...(centro ? { lat: centro.lat, lng: centro.lng, raioKm, cidade: "", bairro: "" } : {}),
         }),
       });
       const data = await res.json();
@@ -427,14 +429,54 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
             </button>
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>CIDADE {centro ? "(opcional, o mapa manda)" : ""}</label>
-          <input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Florianópolis SC" style={inputStyle} />
-        </div>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>BAIRRO (OPCIONAL)</label>
-          <input value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Ex: Centro" style={inputStyle} />
-        </div>
+        {/* Cidade e bairro so aparecem quando NAO ha ponto no mapa. Com os dois
+            preenchidos o pedido ao Google fica contraditorio: o texto diz uma
+            cidade e o locationRestriction restringe ao retangulo de outra. O
+            mapa ja tem a propria busca de cidade em cima, entao aqui e a
+            alternativa para quem nao quer mexer no mapa, nao um complemento. */}
+        {!centro ? (
+          <>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>CIDADE</label>
+              <input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Florianópolis SC" style={inputStyle} />
+            </div>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>BAIRRO (OPCIONAL)</label>
+              <input value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Ex: Centro" style={inputStyle} />
+            </div>
+          </>
+        ) : (
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ed2-ink-2)", marginBottom: 6, letterSpacing: "0.03em" }}>ÁREA</label>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 9,
+                height: 46,
+                padding: "0 14px",
+                borderRadius: 12,
+                background: "rgba(201,169,97,0.12)",
+                border: "1px solid rgba(201,169,97,0.30)",
+                fontSize: 13.5,
+                color: "var(--ed2-ink)",
+              }}
+            >
+              <MapPin size={15} style={{ color: "#C9A961", flexShrink: 0 }} />
+              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {raioKm} km do ponto no mapa
+              </span>
+              <button
+                type="button"
+                onClick={() => setCentro(null)}
+                title="Voltar a buscar por cidade"
+                style={{ all: "unset", cursor: "pointer", marginLeft: "auto", color: "var(--ed2-ink-2)", display: "inline-flex" } as React.CSSProperties}
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
+        )}
         <button type="submit" disabled={loading || !nicho.trim() || (!cidade.trim() && !centro)}
           style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#C9A961", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: loading ? "wait" : "pointer", opacity: (loading || !nicho.trim() || (!cidade.trim() && !centro)) ? 0.6 : 1, boxShadow: "0 4px 12px rgba(201,169,97,0.28)", height: 46 }}>
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
