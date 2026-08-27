@@ -181,21 +181,24 @@ export default function FilaReunioes() {
         </p>
       ) : null}
 
-      {todas.length ? (
-        <div style={{ marginTop: 4, marginBottom: 8 }}>
+      <div className="fila-reunioes" style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+        {todas.length ? (
           <AgendaMes
             itens={todas.map((r) => ({
               cal_uid: r.cal_uid,
-              nome: r.nome,
-              empresa: r.empresa,
               reuniao_em: r.reuniao_em,
-              parceiro_nome: r.parceiro_nome,
               status: r.status,
             }))}
             diaSelecionado={dia}
             onSelecionarDia={setDia}
           />
-        </div>
+        ) : null}
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+      {dia && !futuras.filter(doDia).length && !pendentes.filter(doDia).length && !anotadas.filter(doDia).length ? (
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--ed2-ink-2)" }}>
+          Nenhuma reunião nesse dia.
+        </p>
       ) : null}
 
       {futuras.filter(doDia).length ? (
@@ -221,6 +224,11 @@ export default function FilaReunioes() {
           ))}
         </Secao>
       ) : null}
+        </div>
+      </div>
+
+      {/* Abaixo de 900px o calendario nao cabe ao lado da lista. */}
+      <style>{`@media (max-width: 900px) { .fila-reunioes { flex-direction: column; } }`}</style>
     </Card>
   );
 }

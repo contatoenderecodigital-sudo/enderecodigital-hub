@@ -4,31 +4,32 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * Mes navegavel com as reunioes marcadas, para a aba Reunioes.
+ * Mes compacto com as reunioes marcadas.
  *
- * A lista sozinha responde "o que vem depois", mas nao responde "como esta a
- * minha semana", que e a pergunta de quem vai encaixar mais uma call. Aqui o
- * dia com reuniao ganha um ponto e o numero, e clicar filtra a lista de baixo.
+ * Largura fixa de proposito. A primeira versao usava aspect-ratio 1/1 numa
+ * grade que ocupava o card inteiro: cada dia virava um quadrado de 170px e a
+ * tela ficava impossivel de ler. Calendario e um objeto pequeno, ele nao
+ * acompanha a largura do container.
+ *
+ * Todo dia e clicavel, inclusive os vazios. Desabilitar os dias sem reuniao
+ * fazia a maior parte da grade parecer quebrada.
  */
 
 export interface ItemAgenda {
   cal_uid: string;
-  nome: string;
-  empresa: string | null;
   reuniao_em: string;
-  parceiro_nome: string | null;
   status: string;
 }
 
-const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const DIAS = ["D", "S", "T", "Q", "Q", "S", "S"];
 const MESES = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-/** Chave local do dia. Nao usa toISOString: aquilo converte para UTC e a
- *  reuniao das 21h cai no dia seguinte. */
-function chaveDia(d: Date): string {
+/** Chave local do dia. toISOString converteria para UTC e a reuniao das 21h
+ *  cairia no dia seguinte. */
+export function chaveDia(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
     d.getDate()
   ).padStart(2, "0")}`;
@@ -46,15 +47,13 @@ export default function AgendaMes({
   const hoje = new Date();
   const [cursor, setCursor] = useState(() => new Date(hoje.getFullYear(), hoje.getMonth(), 1));
 
-  const porDia = useMemo(() => {
-    const m = new Map<string, ItemAgenda[]>();
+  const contagem = useMemo(() => {
+    const m = new Map<string, number>();
     for (const i of itens) {
       const d = new Date(i.reuniao_em);
       if (Number.isNaN(d.getTime())) continue;
       const k = chaveDia(d);
-      const lista = m.get(k);
-      if (lista) lista.push(i);
-      else m.set(k, [i]);
+      m.set(k, (m.get(k) || 0) + 1);
     }
     return m;
   }, [itens]);
@@ -63,8 +62,8 @@ export default function AgendaMes({
     const primeiro = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
     const inicio = new Date(primeiro);
     inicio.setDate(1 - primeiro.getDay());
-    // 6 semanas fixas: o mes nao muda de altura ao navegar, o que faria a tela
-    // inteira pular de tamanho a cada clique na seta.
+    // 6 semanas fixas: o calendario nao muda de altura ao trocar de mes, senao
+    // a tela inteira pula a cada clique na seta.
     return Array.from({ length: 42 }, (_, i) => {
       const d = new Date(inicio);
       d.setDate(inicio.getDate() + i);
@@ -75,51 +74,50 @@ export default function AgendaMes({
   const chaveHoje = chaveDia(hoje);
   const mesAtual = cursor.getMonth();
 
-  function mover(delta: number) {
-    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
-  }
-
   return (
-    <div>
+    <div style={{ width: 296, flexShrink: 0 }}>
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 14,
+          marginBottom: 12,
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ed2-ink)" }}>
+        <div style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ed2-ink)" }}>
           {MESES[cursor.getMonth()]}{" "}
           <span style={{ color: "var(--ed2-ink-2)", fontWeight: 400 }}>{cursor.getFullYear()}</span>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {diaSelecionado ? (
-            <button onClick={() => onSelecionarDia(null)} style={botaoTexto}>
-              ver o mês todo
-            </button>
-          ) : null}
-          <button onClick={() => mover(-1)} style={seta} aria-label="Mês anterior">
-            <ChevronLeft size={15} />
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+            style={seta}
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft size={14} />
           </button>
-          <button onClick={() => mover(1)} style={seta} aria-label="Próximo mês">
-            <ChevronRight size={15} />
+          <button
+            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+            style={seta}
+            aria-label="Próximo mês"
+          >
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-        {DIAS.map((d) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+        {DIAS.map((d, i) => (
           <div
-            key={d}
+            key={i}
             style={{
-              textAlign: "center",
+              height: 22,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 10.5,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
+              fontWeight: 700,
               color: "var(--ed2-ink-2)",
-              paddingBottom: 6,
             }}
           >
             {d}
@@ -129,52 +127,42 @@ export default function AgendaMes({
         {celulas.map((d) => {
           const k = chaveDia(d);
           const doMes = d.getMonth() === mesAtual;
-          const lista = porDia.get(k) || [];
+          const n = contagem.get(k) || 0;
           const ehHoje = k === chaveHoje;
           const escolhido = k === diaSelecionado;
           return (
             <button
               key={k}
               onClick={() => onSelecionarDia(escolhido ? null : k)}
-              disabled={!lista.length}
-              title={lista.length ? `${lista.length} reunião(ões)` : ""}
+              title={n ? `${n} reunião${n > 1 ? "ões" : ""}` : "Sem reunião"}
               style={{
                 position: "relative",
-                aspectRatio: "1 / 1",
-                borderRadius: 11,
-                border: ehHoje
-                  ? "1px solid rgba(201,169,97,0.65)"
-                  : "1px solid transparent",
-                background: escolhido
-                  ? "#C9A961"
-                  : lista.length
-                    ? "rgba(201,169,97,0.14)"
-                    : "transparent",
-                color: escolhido
-                  ? "#0B1838"
-                  : doMes
-                    ? "var(--ed2-ink)"
-                    : "var(--ed2-ink-2)",
-                opacity: doMes ? 1 : 0.35,
-                fontSize: 13.5,
-                fontWeight: lista.length ? 700 : 400,
-                cursor: lista.length ? "pointer" : "default",
+                height: 36,
+                borderRadius: 9,
+                border: ehHoje && !escolhido ? "1px solid rgba(201,169,97,0.7)" : "1px solid transparent",
+                background: escolhido ? "#0B1838" : n ? "rgba(201,169,97,0.18)" : "transparent",
+                color: escolhido ? "#F5F2EA" : doMes ? "var(--ed2-ink)" : "var(--ed2-ink-2)",
+                opacity: doMes ? 1 : 0.3,
+                fontSize: 13,
+                fontWeight: n ? 700 : 400,
+                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontVariantNumeric: "tabular-nums",
+                padding: 0,
               }}
             >
               {d.getDate()}
-              {lista.length ? (
+              {n ? (
                 <span
                   style={{
                     position: "absolute",
-                    bottom: 5,
+                    bottom: 4,
                     width: 4,
                     height: 4,
                     borderRadius: 999,
-                    background: escolhido ? "#0B1838" : "#C9A961",
+                    background: escolhido ? "#C9A961" : "#8a712d",
                   }}
                 />
               ) : null}
@@ -182,6 +170,12 @@ export default function AgendaMes({
           );
         })}
       </div>
+
+      {diaSelecionado ? (
+        <button onClick={() => onSelecionarDia(null)} style={limpar}>
+          ver todas as reuniões
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -190,21 +184,25 @@ const seta: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: 30,
-  height: 30,
+  width: 26,
+  height: 26,
   borderRadius: 999,
   border: "1px solid var(--ed2-hair)",
   background: "transparent",
   color: "var(--ed2-ink-2)",
   cursor: "pointer",
+  padding: 0,
 };
 
-const botaoTexto: React.CSSProperties = {
-  border: "none",
+const limpar: React.CSSProperties = {
+  marginTop: 12,
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: 999,
+  border: "1px solid var(--ed2-hair)",
   background: "transparent",
-  color: "#8a712d",
+  color: "var(--ed2-ink-2)",
   fontSize: 12.5,
   fontWeight: 600,
   cursor: "pointer",
-  padding: "6px 8px",
 };
