@@ -491,12 +491,37 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
       )}
 
       {/* FILTROS */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, flexWrap: "wrap", background: "var(--ed2-card)", borderRadius: 16, padding: "12px 18px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ed2-ink-2)", letterSpacing: "0.04em", textTransform: "uppercase" }}>Filtros</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 20,
+          marginBottom: 20,
+          flexWrap: "wrap",
+          background: "var(--ed2-card)",
+          borderRadius: 16,
+          padding: "14px 20px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: "var(--ed2-ink-2)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Filtros
+        </span>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+        {/* nowrap em cada item: sem isso a linha quebrava no meio das frases e
+            saia "Sem site / proprio / (oportunidade)" em tres linhas. E cor
+            explicita, senao o rotulo herda um cinza que mal da para ler. */}
+        <label style={rotuloFiltro}>
           Nota mínima
-          <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} style={{ borderRadius: 8, border: "1px solid var(--ed2-hair)", padding: "5px 8px", fontSize: 13, background: "var(--ed2-surface-2)", color: "var(--ed2-ink)" }}>
+          <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} style={seletorFiltro}>
             <option value={0}>Qualquer</option>
             <option value={3}>3.0+</option>
             <option value={4}>4.0+</option>
@@ -504,9 +529,9 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           </select>
         </label>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-          Mín. avaliações
-          <select value={minReviews} onChange={(e) => setMinReviews(Number(e.target.value))} style={{ borderRadius: 8, border: "1px solid var(--ed2-hair)", padding: "5px 8px", fontSize: 13, background: "var(--ed2-surface-2)", color: "var(--ed2-ink)" }}>
+        <label style={rotuloFiltro}>
+          Avaliações
+          <select value={minReviews} onChange={(e) => setMinReviews(Number(e.target.value))} style={seletorFiltro}>
             <option value={0}>Qualquer</option>
             <option value={10}>10+</option>
             <option value={50}>50+</option>
@@ -514,19 +539,23 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           </select>
         </label>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-          <input type="checkbox" checked={onlyPhone} onChange={(e) => setOnlyPhone(e.target.checked)} style={{ accentColor: "#C9A961" }} />
+        <label style={rotuloFiltro}>
+          <input type="checkbox" checked={onlyPhone} onChange={(e) => setOnlyPhone(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
           Só com telefone
         </label>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, cursor: "pointer" }} title="Negócios sem site próprio (só Instagram ou nada) = melhores prospects pra vender presença digital">
-          <input type="checkbox" checked={semSite} onChange={(e) => setSemSite(e.target.checked)} style={{ accentColor: "#C9A961" }} />
-          <Target size={14} style={{ color: "#C9A961" }} /> Sem site próprio (oportunidade)
+        <label
+          style={rotuloFiltro}
+          title="Negócio sem site próprio, só Instagram ou nada. É o melhor alvo pra vender presença digital."
+        >
+          <input type="checkbox" checked={semSite} onChange={(e) => setSemSite(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
+          <Target size={14} style={{ color: "#C9A961" }} />
+          Sem site próprio
         </label>
 
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-          <input type="checkbox" checked={maisResultados} onChange={(e) => setMaisResultados(e.target.checked)} style={{ accentColor: "#C9A961" }} />
-          Mais resultados (até 60)
+        <label style={rotuloFiltro} title="Busca até 60 empresas em vez de 20. Demora mais.">
+          <input type="checkbox" checked={maisResultados} onChange={(e) => setMaisResultados(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
+          Mais resultados
         </label>
       </div>
 
@@ -793,3 +822,24 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
     </div>
   );
 }
+
+const rotuloFiltro: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  fontSize: 13.5,
+  fontWeight: 500,
+  color: "var(--ed2-ink)",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+};
+
+const seletorFiltro: React.CSSProperties = {
+  borderRadius: 9,
+  border: "1px solid var(--ed2-hair)",
+  padding: "6px 9px",
+  fontSize: 13,
+  background: "var(--ed2-surface)",
+  color: "var(--ed2-ink)",
+  cursor: "pointer",
+};
