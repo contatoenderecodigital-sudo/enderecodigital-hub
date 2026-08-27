@@ -173,7 +173,7 @@ export default function ParceirosPage() {
         />
       </div>
 
-      <FilaReunioes />
+      <FilaReunioes onMudou={carregar} />
 
       <Card padding={22}>
         {carregando ? (

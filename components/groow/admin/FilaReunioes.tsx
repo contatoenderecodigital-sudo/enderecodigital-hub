@@ -56,7 +56,7 @@ function telefoneLegivel(t: string | null): string {
   return t;
 }
 
-export default function FilaReunioes() {
+export default function FilaReunioes({ onMudou }: { onMudou?: () => void } = {}) {
   const [futuras, setFuturas] = useState<Reuniao[]>([]);
   const [passadas, setPassadas] = useState<Reuniao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -207,6 +207,9 @@ export default function FilaReunioes() {
             setOk(msg);
             setTimeout(() => setOk(null), 8000);
             carregar();
+            // Os indicadores e a tabela de parceiros vivem na pagina, nao aqui:
+            // sem avisar, a comissao nascia e o cartao continuava em R$ 0,00.
+            onMudou?.();
           }}
         />
       ) : null}
