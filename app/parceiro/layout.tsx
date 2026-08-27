@@ -35,11 +35,20 @@ export default async function ParceiroLayout({ children }: { children: React.Rea
         }}
       />
       <SidebarParceiro nome={parceiro.nome} />
-      <div style={{ marginLeft: 236 }}>
+      <div className="parc-conteudo" style={{ marginLeft: 236 }}>
         <main style={{ maxWidth: 1240, margin: "0 auto", padding: "40px 32px 80px" }}>
           {children}
         </main>
       </div>
+      {/* Sem soltar a margem, a gaveta fecha e o conteudo continua espremido. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@media (max-width: 900px) {
+            .parc-conteudo { margin-left: 0 !important; }
+            .parc-conteudo main { padding: 68px 18px 60px !important; }
+          }`,
+        }}
+      />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet, Headphones, Tag, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, Headphones, Tag, LogOut, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const W = 236;
@@ -17,9 +18,56 @@ const ITENS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[
 
 export default function SidebarParceiro({ nome }: { nome: string }) {
   const pathname = usePathname();
+  // No celular o menu vira gaveta. Fixo, ele comia 236px de uma tela de 433 e
+  // sobrava menos da metade pro conteudo: o link de indicacao aparecia como
+  // "http" e o botao de copiar ficava cortado na borda.
+  const [aberto, setAberto] = useState(false);
+
+  // Fecha ao navegar, senao a gaveta cobre a tela que acabou de abrir.
+  useEffect(() => setAberto(false), [pathname]);
 
   return (
+    <>
+      <button
+        className="parc-hamb"
+        onClick={() => setAberto(true)}
+        aria-label="Abrir menu"
+        style={{
+          position: "fixed",
+          top: 12,
+          left: 12,
+          zIndex: 60,
+          width: 42,
+          height: 42,
+          borderRadius: 13,
+          border: "1px solid rgba(201,169,97,0.30)",
+          background: "#0B1838",
+          color: "#C9A961",
+          display: "none",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+      >
+        <Menu size={19} />
+      </button>
+
+      {aberto ? (
+        <div
+          className="parc-fundo"
+          onClick={() => setAberto(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(6,13,34,0.55)",
+            zIndex: 45,
+            display: "none",
+          }}
+        />
+      ) : null}
+
     <aside
+      className={`parc-menu${aberto ? " parc-menu-aberto" : ""}`}
       style={{
         position: "fixed",
         top: 0,
@@ -99,6 +147,44 @@ export default function SidebarParceiro({ nome }: { nome: string }) {
         <LogOut size={16} strokeWidth={2} />
         Sair
       </a>
+
+      <button
+        className="parc-fechar"
+        onClick={() => setAberto(false)}
+        aria-label="Fechar menu"
+        style={{
+          position: "absolute",
+          top: 14,
+          right: 14,
+          width: 34,
+          height: 34,
+          borderRadius: 999,
+          border: "1px solid rgba(245,242,234,0.16)",
+          background: "transparent",
+          color: "rgba(245,242,234,0.6)",
+          display: "none",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+      >
+        <X size={16} />
+      </button>
     </aside>
+
+    <style>{`
+      @media (max-width: 900px) {
+        .parc-hamb { display: flex !important; }
+        .parc-fechar { display: flex !important; }
+        .parc-fundo { display: block !important; }
+        .parc-menu {
+          transform: translateX(-100%);
+          transition: transform 220ms cubic-bezier(.2,.8,.3,1);
+          z-index: 50;
+        }
+        .parc-menu-aberto { transform: none; }
+      }
+    `}</style>
+    </>
   );
 }
