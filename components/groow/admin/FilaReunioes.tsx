@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarClock, RefreshCw, Video } from "lucide-react";
+import { CalendarClock, Check, RefreshCw, Video } from "lucide-react";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import AgendaMes from "@/components/groow/admin/AgendaMes";
 
@@ -116,33 +116,43 @@ export default function FilaReunioes() {
   const anotadas = passadas.filter((r) => r.status !== "marcada" && r.status !== "remarcada");
   const todas = [...futuras, ...passadas];
 
-  // Os botoes aparecem em qualquer reuniao sem desfecho, inclusive nas que ainda
-  // vao acontecer. Presos so ao passado, nao dava para anotar "fechou" no fim da
-  // propria call, que e justamente quando a gente sabe.
-  const semDesfecho = (r: Reuniao) => r.status === "marcada" || r.status === "remarcada";
-  const botoes = (r: Reuniao) => (
-    <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 10 }}>
-      {DESFECHOS.map((d) => (
-        <button
-          key={d.valor}
-          onClick={() => marcar(r.cal_uid, d.valor)}
-          disabled={salvando === r.cal_uid + d.valor}
-          style={{
-            padding: "7px 14px",
-            borderRadius: 999,
-            border: `1px solid ${d.cor}55`,
-            background: `${d.cor}18`,
-            color: d.cor,
-            fontWeight: 600,
-            fontSize: 12.5,
-            cursor: "pointer",
-          }}
-        >
-          {d.label}
-        </button>
-      ))}
-    </div>
-  );
+  // Os botoes aparecem SEMPRE, inclusive depois de marcado e nas reunioes que
+  // ainda vao acontecer. Duas razoes: o dono sabe o desfecho no fim da propria
+  // call, e clicar no botao errado nao pode ser irreversivel.
+  const botoes = (r: Reuniao) => {
+    const atual = r.lead_situacao || "";
+    return (
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 10 }}>
+        {DESFECHOS.map((d) => {
+          const marcado = atual === d.valor;
+          return (
+            <button
+              key={d.valor}
+              onClick={() => marcar(r.cal_uid, d.valor)}
+              disabled={salvando === r.cal_uid + d.valor}
+              title={marcado ? "É o desfecho atual. Clique em outro para corrigir." : ""}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 14px",
+                borderRadius: 999,
+                border: `1px solid ${marcado ? d.cor : d.cor + "55"}`,
+                background: marcado ? d.cor : `${d.cor}18`,
+                color: marcado ? "#fff" : d.cor,
+                fontWeight: marcado ? 700 : 600,
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
+            >
+              {marcado ? <Check size={12} /> : null}
+              {d.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <Card style={{ marginBottom: 22 }}>
@@ -191,7 +201,7 @@ export default function FilaReunioes() {
       {futuras.filter(doDia).length ? (
         <Secao titulo={dia ? "Nesse dia" : "Vão acontecer"}>
           {futuras.filter(doDia).map((r) => (
-            <Linha key={r.cal_uid} r={r} acoes={semDesfecho(r) ? botoes(r) : undefined} />
+            <Linha key={r.cal_uid} r={r} acoes={botoes(r)} />
           ))}
         </Secao>
       ) : null}
@@ -207,7 +217,7 @@ export default function FilaReunioes() {
       {anotadas.filter(doDia).length ? (
         <Secao titulo="Já anotadas">
           {anotadas.filter(doDia).slice(0, 20).map((r) => (
-            <Linha key={r.cal_uid} r={r} />
+            <Linha key={r.cal_uid} r={r} acoes={botoes(r)} />
           ))}
         </Secao>
       ) : null}
