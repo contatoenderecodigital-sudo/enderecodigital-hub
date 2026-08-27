@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Wallet, Headphones, Tag, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Search, Users, Wallet, Headphones, Tag, LogOut, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const W = 236;
 
 const ITENS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
   { href: "/parceiro", label: "Painel", icon: LayoutDashboard, exact: true },
+  { href: "/parceiro/prospeccao", label: "Achar quem ligar", icon: Search },
   { href: "/parceiro/leads", label: "Minhas ligações", icon: Users },
   { href: "/parceiro/comissoes", label: "Comissões", icon: Wallet },
   { href: "/parceiro/oferta", label: "O que você vende", icon: Tag },
