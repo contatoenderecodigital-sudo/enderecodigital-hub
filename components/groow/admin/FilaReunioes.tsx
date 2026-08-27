@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, Check, RefreshCw, Video } from "lucide-react";
 import Card, { CardHead } from "@/components/groow/admin/ed2/Card";
 import AgendaMes from "@/components/groow/admin/AgendaMes";
+import FecharContrato from "@/components/groow/admin/FecharContrato";
 
 /** Espelha lib/groow/reunioes.ts. Tipo local para nao arrastar o `pg` pro bundle. */
 interface Reuniao {
@@ -62,6 +63,8 @@ export default function FilaReunioes() {
   const [salvando, setSalvando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [dia, setDia] = useState<string | null>(null);
+  const [fechando, setFechando] = useState<Reuniao | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -128,7 +131,13 @@ export default function FilaReunioes() {
           return (
             <button
               key={d.valor}
-              onClick={() => marcar(r.cal_uid, d.valor)}
+              onClick={() =>
+                // "Fechou" nao e so um selo: e um contrato. Abre o cadastro do
+                // cliente, que e o que faz a comissao existir de verdade.
+                d.valor === "fechou" && atual !== "fechou"
+                  ? setFechando(r)
+                  : marcar(r.cal_uid, d.valor)
+              }
               disabled={salvando === r.cal_uid + d.valor}
               title={marcado ? "É o desfecho atual. Clique em outro para corrigir." : ""}
               style={{
@@ -170,8 +179,36 @@ export default function FilaReunioes() {
         }
       />
 
-      {erro ? (
-        <div style={aviso}>{erro}</div>
+      {erro ? <div style={aviso}>{erro}</div> : null}
+      {ok ? (
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: 12,
+            background: "rgba(52,199,89,0.12)",
+            color: "#1d8a3a",
+            fontSize: 13.5,
+            marginBottom: 12,
+          }}
+        >
+          {ok}
+        </div>
+      ) : null}
+
+      {fechando ? (
+        <FecharContrato
+          calUid={fechando.cal_uid}
+          nome={fechando.nome}
+          empresa={fechando.empresa}
+          parceiroNome={fechando.parceiro_nome}
+          onCancelar={() => setFechando(null)}
+          onPronto={(msg) => {
+            setFechando(null);
+            setOk(msg);
+            setTimeout(() => setOk(null), 8000);
+            carregar();
+          }}
+        />
       ) : null}
 
       {!carregando && !futuras.length && !passadas.length ? (
