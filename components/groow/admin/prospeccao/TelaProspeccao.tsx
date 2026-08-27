@@ -590,8 +590,10 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           style={rotuloFiltro}
           title="Negócio sem site próprio, só Instagram ou nada. É o melhor alvo pra vender presença digital."
         >
+          {/* Sem o icone entre a caixa e o texto: so este filtro tinha
+              [caixa][icone][texto] e os outros [caixa][texto], o que empurrava
+              a frase para a direita e tirava ela da linha dos demais. */}
           <input type="checkbox" checked={semSite} onChange={(e) => setSemSite(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
-          <Target size={14} style={{ color: "#C9A961" }} />
           Sem site próprio
         </label>
 
@@ -869,11 +871,16 @@ const rotuloFiltro: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
+  // lineHeight e altura fixos: sem isso cada item se apoia na propria caixa de
+  // texto e eles nao ficam na mesma linha de base.
+  height: 32,
+  lineHeight: "32px",
   fontSize: 13.5,
   fontWeight: 500,
   color: "var(--ed2-ink)",
   whiteSpace: "nowrap",
   cursor: "pointer",
+  margin: 0,
 };
 
 const seletorFiltro: React.CSSProperties = {
