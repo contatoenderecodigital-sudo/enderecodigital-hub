@@ -21,7 +21,9 @@ export interface ItemAgenda {
   status: string;
 }
 
-const DIAS = ["D", "S", "T", "Q", "Q", "S", "S"];
+// Tres letras e nao uma: com inicial, S serve para segunda, sexta e sabado,
+// e Q para quarta e quinta. Em 296px de largura as tres cabem.
+const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 const MESES = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
@@ -125,8 +127,9 @@ export default function AgendaMes({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: 700,
+              letterSpacing: "0.03em",
               color: "var(--ed2-ink-2)",
             }}
           >
