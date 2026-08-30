@@ -200,7 +200,9 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nicho, cidade, bairro, minRating, minReviews, onlyPhone, semSite,
+          nicho, cidade, bairro, minRating, minReviews,
+          onlyPhone: ehDono ? onlyPhone : true,
+          semSite,
           maxPaginas: maisResultados ? 3 : 1,
           // Com ponto no mapa, cidade e bairro nao vao junto: mandar os dois
           // faria o texto pedir uma cidade e a area restringir a outra.
@@ -674,10 +676,15 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           </select>
         </label>
 
-        <label style={rotuloFiltro}>
-          <input type="checkbox" checked={onlyPhone} onChange={(e) => setOnlyPhone(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
-          Só com telefone
-        </label>
+        {/* Escondido no painel do parceiro e sempre ligado: desmarcar so encheria
+            a lista de empresa sem telefone, que ele nao tem como ligar, e o
+            botao de mandar pro funil recusaria em silencio. */}
+        {ehDono && (
+          <label style={rotuloFiltro}>
+            <input type="checkbox" checked={onlyPhone} onChange={(e) => setOnlyPhone(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
+            Só com telefone
+          </label>
+        )}
 
         <label
           style={rotuloFiltro}
@@ -690,10 +697,15 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           Sem site próprio
         </label>
 
-        <label style={rotuloFiltro} title="Busca até 60 empresas em vez de 20. Demora mais.">
-          <input type="checkbox" checked={maisResultados} onChange={(e) => setMaisResultados(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
-          Mais resultados
-        </label>
+        {/* So no painel do dono. A rota do parceiro trava em uma pagina para
+            segurar o custo, entao marcar aqui nao mudava nada e a caixa mentia
+            na tela. */}
+        {ehDono && (
+          <label style={rotuloFiltro} title="Busca até 60 empresas em vez de 20. Demora mais.">
+            <input type="checkbox" checked={maisResultados} onChange={(e) => setMaisResultados(e.target.checked)} style={{ accentColor: "#C9A961", width: 16, height: 16 }} />
+            Mais resultados
+          </label>
+        )}
       </div>
 
       {error && <div style={{ background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.18)", borderRadius: 18, padding: "12px 18px", color: "#c8261c", fontSize: 13, marginBottom: 18 }}>{error}</div>}
