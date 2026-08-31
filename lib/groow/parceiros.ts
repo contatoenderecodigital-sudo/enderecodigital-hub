@@ -385,6 +385,45 @@ export async function salvarDiagnostico(
   return r.affectedRows > 0;
 }
 
+/**
+ * Manda para o funil ou tira dele.
+ *
+ * Tirar do funil NAO apaga: a empresa volta para a base e pode ser retomada.
+ * Quem apaga de vez e excluirLead.
+ */
+export async function moverFunil(
+  id: number,
+  parceiroId: number,
+  dentro: boolean
+): Promise<boolean> {
+  const r = await exec(
+    `UPDATE parceiro_leads SET no_funil = $1, atualizado_em = NOW()
+      WHERE id = $2 AND parceiro_id = $3`,
+    [dentro ? 1 : 0, id, parceiroId]
+  );
+  return r.affectedRows > 0;
+}
+
+/**
+ * Apaga o lead de vez, com as ligacoes registradas junto.
+ *
+ * Filtra por parceiro_id junto do id: sem isso um parceiro apagaria o lead do
+ * outro mandando um id qualquer.
+ */
+export async function excluirLead(id: number, parceiroId: number): Promise<boolean> {
+  const dono = await query<{ id: number }>(
+    `SELECT id FROM parceiro_leads WHERE id = $1 AND parceiro_id = $2 LIMIT 1`,
+    [id, parceiroId]
+  );
+  if (!dono[0]) return false;
+  await exec(`DELETE FROM parceiro_calls WHERE parceiro_lead_id = $1`, [id]);
+  const r = await exec(
+    `DELETE FROM parceiro_leads WHERE id = $1 AND parceiro_id = $2`,
+    [id, parceiroId]
+  );
+  return r.affectedRows > 0;
+}
+
 export async function listarCallsDoLead(
   parceiroLeadId: number,
   parceiroId: number

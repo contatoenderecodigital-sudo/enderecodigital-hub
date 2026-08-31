@@ -74,6 +74,8 @@ export interface ParceiroLead {
   desfecho_nota: string | null;
   /** respostas do diagnostico que o parceiro preenche durante a ligacao */
   diagnostico: Record<string, string> | null;
+  /** 1 = esta no kanban; 0 = so na base, esperando ele escolher */
+  no_funil: number;
   criado_em: string;
   atualizado_em: string;
   /** vem do JOIN com `leads` quando já foi promovido */

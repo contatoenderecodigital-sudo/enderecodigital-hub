@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Phone, Mic, CalendarClock, CheckCircle2, Repeat, Video } from "lucide-react";
+import { Phone, Mic, CalendarClock, CheckCircle2, Repeat, Video, Trash2, Undo2 } from "lucide-react";
 import { ETAPAS, type ParceiroLead, type SituacaoLead } from "@/lib/groow/parceiros-etapas";
 import { formatarTelefone } from "@/lib/groow/telefone";
 
@@ -19,6 +19,9 @@ interface Props {
   onAbrir: (lead: ParceiroLead) => void;
   onMover: (id: number, situacao: SituacaoLead) => void;
   filtro: string;
+  /** tirar do quadro devolve para a base; excluir apaga de vez */
+  onSairDoFunil?: (id: number) => void;
+  onExcluir?: (id: number) => void;
 }
 
 function diasDesde(iso: string | null): number | null {
@@ -75,7 +78,7 @@ function Selo({
   );
 }
 
-export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Props) {
+export default function KanbanParceiro({ leads, onAbrir, onMover, filtro, onSairDoFunil, onExcluir }: Props) {
   const [arrastando, setArrastando] = useState<number | null>(null);
   const [alvo, setAlvo] = useState<SituacaoLead | null>(null);
 
@@ -332,6 +335,37 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
                         ))}
                       </select>
 
+                      {onSairDoFunil || onExcluir ? (
+                        <div style={{ display: "flex", gap: 6, marginTop: 7 }}>
+                          {onSairDoFunil ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSairDoFunil(l.id);
+                              }}
+                              title="Tirar do quadro e devolver para a base"
+                              style={acaoCard("var(--ed2-ink-2)")}
+                            >
+                              <Undo2 size={12} />
+                              Tirar
+                            </button>
+                          ) : null}
+                          {onExcluir ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onExcluir(l.id);
+                              }}
+                              title="Apagar de vez"
+                              style={acaoCard("#c8261c")}
+                            >
+                              <Trash2 size={12} />
+                              Apagar
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -367,4 +401,22 @@ export default function KanbanParceiro({ leads, onAbrir, onMover, filtro }: Prop
       })}
     </div>
   );
+}
+
+function acaoCard(cor: string): React.CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    flex: 1,
+    justifyContent: "center",
+    padding: "6px 8px",
+    borderRadius: 9,
+    border: "1px solid var(--ed2-hair)",
+    background: "transparent",
+    color: cor,
+    fontSize: 11.5,
+    fontWeight: 600,
+    cursor: "pointer",
+  };
 }

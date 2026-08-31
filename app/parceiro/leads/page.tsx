@@ -6,6 +6,7 @@ import PageHeader from "@/components/groow/admin/ed2/PageHeader";
 import LeadParceiroModal from "@/components/groow/parceiro/LeadParceiroModal";
 import KanbanParceiro from "@/components/groow/parceiro/KanbanParceiro";
 import LeadDrawer from "@/components/groow/parceiro/LeadDrawer";
+import BaseLeads from "@/components/groow/parceiro/BaseLeads";
 import type { ParceiroLead, SituacaoLead } from "@/lib/groow/parceiros-etapas";
 
 export default function LeadsDoParceiro() {
@@ -14,6 +15,11 @@ export default function LeadsDoParceiro() {
   const [busca, setBusca] = useState("");
   const [modal, setModal] = useState(false);
   const [aberto, setAberto] = useState<number | null>(null);
+  const [aba, setAba] = useState<"funil" | "base">("funil");
+
+  // Base e funil saem da mesma lista: o que separa e a coluna no_funil.
+  const noFunil = useMemo(() => leads.filter((l) => l.no_funil !== 0), [leads]);
+  const naBase = useMemo(() => leads.filter((l) => l.no_funil === 0), [leads]);
 
   const carregar = useCallback(async () => {
     try {
@@ -36,6 +42,17 @@ export default function LeadsDoParceiro() {
    * recusar. Arrastar e esperar meio segundo pelo banco é o tipo de atrito que
    * faz o vendedor parar de usar o board.
    */
+  // Tirar do funil devolve para a base; excluir apaga de vez, com as ligacoes.
+  async function acaoFunil(id: number, acao: "base" | "excluir") {
+    if (acao === "excluir" && !confirm("Apagar essa pessoa de vez? Não dá para desfazer.")) return;
+    await fetch("/api/parceiro/leads/funil", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, acao }),
+    });
+    carregar();
+  }
+
   const mover = useCallback(
     async (id: number, situacao: SituacaoLead) => {
       const antes = leads;
@@ -235,12 +252,59 @@ export default function LeadsDoParceiro() {
           </button>
         </div>
       ) : (
-        <KanbanParceiro
-          leads={leads}
-          filtro={busca}
-          onAbrir={(l) => setAberto(l.id)}
-          onMover={mover}
-        />
+        <>
+          <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+            {(["funil", "base"] as const).map((t) => {
+              const on = aba === t;
+              const n = t === "funil" ? noFunil.length : naBase.length;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setAba(t)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "9px 18px",
+                    borderRadius: 999,
+                    border: `1px solid ${on ? "transparent" : "var(--ed2-hair)"}`,
+                    background: on ? "#0B1838" : "transparent",
+                    color: on ? "#F5F2EA" : "var(--ed2-ink-2)",
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t === "funil" ? "Funil" : "Base"}
+                  <span
+                    style={{
+                      padding: "1px 8px",
+                      borderRadius: 999,
+                      background: on ? "rgba(255,255,255,0.16)" : "rgba(11,24,56,0.07)",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {n}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {aba === "funil" ? (
+            <KanbanParceiro
+              leads={noFunil}
+              filtro={busca}
+              onAbrir={(l) => setAberto(l.id)}
+              onMover={mover}
+              onSairDoFunil={(id) => acaoFunil(id, "base")}
+              onExcluir={(id) => acaoFunil(id, "excluir")}
+            />
+          ) : (
+            <BaseLeads leads={naBase} onMudou={carregar} />
+          )}
+        </>
       )}
 
       {modal ? (
