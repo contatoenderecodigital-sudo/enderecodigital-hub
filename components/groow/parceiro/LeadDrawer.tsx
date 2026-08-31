@@ -10,6 +10,7 @@ import {
   CircleDot,
   Loader2,
   TriangleAlert,
+  MapPinned,
 } from "lucide-react";
 import {
   RESULTADOS_CALL,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/groow/parceiros-etapas";
 import DiagnosticoLead from "./DiagnosticoLead";
 import { formatarTelefone } from "@/lib/groow/telefone";
+import { linkGoogleMaps } from "@/lib/groow/google-link";
 
 /**
  * O lead aberto: dados, a ligação acontecendo agora e o histórico do que já
@@ -306,6 +308,28 @@ export default function LeadDrawer({ lead, onFechar, onMudou }: Props) {
             <div style={{ fontSize: 13.5, color: "var(--ed2-ink-2)", marginTop: 4, lineHeight: 1.5 }}>
               {[lead.empresa, lead.cidade, lead.setor].filter(Boolean).join(" · ") || "sem detalhes"}
             </div>
+            <a
+              href={linkGoogleMaps({ nome: lead.nome, empresa: lead.empresa, cidade: lead.cidade })}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abrir o perfil no Google Maps"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 9,
+                marginRight: 8,
+                padding: "4px 12px",
+                borderRadius: 999,
+                border: "1px solid var(--ed2-hair)",
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: "var(--ed2-ink-2)",
+                textDecoration: "none",
+              }}
+            >
+              <MapPinned size={13} /> Ver no Google
+            </a>
             {etapa ? (
               <span
                 style={{

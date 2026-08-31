@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, Trash2, Search } from "lucide-react";
+import { ArrowRight, Trash2, Search, MapPinned } from "lucide-react";
+import { linkGoogleMaps } from "@/lib/groow/google-link";
 import type { ParceiroLead } from "@/lib/groow/parceiros-etapas";
 import { formatarTelefone } from "@/lib/groow/telefone";
 
@@ -219,6 +220,16 @@ export default function BaseLeads({
               </div>
 
               <div style={{ display: "flex", gap: 7, flexShrink: 0 }}>
+                <a
+                  href={linkGoogleMaps({ nome: l.nome, empresa: l.empresa, cidade: l.cidade })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Ver no Google antes de ligar"
+                  style={{ ...iconeBotao("var(--ed2-ink-2)"), textDecoration: "none" }}
+                >
+                  <MapPinned size={15} />
+                </a>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

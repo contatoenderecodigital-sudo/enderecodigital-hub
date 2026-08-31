@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import { useRouter } from "next/navigation";
-import { Loader2, Search, Star, Globe, MapPin, Check, Target, X, Download, Megaphone, ScanSearch, ChevronDown, Mail, Sparkles, Layout, ExternalLink } from "lucide-react";
+import { linkGoogleMaps } from "@/lib/groow/google-link";
+import { Loader2, Search, Star, Globe, MapPin, Check, Target, X, Download, Megaphone, ScanSearch, ChevronDown, Mail, Sparkles, Layout, ExternalLink, MapPinned } from "lucide-react";
 import { NICHOS, TOTAL_NICHOS } from "@/lib/groow/nichos";
 import type { Centro } from "@/components/groow/admin/prospeccao/MapaRaio";
 
@@ -818,6 +819,12 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
                         </span>
                       )}
                       <span style={{ fontSize: 15, fontWeight: 600 }}>{emp.nome}</span>
+                      <a href={linkGoogleMaps({ nome: emp.nome, cidade: emp.endereco, placeId: emp.place_id })}
+                        target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
+                        title="Abrir o perfil no Google Maps para analisar antes de ligar"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--ed2-ink-2)", border: "1px solid var(--ed2-hair)", padding: "2px 9px", borderRadius: 99, textDecoration: "none" }}>
+                        <MapPinned size={11} /> Google <ExternalLink size={10} />
+                      </a>
                       {emp.rating != null && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, color: "#a85f00", fontWeight: 600 }}>
                           <Star size={12} fill="#FF9F0A" stroke="#FF9F0A" /> {emp.rating} ({emp.avaliacoes})
