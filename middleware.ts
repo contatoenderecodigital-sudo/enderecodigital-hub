@@ -72,6 +72,19 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Painel do cliente: dono e operador entram no proprio negocio. O owner so
+  // entra quando esta impersonando alguem; sem isso ele nao tem workspace e o
+  // lugar dele e o console. Parceiro nao tem nada a fazer aqui.
+  if (pathname.startsWith("/painel")) {
+    const ehCliente = session.papel === "dono" || session.papel === "operador";
+    const ownerDentro = session.papel === "owner_plataforma" && !!session.imp;
+    if (!ehCliente && !ownerDentro) {
+      const url = req.nextUrl.clone();
+      url.pathname = session.papel === "owner_plataforma" ? "/owner" : "/login";
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Painel do parceiro: so papel 'parceiro'. O owner enxerga tudo pelo
   // /operacao/parceiros, entao nao precisa (nem deve) entrar aqui.
   if (

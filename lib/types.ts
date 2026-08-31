@@ -21,6 +21,7 @@ export interface Hub {
   mod_instagram: boolean;
   mod_financeiro: boolean;
   mod_crm: boolean;
+  mod_veiculos: boolean;
   ativo: boolean;
   criado_em: string;
 }
@@ -46,6 +47,7 @@ export interface Negocio {
   mod_instagram: boolean | null;
   mod_financeiro: boolean | null;
   mod_crm: boolean | null;
+  mod_veiculos: boolean | null;
   tipo_cliente: "recorrente" | "nao_recorrente" | "nao_definido";
   experimental: boolean;
   health_score: number;
@@ -98,6 +100,7 @@ export interface ModulosEfetivos {
   instagram: boolean;
   financeiro: boolean;
   crm: boolean;
+  veiculos: boolean;
 }
 
 export function modulosEfetivos(n: Negocio, h: Hub): ModulosEfetivos {
@@ -106,5 +109,6 @@ export function modulosEfetivos(n: Negocio, h: Hub): ModulosEfetivos {
     instagram: n.mod_instagram ?? h.mod_instagram,
     financeiro: n.mod_financeiro ?? h.mod_financeiro,
     crm: n.mod_crm ?? h.mod_crm,
+    veiculos: n.mod_veiculos ?? h.mod_veiculos,
   };
 }

@@ -85,6 +85,9 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
   const rotaImportar = ehDono
     ? "/api/admin/prospeccao/importar"
     : "/api/parceiro/prospeccao/importar";
+  const rotaGeo = ehDono
+    ? "/api/admin/prospeccao/geocodificar"
+    : "/api/parceiro/prospeccao/geocodificar";
   const [restantes, setRestantes] = useState<number | null>(null);
   const [teto, setTeto] = useState<number | null>(null);
   const [historico, setHistorico] = useState<
@@ -441,6 +444,7 @@ export default function TelaProspeccao({ modo = "dono" }: { modo?: "dono" | "par
           raioKm={raioKm}
           onCentroChange={setCentro}
           onRaioChange={setRaioKm}
+          rotaGeocodificar={rotaGeo}
           pins={empresas.map((e) => ({ lat: e.lat ?? null, lng: e.lng ?? null, nome: e.nome }))}
         />
       </div>

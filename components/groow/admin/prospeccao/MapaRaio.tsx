@@ -44,6 +44,7 @@ export default function MapaRaio({
   onCentroChange,
   onRaioChange,
   pins = [],
+  rotaGeocodificar = "/api/admin/prospeccao/geocodificar",
 }: {
   centro: Centro | null;
   raioKm: number;
@@ -51,6 +52,9 @@ export default function MapaRaio({
   onRaioChange: (r: number) => void;
   /** empresas encontradas, para aparecerem no mapa */
   pins?: { lat: number | null; lng: number | null; nome: string }[];
+  /** o mapa e o mesmo nos dois paineis; a rota nao. Sem isto o parceiro tomava
+   *  unauthorized do middleware ao buscar a cidade. */
+  rotaGeocodificar?: string;
 }) {
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -166,7 +170,7 @@ export default function MapaRaio({
     setBuscando(true);
     setErro(null);
     try {
-      const r = await fetch("/api/admin/prospeccao/geocodificar", {
+      const r = await fetch(rotaGeocodificar, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cidade: termo }),

@@ -42,7 +42,13 @@ export async function POST(req: Request) {
         hub_id: u.hub_id,
         imp: null,
       });
-      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/login");
+      // Antes, dono e operador caiam de volta no /login porque nao existia
+      // workspace do cliente. Agora existe: /painel.
+      const res = redir(
+        u.papel === "owner_plataforma" ? "/owner"
+        : u.papel === "parceiro" ? "/parceiro"
+        : "/painel",
+      );
       res.cookies.set(SESSION_COOKIE, token, cookieOptions());
       return res;
     }
