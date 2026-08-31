@@ -81,7 +81,15 @@ function initials(s: string) {
   return (s || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
 }
 
-function CardItem({ lead, onClick }: { lead: Lead; onClick: () => void }) {
+function CardItem({
+  lead,
+  onClick,
+  onMudarEtapa,
+}: {
+  lead: Lead;
+  onClick: () => void;
+  onMudarEtapa?: (id: number, status: LeadStatus) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `lead-${lead.id}`,
     data: { leadId: lead.id, status: lead.status },
@@ -102,6 +110,10 @@ function CardItem({ lead, onClick }: { lead: Lead; onClick: () => void }) {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: "box-shadow .15s, opacity .2s",
     userSelect: "none",
+    // Exigencia do dnd-kit: com touch-action "auto" (o padrao) o navegador
+    // entende o gesto como rolagem e o arraste nunca comeca em celular ou em
+    // tela sensivel ao toque. O card ficava parecendo travado.
+    touchAction: "none",
     position: "relative",
   };
 
@@ -142,6 +154,36 @@ function CardItem({ lead, onClick }: { lead: Lead; onClick: () => void }) {
         </span>
         <div style={{ width: 22, height: 22, borderRadius: 99, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#0B1838,#1d2d56)", color: "#fff", fontWeight: 600, fontSize: 9, boxShadow: "0 0 0 2px #fff" }}>RA</div>
       </div>
+
+      {/* Saida sem arrastar. Arrastar depende de mouse firme e de tela larga: no
+          celular, num trackpad ruim ou com a coluna rolando, o card parece
+          travado. Mesma solucao que o kanban do parceiro ja usava. */}
+      {onMudarEtapa ? (
+        <select
+          value={lead.status}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onChange={(e) => onMudarEtapa(lead.id, e.target.value as LeadStatus)}
+          style={{
+            marginTop: 10,
+            width: "100%",
+            padding: "6px 9px",
+            borderRadius: 9,
+            border: "1px solid var(--ed2-hair)",
+            background: "transparent",
+            color: "var(--ed2-ink-2)",
+            fontSize: 12,
+            outline: "none",
+            cursor: "pointer",
+          }}
+        >
+          {PIPELINE_COLUMNS.map((c) => (
+            <option key={c} value={c}>
+              {LEAD_STATUS_LABEL[c] ?? c}
+            </option>
+          ))}
+        </select>
+      ) : null}
     </div>
   );
 }
@@ -155,7 +197,7 @@ const tagStyle: React.CSSProperties = {
   fontWeight: 500,
 };
 
-function Column({ status, leads, onCardClick, onAdd, sortBy, onSortChange }: { status: LeadStatus; leads: Lead[]; onCardClick: (id: number) => void; onAdd: () => void; sortBy: "data" | "nome"; onSortChange: (s: "data" | "nome") => void }) {
+function Column({ status, leads, onCardClick, onAdd, sortBy, onSortChange, onMudarEtapa }: { status: LeadStatus; leads: Lead[]; onCardClick: (id: number) => void; onAdd: () => void; sortBy: "data" | "nome"; onSortChange: (s: "data" | "nome") => void; onMudarEtapa?: (id: number, status: LeadStatus) => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: `col-${status}`, data: { status } });
   const col = COL_COLOR[status] ?? { dot: "var(--ed2-ink-3)" };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -237,7 +279,7 @@ function Column({ status, leads, onCardClick, onAdd, sortBy, onSortChange }: { s
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 4px", flex: 1, minHeight: 60 }}>
-        {sortedLeads.map((l) => <CardItem key={l.id} lead={l} onClick={() => onCardClick(l.id)} />)}
+        {sortedLeads.map((l) => <CardItem key={l.id} lead={l} onClick={() => onCardClick(l.id)} onMudarEtapa={onMudarEtapa} />)}
       </div>
 
       <button type="button" onClick={onAdd} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: 10, borderRadius: 14, color: "var(--ed2-ink-2)", fontSize: 12, fontWeight: 600, cursor: "pointer", margin: "6px 4px 0", background: "none", border: "none", width: "100%" }}>
@@ -292,6 +334,39 @@ export default function PipelinePage() {
   useEffect(() => { load(period); }, [load, period]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  /**
+   * Move sem arrastar. Mesma escrita do arraste, so que disparada pelo seletor
+   * do card: arrastar depende de mouse firme e tela larga, e no celular nao
+   * funciona de jeito nenhum.
+   */
+  const mudarEtapa = async (leadId: number, toStatus: LeadStatus) => {
+    let fromStatus: LeadStatus | null = null;
+    setPipeline((prev) => {
+      for (const c of PIPELINE_COLUMNS) {
+        if (prev[c]?.some((l) => l.id === leadId)) fromStatus = c;
+      }
+      if (!fromStatus || fromStatus === toStatus) return prev;
+      const moving = prev[fromStatus].find((l) => l.id === leadId);
+      if (!moving) return prev;
+      return {
+        ...prev,
+        [fromStatus]: prev[fromStatus].filter((l) => l.id !== leadId),
+        [toStatus]: [{ ...moving, status: toStatus }, ...prev[toStatus]],
+      };
+    });
+    if (fromStatus === toStatus) return;
+
+    try {
+      await fetch(`/api/admin/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: toStatus }),
+      });
+    } catch {
+      load(period);
+    }
+  };
 
   const onDragEnd = async (e: DragEndEvent) => {
     if (!e.over) return;
@@ -386,7 +461,7 @@ export default function PipelinePage() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${PIPELINE_COLUMNS.length}, minmax(160px, 1fr))`, gap: 12, overflowX: "auto", paddingBottom: 12 }}>
             {PIPELINE_COLUMNS.map((status) => (
-              <Column key={status} status={status} leads={pipeline[status]} onCardClick={setSelected} onAdd={() => setShowNewDeal(true)} sortBy={sortBy} onSortChange={setSortBy} />
+              <Column key={status} status={status} leads={pipeline[status]} onCardClick={setSelected} onAdd={() => setShowNewDeal(true)} sortBy={sortBy} onSortChange={setSortBy} onMudarEtapa={mudarEtapa} />
             ))}
           </div>
         </DndContext>
