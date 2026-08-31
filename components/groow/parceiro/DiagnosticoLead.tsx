@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ClipboardList } from "lucide-react";
+import { Check, ChevronDown, ClipboardList } from "lucide-react";
 import {
   CAMPO_PALAVRAS_DELA,
   PERGUNTAS_DIAGNOSTICO,
@@ -17,6 +17,10 @@ import {
 export default function DiagnosticoLead({ lead }: { lead: ParceiroLead }) {
   const [respostas, setRespostas] = useState<Record<string, string>>(lead.diagnostico || {});
   const [salvo, setSalvo] = useState(false);
+  // Recolhido por padrao. Aberto, as sete perguntas com ajuda embaixo ocupavam
+  // a ficha inteira e empurravam o botao de ligar para fora da tela no celular,
+  // que e onde ele usa isto.
+  const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   // Guarda o que ja foi pro servidor, para nao salvar de novo em cada blur.
   const enviado = useRef<string>(JSON.stringify(lead.diagnostico || {}));
@@ -68,13 +72,32 @@ export default function DiagnosticoLead({ lead }: { lead: ParceiroLead }) {
           marginBottom: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          onClick={() => setAberto((v) => !v)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
           <ClipboardList size={15} style={{ color: "var(--ed2-ink-2)" }} />
           <strong style={{ fontSize: 14.5, color: "var(--ed2-ink)" }}>Diagnóstico</strong>
           <span style={{ fontSize: 12.5, color: "var(--ed2-ink-2)" }}>
             {respondidas} de {PERGUNTAS_DIAGNOSTICO.length}
           </span>
-        </div>
+          <ChevronDown
+            size={15}
+            style={{
+              color: "var(--ed2-ink-2)",
+              transform: aberto ? "rotate(180deg)" : "none",
+              transition: "transform .15s",
+            }}
+          />
+        </button>
         {salvo ? (
           <span
             style={{
@@ -91,10 +114,12 @@ export default function DiagnosticoLead({ lead }: { lead: ParceiroLead }) {
         ) : null}
       </div>
 
-      <p style={{ margin: "0 0 16px", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
-        Preencha enquanto conversa. Salva sozinho, não precisa clicar em nada. O objetivo
-        não é o dado, é ela se ouvir falando do problema.
-      </p>
+      {aberto ? (
+        <p style={{ margin: "0 0 16px", fontSize: 12.5, color: "var(--ed2-ink-2)", lineHeight: 1.55 }}>
+          Preencha enquanto conversa. Salva sozinho, não precisa clicar em nada. O objetivo
+          não é o dado, é ela se ouvir falando do problema.
+        </p>
+      ) : null}
 
       {erro ? (
         <div
@@ -111,7 +136,7 @@ export default function DiagnosticoLead({ lead }: { lead: ParceiroLead }) {
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gap: 14 }}>
+      <div style={{ display: aberto ? "grid" : "none", gap: 14 }}>
         {PERGUNTAS_DIAGNOSTICO.map((p, i) => (
           <div key={p.campo}>
             <label

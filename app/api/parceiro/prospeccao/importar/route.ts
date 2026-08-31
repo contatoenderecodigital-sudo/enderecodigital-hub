@@ -50,8 +50,10 @@ export async function POST(req: Request) {
 
     try {
       const novoId = await salvarLeadDoParceiro(auth.parceiro.id, {
+        // Nome da empresa e o nome do card: repetir nos dois campos fazia o
+        // titulo aparecer duplicado na ficha.
         nome: nome.slice(0, 160),
-        empresa: nome.slice(0, 160),
+        empresa: null,
         telefone,
         cidade: String(e.cidade || "").trim() || null,
         situacao: "a_ligar",

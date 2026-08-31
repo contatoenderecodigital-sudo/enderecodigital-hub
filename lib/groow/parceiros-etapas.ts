@@ -266,8 +266,8 @@ export interface EntradaLead {
 export const PERGUNTAS_DIAGNOSTICO: { campo: string; texto: string; ajuda?: string }[] = [
   {
     campo: "origem_clientes",
-    texto: "Como chega cliente pra voces hoje?",
-    ajuda: "Indicacao, Instagram, Google, passa na frente.",
+    texto: "Como chega cliente pra vocês hoje?",
+    ajuda: "Indicação, Instagram, Google, passa na frente.",
   },
   {
     campo: "quem_responde_whatsapp",
@@ -279,20 +279,20 @@ export const PERGUNTAS_DIAGNOSTICO: { campo: string; texto: string; ajuda?: stri
   },
   {
     campo: "tem_site",
-    texto: "Tem site hoje? Ele traz cliente ou esta so pra existir?",
+    texto: "Tem site hoje? Ele traz cliente ou está só pra existir?",
   },
   {
     campo: "maior_ladrao_de_tempo",
-    texto: "O que mais toma o seu tempo hoje e nao devia?",
+    texto: "O que mais toma o seu tempo hoje e não devia?",
   },
   {
     campo: "prioridade_30_dias",
-    texto: "Se desse pra resolver uma coisa so nos proximos 30 dias, qual seria?",
+    texto: "Se desse pra resolver uma coisa só nos próximos 30 dias, qual seria?",
   },
   {
     campo: "outro_decisor",
-    texto: "Quem decide isso junto com voce?",
-    ajuda: "Se tem socio ou conjuge, a reuniao precisa dos dois.",
+    texto: "Quem decide isso junto com você?",
+    ajuda: "Se tem sócio ou cônjuge, a reunião precisa dos dois.",
   },
 ];
 
@@ -301,5 +301,5 @@ export const CAMPO_PALAVRAS_DELA = {
   campo: "nas_palavras_dela",
   label: "Nas palavras dela",
   ajuda:
-    "Escreva com as palavras que a pessoa usou, nao com as suas. E daqui que sai a conversa da reuniao.",
+    "Escreva com as palavras que a pessoa usou, não com as suas. É daqui que sai a conversa da reunião.",
 };
