@@ -42,7 +42,9 @@ export async function POST(req: Request) {
         hub_id: u.hub_id,
         imp: null,
       });
-      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/login");
+      // Dono e operador nao tinham destino e caiam de volta no /login, parecendo
+      // que a senha estava errada. A raiz sabe para onde mandar cada papel.
+      const res = redir(u.papel === "owner_plataforma" ? "/owner" : "/");
       res.cookies.set(SESSION_COOKIE, token, cookieOptions());
       return res;
     }

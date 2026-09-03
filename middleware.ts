@@ -13,6 +13,19 @@ const PUBLIC = [
   // prefixo "/p/", entao isto NAO libera "/parceiro".
   "/p",
   "/api/indicacao",
+  // AppFood: o cliente final na mesa nao tem login. A autorizacao e o token do
+  // cartao NFC (/c), o token do tablet da cozinha (/k) e a chave da impressora.
+  "/c",
+  "/k",
+  "/g",
+  "/api/food/publico",
+  // a foto do produto e a imagem que o cliente ve na mesa: sem isto o
+  // navegador segue o redirect e o cardapio aparece sem foto nenhuma
+  "/api/food/midia",
+  "/api/food/print",
+  "/api/food/kds",
+  "/api/food/garcom",
+  "/api/food/webhook",
 ];
 
 export async function middleware(req: NextRequest) {

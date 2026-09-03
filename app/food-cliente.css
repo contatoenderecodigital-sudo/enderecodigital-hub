@@ -1,0 +1,225 @@
+/* ============================================================================
+   Telas do cliente final: mesa (NFC), cardápio e pedido online.
+   Visual de app de comida: claro, foto grande, botão fixo embaixo.
+   A cor de destaque vem da MARCA DO RESTAURANTE (--fc-cor), definida inline.
+   ========================================================================== */
+
+.fc {
+  --fc-cor: #e8332a;
+  --fc-ink: #17181c;
+  --fc-ink-2: #4a4e57;
+  --fc-muted: #7c8089;
+  --fc-line: #ececf0;
+  --fc-bg: #f6f6f8;
+  --fc-card: #fff;
+
+  min-height: 100dvh;
+  background: var(--fc-bg);
+  color: var(--fc-ink);
+  font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  padding-bottom: 96px;
+}
+.fc * { box-sizing: border-box; }
+.fc img { display: block; }
+/* o globals.css do hub pinta botao com a cor do tema escuro; aqui tudo herda do .fc */
+.fc button, .fc a, .fc input, .fc select, .fc textarea { color: inherit; }
+.fc-item, .fc-chip, .fc-aba { color: var(--fc-ink); }
+
+/* ---------- topo ---------- */
+.fc-capa { position: relative; background: var(--fc-cor); color: #fff; padding: 18px 16px 20px; }
+.fc-capa-sombra { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.18)); }
+.fc-capa > * { position: relative; }
+.fc-topo { display: flex; align-items: center; gap: 12px; }
+.fc-logo { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; border: 2px solid rgba(255,255,255,.7); flex: none; }
+.fc-logo-vazia { display: grid; place-items: center; background: rgba(255,255,255,.18); font-weight: 800; font-size: 20px; }
+.fc-nome { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.fc-sub { font-size: 13px; opacity: .92; margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fc-pill { background: rgba(255,255,255,.2); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+
+/* ---------- abas ---------- */
+.fc-abas { display: flex; background: var(--fc-card); border-bottom: 1px solid var(--fc-line);
+  position: sticky; top: 0; z-index: 30; }
+.fc-aba { flex: 1; padding: 13px 8px; font-size: 14px; font-weight: 700; color: var(--fc-muted);
+  background: none; border: none; border-bottom: 2px solid transparent; font-family: inherit; cursor: pointer; }
+.fc-aba.on { color: var(--fc-ink); border-bottom-color: var(--fc-cor); }
+
+/* ---------- categorias em chips ---------- */
+.fc-chips { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; background: var(--fc-card);
+  border-bottom: 1px solid var(--fc-line); position: sticky; top: 45px; z-index: 25; scrollbar-width: none; }
+.fc-chips::-webkit-scrollbar { display: none; }
+.fc-chip { white-space: nowrap; color: var(--fc-ink-2); padding: 8px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 700;
+  background: #f1f1f4; color: var(--fc-ink-2); border: none; font-family: inherit; cursor: pointer; }
+.fc-chip.on { background: var(--fc-cor); color: #fff !important; }
+
+/* ---------- lista ---------- */
+.fc-secao { padding: 16px 16px 4px; }
+.fc-secao h2 { font-size: 17px; font-weight: 800; margin: 0 0 2px; letter-spacing: -0.01em; }
+.fc-secao p { margin: 0 0 10px; color: var(--fc-muted); font-size: 13px; }
+
+.fc-item { display: flex; gap: 12px; align-items: stretch; width: 100%; text-align: left;
+  background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 16px; padding: 12px;
+  margin-bottom: 10px; font-family: inherit; cursor: pointer; transition: transform .1s ease; }
+.fc-item:active { transform: scale(.99); }
+.fc-item.off { opacity: .5; }
+.fc-item-txt { flex: 1; min-width: 0; }
+.fc-item-nome { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--fc-ink); display: block; }
+.fc-item-desc { font-size: 13px; color: var(--fc-muted); margin-top: 3px; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fc-item-preco { font-size: 15px; font-weight: 800; color: var(--fc-ink); margin-top: 8px; }
+.fc-item-preco small { font-weight: 600; color: var(--fc-muted); font-size: 12px; }
+.fc-item-foto { width: 88px; height: 88px; border-radius: 12px; object-fit: cover; flex: none; }
+.fc-item-sem-foto { width: 0; }
+
+/* ---------- barra de baixo ---------- */
+.fc-barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: var(--fc-card); border-top: 1px solid var(--fc-line); padding: 12px 16px 16px;
+  box-shadow: 0 -6px 20px rgba(16,24,40,.08); }
+.fc-btn { width: 100%; color: #fff !important; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--fc-cor); color: #fff; border: none; border-radius: 14px; padding: 15px 16px;
+  font-size: 15.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
+.fc-btn:disabled { opacity: .55; }
+.fc-btn-2 { background: var(--fc-card); color: var(--fc-ink) !important; border: 1px solid #d9dade; }
+.fc-btn-3 { background: #f1f1f4; color: var(--fc-ink) !important; border: none; }
+.fc-btn-linha { display: flex; gap: 8px; }
+
+/* ---------- comanda ---------- */
+.fc-bloco { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 16px;
+  padding: 14px; margin: 0 16px 12px; }
+.fc-linha { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 14px; }
+.fc-linha b { font-weight: 700; }
+.fc-hr { height: 1px; background: var(--fc-line); margin: 10px 0; }
+.fc-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px; background: #f1f1f4; color: var(--fc-ink-2); }
+.fc-status.ok { background: #e6f5ec; color: #12864b; }
+.fc-status.fazendo { background: #fdf3e2; color: #b76e00; }
+
+/* ---------- janela do produto ---------- */
+.fc-modal { position: fixed; inset: 0; z-index: 60; background: rgba(20,20,24,.5);
+  display: flex; align-items: flex-end; }
+.fc-modal-card { background: var(--fc-card); width: 100%; max-height: 92dvh; overflow-y: auto;
+  border-radius: 20px 20px 0 0; animation: fc-sobe .18s ease; }
+@keyframes fc-sobe { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+.fc-modal-foto { width: 100%; height: 200px; object-fit: cover; }
+.fc-modal-corpo { padding: 16px; }
+.fc-fechar { color: #17181c !important; position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 999px;
+  background: rgba(255,255,255,.92); border: none; font-size: 20px; line-height: 1; cursor: pointer; }
+
+.fc-opcao { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 12px 0; border-bottom: 1px solid var(--fc-line); font-size: 14.5px; cursor: pointer; }
+.fc-opcao:last-child { border-bottom: none; }
+.fc-grupo-tit { font-size: 14.5px; font-weight: 800; margin: 18px 0 2px; }
+.fc-grupo-sub { font-size: 12.5px; color: var(--fc-muted); margin-bottom: 4px; }
+.fc-obrig { background: var(--fc-ink); color: #fff; font-size: 10.5px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; margin-left: 8px; text-transform: uppercase; letter-spacing: .04em; }
+
+.fc-qtd { display: flex; align-items: center; gap: 14px; background: #f1f1f4; border-radius: 12px; padding: 6px 10px; }
+.fc-qtd button { width: 30px; height: 30px; border: none; background: none; font-size: 20px; color: var(--fc-cor) !important;
+  cursor: pointer; font-family: inherit; line-height: 1; }
+.fc-qtd span { min-width: 18px; text-align: center; font-weight: 700; }
+
+.fc-input { width: 100%; border: 1px solid #dcdde2; border-radius: 12px; padding: 12px;
+  font-size: 15px; font-family: inherit; background: #fff; color: var(--fc-ink); }
+.fc-input::placeholder { color: #9aa0a8; }
+.fc-input:focus { outline: none; border-color: var(--fc-cor); box-shadow: 0 0 0 3px rgba(0,0,0,.05); }
+.fc-label { display: block; font-size: 13px; font-weight: 700; color: var(--fc-ink-2); margin: 14px 0 6px; }
+
+.fc-aviso { margin: 12px 16px; padding: 12px 14px; border-radius: 14px; font-size: 13.5px;
+  background: var(--fc-ink); color: #fff; }
+.fc-vazio { text-align: center; padding: 60px 24px; color: var(--fc-muted); font-size: 14.5px; }
+
+/* telas maiores: o app fica centralizado, como um celular */
+@media (min-width: 720px) {
+  .fc-conteudo { max-width: 640px; margin: 0 auto; }
+  .fc-barra > * { max-width: 640px; margin: 0 auto; }
+}
+
+/* ============================================================================
+   COZINHA (KDS). Escuro de proposito: fica numa tela vista de longe, com o
+   ambiente claro. Cartao grande, tipografia grossa, cor pelo tempo de espera.
+   ========================================================================== */
+.fk { min-height: 100dvh; background: #0e0f13; color: #f2f3f5; padding: 14px;
+  font-family: var(--font-jakarta), system-ui, sans-serif; }
+.fk-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px; flex-wrap: wrap; }
+.fk-titulo { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+.fk-titulo span { color: #9aa0a8; font-weight: 600; }
+.fk-contador { font-size: 13.5px; color: #9aa0a8; }
+.fk-chamados { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.fk-chamado { background: #7a4a00; color: #ffe6b8; border: none; border-radius: 12px;
+  padding: 10px 14px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.fk-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
+.fk-card { background: #181a20; border: 1px solid #262932; border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; }
+.fk-card.novo { border-color: #2f6b45; }
+.fk-card.medio { border-color: #7a5a1a; }
+.fk-card.velho { border-color: #8c2f2f; }
+.fk-card-topo { display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; background: #1e212a; }
+.fk-card.novo .fk-card-topo { background: #163325; }
+.fk-card.medio .fk-card-topo { background: #35290f; }
+.fk-card.velho .fk-card-topo { background: #3a1717; }
+.fk-num { font-size: 17px; font-weight: 800; }
+.fk-onde { font-size: 13px; color: #b9bec6; font-weight: 600; }
+.fk-tempo { font-size: 13px; font-weight: 700; color: #cfd4da; }
+.fk-itens { padding: 6px 14px 12px; }
+.fk-item { padding: 10px 0; border-bottom: 1px solid #23262e; }
+.fk-item:last-child { border-bottom: none; }
+.fk-item-nome { font-size: 16px; font-weight: 700; line-height: 1.25; }
+.fk-item.pronto .fk-item-nome { text-decoration: line-through; color: #7f858d; }
+.fk-item-op { font-size: 13px; color: #a9afb7; padding-left: 12px; }
+.fk-item-obs { font-size: 13px; color: #ffb4a8; padding-left: 12px; font-weight: 600; }
+.fk-acoes { display: flex; gap: 6px; margin-top: 8px; }
+.fk-btn { flex: 1; border: none; border-radius: 10px; padding: 9px 10px; font-size: 13.5px;
+  font-weight: 700; font-family: inherit; cursor: pointer; background: #262932; color: #e9eaee; }
+.fk-btn.fazer { background: #1f4d8a; color: #fff; }
+.fk-btn.pronto { background: #1e7a4a; color: #fff; }
+.fk-vazio { display: grid; place-items: center; min-height: 60dvh; color: #6b7079; font-size: 16px; }
+
+/* ============================================================================
+   GARCOM. Claro e com area de toque grande: e usado em pe, com uma mao so.
+   ========================================================================== */
+.fg { min-height: 100dvh; background: #f4f5f7; color: #17181c; padding-bottom: 90px;
+  font-family: var(--font-jakarta), system-ui, sans-serif; }
+.fg-topo { background: #fff; border-bottom: 1px solid #e6e8ec; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  position: sticky; top: 0; z-index: 20; }
+.fg-nome { font-size: 17px; font-weight: 800; }
+.fg-quem { font-size: 13px; color: #71757e; }
+.fg-mesas { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); padding: 14px 16px; }
+.fg-mesa { background: #fff; border: 1px solid #e6e8ec; border-radius: 16px; padding: 14px 12px;
+  text-align: left; font-family: inherit; cursor: pointer; box-shadow: 0 1px 2px rgba(16,24,40,.05); }
+.fg-mesa.ocupada { border-color: #bfe5cf; background: #f2fbf6; }
+.fg-mesa.chamando { border-color: #f2ddb5; background: #fff8ec; }
+.fg-mesa b { font-size: 19px; display: block; }
+.fg-mesa span { font-size: 12.5px; color: #71757e; }
+.fg-secao { padding: 6px 16px 0; }
+.fg-secao h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #71757e; margin: 14px 0 8px; }
+.fg-prods { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.fg-prod { background: #fff; border: 1px solid #e6e8ec; border-radius: 14px; padding: 12px;
+  text-align: left; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.fg-prod span { display: block; color: #e8332a; font-weight: 800; margin-top: 4px; }
+.fg-prod:disabled { opacity: .45; }
+.fg-conta { background: #fff; border-top: 1px solid #e6e8ec; padding: 12px 16px; }
+.fg-pin { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.fg-pessoa { background: #fff; border: 1px solid #e6e8ec; border-radius: 14px; padding: 16px;
+  font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+
+/* o texto dos botoes tem que herdar do bloco, nao do tema escuro do hub */
+.fk button, .fg button, .fg a { color: inherit; }
+.fg-mesa, .fg-prod, .fg-pessoa { color: #17181c; }
+.fk-chamado { color: #ffe6b8 !important; }
+.fk-btn { color: #e9eaee !important; }
+.fk-btn.fazer, .fk-btn.pronto { color: #fff !important; }
+
+/* ---------- alergenicos e marcas (RDC 727/2022) ---------- */
+.fc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.fc-tag { font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 3px 8px;
+  border-radius: 999px; background: #f1f1f4; color: var(--fc-ink-2); }
+.fc-tag.boa { background: #e7f6ec; color: #1c6b3c; }
+.fc-alergenico { margin-top: 12px; padding: 12px; border-radius: 12px;
+  background: #fbf6ec; border: 1px solid #ecdfc4; font-size: 13.5px; color: #6b5a33; }
+.fc-alergenico b { color: #5a4718; }
+.fc-modal-topo { display: flex; align-items: center; justify-content: space-between;
+  padding: 16px; border-bottom: 1px solid var(--fc-line); font-size: 16px; }
+.fc-modal-topo button { border: none; background: none; font: inherit; font-size: 13px;
+  color: var(--fc-muted); cursor: pointer; }

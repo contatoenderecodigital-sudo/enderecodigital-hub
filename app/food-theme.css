@@ -1,0 +1,200 @@
+/* ============================================================================
+   Tema do AppFood. NÃO é a marca da Endereço Digital: é um sistema de
+   restaurante, então usa a linguagem visual do setor (iFood, Rappi, Goomer):
+   fundo claro, cartão branco, vermelho como cor de ação, verde para dinheiro.
+
+   Tudo mora dentro de .food-app, então sobrescreve as classes do hub
+   (.card, .btn, .badge, input) sem afetar o console do owner.
+   ========================================================================== */
+
+.food-app {
+  --fd-primary: #e8332a;
+  --fd-primary-d: #c9241d;
+  --fd-primary-soft: #fdecea;
+  --fd-ok: #12864b;
+  --fd-ok-soft: #e6f5ec;
+  --fd-warn: #b76e00;
+  --fd-warn-soft: #fdf3e2;
+  --fd-danger: #c62828;
+  --fd-ink: #17181c;
+  --fd-ink-2: #3f434d;
+  --fd-muted: #71757e;
+  --fd-line: #e6e8ec;
+  --fd-bg: #f4f5f7;
+  --fd-card: #ffffff;
+  --fd-sombra: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.04);
+
+  min-height: 100vh;
+  background: var(--fd-bg);
+  color: var(--fd-ink);
+}
+
+/* ---------- tipografia ---------- */
+.food-app h1 { font-size: 26px; letter-spacing: -0.02em; color: var(--fd-ink); }
+.food-app h2 { color: var(--fd-ink); }
+.food-app .muted { color: var(--fd-muted); }
+.food-app .gold { color: var(--fd-primary); }
+.food-app .eyebrow { color: var(--fd-primary); }
+.food-app code { color: var(--fd-primary-d); background: var(--fd-primary-soft);
+  padding: 2px 7px; border-radius: 7px; font-size: 12.5px; }
+
+/* ---------- cartões ---------- */
+.food-app .card,
+.food-app .glass,
+.food-app .mod-card {
+  background: var(--fd-card);
+  border: 1px solid var(--fd-line);
+  border-top: 1px solid var(--fd-line);
+  border-radius: 16px;
+  box-shadow: var(--fd-sombra);
+  backdrop-filter: none;
+}
+.food-app .glass-soft {
+  background: #fafbfc;
+  border: 1px solid var(--fd-line);
+  backdrop-filter: none;
+}
+
+/* ---------- botões ---------- */
+.food-app .btn {
+  background: var(--fd-primary);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: none;
+  font-weight: 700;
+}
+.food-app .btn:hover { background: var(--fd-primary-d); filter: none; }
+.food-app .btn-ghost {
+  background: #fff;
+  color: var(--fd-ink-2);
+  border: 1px solid #dcdfe4;
+}
+.food-app .btn-ghost:hover { background: #f4f5f7; color: var(--fd-ink); }
+
+/* ---------- formulários ---------- */
+.food-app label { color: var(--fd-ink-2); font-weight: 600; font-size: 12.5px; }
+.food-app input,
+.food-app select,
+.food-app textarea {
+  background: #fff;
+  border: 1px solid #dcdfe4;
+  color: var(--fd-ink);
+  border-radius: 12px;
+}
+.food-app input::placeholder, .food-app textarea::placeholder { color: #a3a7ae; }
+.food-app input:focus, .food-app select:focus, .food-app textarea:focus {
+  border-color: var(--fd-primary);
+  box-shadow: 0 0 0 3px rgba(232, 51, 42, 0.14);
+}
+.food-app select option { background: #fff; color: var(--fd-ink); }
+.food-app input[type="checkbox"] { accent-color: var(--fd-primary); }
+
+/* ---------- números grandes ---------- */
+.food-app .kpi {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: var(--fd-ink);
+  -webkit-text-fill-color: currentColor;
+  font-size: 30px;
+}
+.food-app .kpi-label { color: var(--fd-muted); }
+
+/* ---------- selos ---------- */
+.food-app .badge {
+  background: #f1f2f4;
+  border: 1px solid var(--fd-line);
+  color: var(--fd-ink-2);
+}
+.food-app .badge.ok { background: var(--fd-ok-soft); border-color: #bfe5cf; color: var(--fd-ok); }
+.food-app .badge.warn { background: var(--fd-warn-soft); border-color: #f2ddb5; color: var(--fd-warn); }
+.food-app .badge.gold { background: var(--fd-primary); color: #fff; border: none; }
+
+/* ---------- ícones e avatar ---------- */
+.food-app .icon-box {
+  background: var(--fd-primary-soft);
+  border: 1px solid #f7d5d2;
+  color: var(--fd-primary);
+  border-radius: 12px;
+}
+.food-app .avatar { background: var(--fd-primary); color: #fff; }
+.food-app .icon-btn-mini {
+  background: #fff; border: 1px solid #dcdfe4; color: var(--fd-muted);
+}
+.food-app .icon-btn-mini:hover { background: #f4f5f7; color: var(--fd-ink); }
+
+/* ---------- barra de navegação ---------- */
+.food-app .wsnav {
+  background: #fff;
+  border-bottom: 1px solid var(--fd-line);
+  backdrop-filter: none;
+  padding: 11px 22px;
+}
+.food-app .wsnav-tab { color: var(--fd-ink-2); border-radius: 10px; }
+.food-app .wsnav-tab svg { color: #9aa0a8; }
+.food-app .wsnav-tab:hover { background: #f4f5f7; color: var(--fd-ink); }
+.food-app .wsnav-tab.active { background: var(--fd-primary-soft); color: var(--fd-primary); }
+.food-app .wsnav-tab.active svg { color: var(--fd-primary); }
+.food-app .wsnav-logo b { color: var(--fd-ink); }
+
+/* ---------- tabela ---------- */
+.food-app th { color: var(--fd-muted); }
+.food-app th, .food-app td { border-bottom: 1px solid var(--fd-line); }
+.food-app tbody tr:hover { background: #fafbfc; }
+
+/* ---------- janela ---------- */
+.food-app-modal .modal-overlay,
+.food-app .modal-overlay { background: rgba(23, 24, 28, 0.45); backdrop-filter: blur(3px); }
+.food-app .modal-panel {
+  background: #fff;
+  border: 1px solid var(--fd-line);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.18);
+  backdrop-filter: none;
+}
+.food-app .modal-head, .food-app .modal-foot { border-color: var(--fd-line); }
+.food-app .modal-head h2 { color: var(--fd-ink); }
+.food-app .modal-head p { color: var(--fd-muted); }
+.food-app .modal-close { background: #f4f5f7; border: 1px solid var(--fd-line); color: var(--fd-muted); }
+.food-app .modal-close:hover { color: var(--fd-ink); }
+
+/* ---------- divisórias herdadas do tema escuro ---------- */
+.food-app [style*="var(--line)"] { border-color: var(--fd-line) !important; }
+
+/* ---------- mesas ---------- */
+.food-app .mesa-card {
+  background: #fff;
+  border: 1px solid var(--fd-line);
+  border-top: 1px solid var(--fd-line);
+  color: var(--fd-ink);
+  box-shadow: var(--fd-sombra);
+}
+.food-app .mesa-card:hover { background: #fff; box-shadow: 0 6px 16px rgba(16, 24, 40, 0.1); }
+
+/* ---------- listas do cardápio ---------- */
+.food-app .cat-linha:hover { background: #f4f5f7; }
+.food-app .cat-linha.ativa { background: var(--fd-primary-soft); }
+.food-app .cat-linha.ativa b { color: var(--fd-primary-d); }
+.food-app .prod-linha { background: #fff; border: 1px solid var(--fd-line); }
+.food-app .prod-foto.vazia { background: #f4f5f7; border: 1px dashed #d5d8dd; color: #a3a7ae; }
+
+/* area de foto do produto: o texto tem que ser legivel sobre o cinza claro */
+.food-app .fd-foto-alvo { color: var(--fd-ink-2) !important; }
+.food-app button { color: inherit; }
+
+/* ============================================================================
+   Tabela dos relatórios. Compacta, porque o dono lê no celular no fim da noite.
+   ========================================================================== */
+.food-app .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.food-app .tabela th {
+  text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--fd-muted); padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--fd-line); white-space: nowrap;
+}
+.food-app .tabela td {
+  padding: 9px 10px 9px 0; border-bottom: 1px solid var(--fd-line); vertical-align: top;
+}
+.food-app .tabela tr:last-child td { border-bottom: none; }
+.food-app .tabela td:not(:first-child), .food-app .tabela th:not(:first-child) {
+  white-space: nowrap;
+}

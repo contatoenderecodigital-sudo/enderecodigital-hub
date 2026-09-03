@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:food": "node db/testes/estrutura.mjs && node db/testes/operacao.mjs && node db/testes/kds.mjs && node db/testes/isolamento.mjs",
+    "test:kds": "node db/testes/kds.mjs",
+    "test:isolamento": "node db/testes/isolamento.mjs",
+    "test:fluxo": "node db/testes/fluxo-real.mjs",
+    "food:instalar": "node db/instalar-food.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
@@ -24,6 +29,7 @@
     "mysql2": "^3.22.3",
     "next": "16.2.10",
     "pg": "^8.13.1",
+    "postcss": "^8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.2.8",
@@ -31,10 +37,10 @@
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^3.4.1",
-    "tailwindcss-animate": "^1.0.7",
-    "postcss": "^8"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.0",
     "@types/pg": "^8.11.10",

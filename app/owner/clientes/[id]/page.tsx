@@ -52,6 +52,7 @@ export default async function ClienteDetalhe({
         </div>
         <div className="row">
           <Link className="btn btn-ghost btn-sm" href="/owner/clientes">Voltar</Link>
+          <Link className="btn btn-ghost btn-sm" href={`/food/${negocio.id}`}>Restaurante</Link>
           <form action="/api/impersonar" method="post">
             <input type="hidden" name="negocio_id" value={negocio.id} />
             <button className="btn btn-sm" type="submit">Abrir workspace</button>
