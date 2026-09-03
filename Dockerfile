@@ -21,6 +21,11 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# As migracoes e o seed da vitrine vao junto. Sem isto so da para mexer no
+# banco por tunel a partir da maquina do Sandro, e no dia da demonstracao ele
+# nao vai estar na frente do PC de casa. Sao arquivos .sql e dois .mjs, nao
+# pesam nada, e o pg e o bcryptjs ja vem tracados pelo standalone.
+COPY --from=builder --chown=nextjs:nodejs /app/db ./db
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
