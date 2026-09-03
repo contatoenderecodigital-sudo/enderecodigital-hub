@@ -18,6 +18,7 @@
 // ============================================================================
 import pg from "pg";
 import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import bcrypt from "bcryptjs";
 
 const SLUG = "esquina-49";
@@ -727,8 +728,12 @@ export async function semear(cliente, opts = {}) {
 // ---------------------------------------------------------------------------
 // linha de comando: abre o banco de verdade e semeia
 // ---------------------------------------------------------------------------
+// Chamado direto pela linha de comando, ou importado pelo teste?
+// Comparar texto de caminho nao serve: no Windows o argv vem com barra
+// invertida e o import.meta.url vem com barra normal, entao nunca batia
+// e o script saia calado, sem semear nada. pathToFileURL normaliza os dois.
 const chamadoDireto = !!process.argv[1]
-  && import.meta.url.endsWith(process.argv[1].split(/[\/]/).pop());
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (chamadoDireto) {
   const conexao = new pg.Client({
     connectionString: urlDoBanco(), connectionTimeoutMillis: 8000,
