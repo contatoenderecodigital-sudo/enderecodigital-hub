@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:food": "node db/testes/estrutura.mjs && node db/testes/operacao.mjs && node db/testes/kds.mjs && node db/testes/isolamento.mjs",
+    "test:food": "node db/testes/estrutura.mjs && node db/testes/operacao.mjs && node db/testes/kds.mjs && node db/testes/isolamento.mjs && node db/testes/vitrine.mjs",
     "test:kds": "node db/testes/kds.mjs",
     "test:isolamento": "node db/testes/isolamento.mjs",
     "test:fluxo": "node db/testes/fluxo-real.mjs",
-    "food:instalar": "node db/instalar-food.mjs"
+    "test:vitrine": "node db/testes/vitrine.mjs",
+    "food:instalar": "node db/instalar-food.mjs",
+    "food:vitrine": "node db/seed-demo-vitrine.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
