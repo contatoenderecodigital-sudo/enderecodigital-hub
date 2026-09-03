@@ -26,6 +26,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # nao vai estar na frente do PC de casa. Sao arquivos .sql e dois .mjs, nao
 # pesam nada, e o pg e o bcryptjs ja vem tracados pelo standalone.
 COPY --from=builder --chown=nextjs:nodejs /app/db ./db
+# O standalone empacota o bcryptjs dentro dos chunks do servidor, entao ele
+# nao sobra em node_modules e o seed morria no MODULE_NOT_FOUND na hora de
+# gravar os PIN da equipe. O pg sobra porque o Next o trata como externo.
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
