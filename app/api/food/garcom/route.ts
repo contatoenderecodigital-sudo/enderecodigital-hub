@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifyPassword } from "@/lib/auth";
 import { query } from "@/lib/db";
 import {
-  atenderChamado, criarPedido, entrarNaMesa, fecharSessao, listChamados, listEquipe,
-  mapaMesas, montarCardapio, registrarPagamento, resumoSessao, sessaoAtivaDaMesa,
+  atenderChamado, criarPedido, entrarNaMesa, fecharSessao, imprimirConta, listChamados,
+  listEquipe, mapaMesas, montarCardapio, registrarPagamento, resumoSessao, sessaoAtivaDaMesa,
 } from "@/lib/food";
 import { ErroKds, desfazerItem, moverItem, type EstadoItem } from "@/lib/food-kds";
 import {
@@ -302,6 +302,17 @@ export async function POST(req: NextRequest) {
           await fecharSessao(d.negocio_id, s.id, passe!.n);
         }
         return NextResponse.json({ ok: true });
+      }
+
+      // ---- a conta impressa, que o garcom leva na mesa
+      case "imprimir_conta": {
+        if (!passe) return NextResponse.json({ erro: "sem_turno" }, { status: 401 });
+        const mesaId = uuid(body.mesaId, "mesa");
+        if (!(await mesaDaLoja(mesaId, d.loja_id))) return NextResponse.json({ erro: "mesa" }, { status: 404 });
+        const s = await sessaoAtivaDaMesa(mesaId);
+        if (!s) return NextResponse.json({ erro: "sem_sessao" }, { status: 409 });
+        const r = await imprimirConta(d.negocio_id, s.id);
+        return NextResponse.json(r);
       }
 
       case "chamado": {

@@ -36,6 +36,9 @@ export default function CaixaFood({ neg }: { neg: string }) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [dia, setDia] = useState<{ totais: { pedidos: string; faturamento: string; ticket: string } } | null>(null);
   const [saldo, setSaldo] = useState("0");
+  const [movimentos, setMovimentos] = useState<{
+    id: string; tipo: string; valor: string; motivo: string | null; criado_em: string;
+  }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
@@ -44,6 +47,7 @@ export default function CaixaFood({ neg }: { neg: string }) {
       fetch(`/api/food/painel?neg=${neg}&vista=pedidos`, { cache: "no-store" }).then((r) => r.json()),
     ]);
     setCaixa(a.caixa ?? null); setPagamentos(a.pagamentos ?? []); setDia(a.dia ?? null);
+    setMovimentos(a.movimentos ?? []);
     setPedidos(b.pedidos ?? []);
   }, [neg]);
 
@@ -115,6 +119,31 @@ export default function CaixaFood({ neg }: { neg: string }) {
                       }}>
                 Fechar caixa
               </button>
+              {/* Dinheiro que sai e entra da gaveta no meio do turno. Sem isto,
+                  a contagem do fim da noite nunca fecha e o dono acha que
+                  sumiu dinheiro. */}
+              <button className="btn btn-ghost"
+                      onClick={async () => {
+                        const v = window.prompt("Quanto está saindo da gaveta?");
+                        if (!v) return;
+                        const m = window.prompt("Para quê? (pagar motoboy, comprar gelo, ...)");
+                        if (!m) return;
+                        await acao({ acao: "caixa_mov", caixaId: caixa.id, tipo: "sangria", valor: v, motivo: m });
+                        avisar("Sangria registrada");
+                      }}>
+                Sangria
+              </button>
+              <button className="btn btn-ghost"
+                      onClick={async () => {
+                        const v = window.prompt("Quanto está entrando na gaveta?");
+                        if (!v) return;
+                        const m = window.prompt("De onde veio?");
+                        if (!m) return;
+                        await acao({ acao: "caixa_mov", caixaId: caixa.id, tipo: "suprimento", valor: v, motivo: m });
+                        avisar("Suprimento registrado");
+                      }}>
+                Suprimento
+              </button>
             </div>
           </div>
 
@@ -125,6 +154,26 @@ export default function CaixaFood({ neg }: { neg: string }) {
             <Kpi rotulo="Pix" valor={money(caixa.pix)} />
             <Kpi rotulo="Deve ter na gaveta" valor={money(esperado)} destaque />
           </div>
+
+          {movimentos.length > 0 && (
+            <div className="card" style={{ marginTop: 14 }}>
+              <b>Gaveta</b>
+              <div className="muted" style={{ fontSize: 12.5, marginBottom: 8 }}>
+                O que saiu e entrou fora das vendas. Entra na conferência do fechamento.
+              </div>
+              {movimentos.map((m) => (
+                <div key={m.id} className="spread" style={{ padding: "6px 0", fontSize: 13.5 }}>
+                  <span>
+                    <b style={{ textTransform: "capitalize" }}>{m.tipo}</b>
+                    {m.motivo && <span className="muted"> · {m.motivo}</span>}
+                  </span>
+                  <b style={{ color: m.tipo === "sangria" ? "#a33" : "#1c6b3c" }}>
+                    {m.tipo === "sangria" ? "-" : "+"} {money(m.valor)}
+                  </b>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

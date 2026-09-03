@@ -9,6 +9,7 @@ import {
 import { extraDoItem } from "./food-regras";
 import { enfileirarNota } from "./food-fiscal";
 import { siglas } from "./food-alergenicos";
+import { montarConta } from "./food-conta-impressa";
 import type {
   CanalPedido, CardapioCategoria, CardapioProduto, FoodArea, FoodCategoria, FoodImpressora,
   FoodGrupoOpcao, FoodItem, FoodLoja, FoodMesa, FoodOpcao, FoodPedido, FoodSessao, FoodVariacao,
@@ -1361,6 +1362,110 @@ async function enfileirarComanda(c: PoolClient, negocioId: string, pedidoId: str
 }
 
 /** A impressora perguntou se tem trabalho. Devolve o próximo job e marca entregue. */
+/**
+ * Enfileira a CONTA para a impressora, que e o papel que o garcom leva na mesa.
+ * Sai nas impressoras marcadas com 'conta'; se nenhuma estiver marcada, sai na
+ * primeira ativa, porque casa pequena tem uma impressora so.
+ */
+export async function imprimirConta(
+  negocioId: string, sessaoId: string
+): Promise<{ ok: boolean; impressoras: number; texto: string }> {
+  const s = (await query<{
+    loja_id: string; loja: string; mesa: string | null; codigo: string; pessoas: number;
+    subtotal: string; couvert_total: string; taxa_servico: string; taxa_servico_pct: string;
+    servico_recusado: boolean; desconto: string; desconto_motivo: string | null;
+    total: string; pago: string; agora: string;
+  }>(
+    `SELECT s.loja_id, l.nome AS loja, m.numero AS mesa, s.codigo, s.pessoas,
+            s.subtotal, s.couvert_total, s.taxa_servico, l.taxa_servico_pct,
+            s.servico_recusado, s.desconto, s.desconto_motivo, s.total, s.pago,
+            to_char(food_agora_loja(s.loja_id), 'DD/MM HH24:MI') AS agora
+       FROM food_sessoes s
+       JOIN food_lojas l ON l.id = s.loja_id
+       LEFT JOIN food_mesas m ON m.id = s.mesa_id
+      WHERE s.id = $1 AND s.negocio_id = $2`,
+    [sessaoId, negocioId]
+  )).rows[0];
+  if (!s) throw new ErroKds("SESSAO_NAO_ENCONTRADA", "Comanda nao encontrada.");
+
+  const itens = (await query<{ nome: string; qtd: string; total: string; quem: string | null }>(
+    `SELECT i.nome_snapshot AS nome, i.qtd, i.preco_total AS total, mb.apelido AS quem
+       FROM food_itens i
+       JOIN food_pedidos p ON p.id = i.pedido_id
+       LEFT JOIN food_sessao_membros mb ON mb.id = i.membro_id
+      WHERE p.sessao_id = $1 AND i.status <> 'cancelado' AND p.status <> 'cancelado'
+      ORDER BY i.criado_em`,
+    [sessaoId]
+  )).rows;
+
+  const impressoras = (await query<FoodImpressora>(
+    `SELECT * FROM food_impressoras
+      WHERE loja_id = $1 AND ativa = true
+        AND ('conta' = ANY(imprime) OR 'via_cliente' = ANY(imprime))
+      ORDER BY nome`,
+    [s.loja_id]
+  )).rows;
+  const alvo = impressoras.length
+    ? impressoras
+    : (await query<FoodImpressora>(
+        "SELECT * FROM food_impressoras WHERE loja_id = $1 AND ativa = true ORDER BY nome LIMIT 1",
+        [s.loja_id]
+      )).rows;
+
+  const texto = montarConta({
+    loja: s.loja, mesa: s.mesa, codigo: s.codigo, pessoas: s.pessoas,
+    agora: s.agora,
+    itens: itens.map((i) => ({
+      nome: i.nome, qtd: Number(i.qtd), total: n(i.total), quem: i.quem,
+    })),
+    subtotal: n(s.subtotal), couvert: n(s.couvert_total),
+    taxaServico: n(s.taxa_servico), taxaPct: n(s.taxa_servico_pct),
+    servicoRecusado: !!s.servico_recusado,
+    desconto: n(s.desconto), descontoMotivo: s.desconto_motivo,
+    total: n(s.total), pago: n(s.pago),
+    cols: alvo[0]?.colunas ?? 48,
+  });
+
+  for (const imp of alvo) {
+    await query(
+      `INSERT INTO food_print_jobs (negocio_id, impressora_id, sessao_id, tipo, conteudo)
+       VALUES ($1,$2,$3,'conta',$4)`,
+      [negocioId, imp.id, sessaoId, texto]
+    );
+  }
+  return { ok: alvo.length > 0, impressoras: alvo.length, texto };
+}
+
+/** Sangria e suprimento: dinheiro que sai e entra da gaveta durante o turno. */
+export async function movimentarCaixa(
+  negocioId: string,
+  input: { caixaId: string; tipo: "sangria" | "suprimento" | "ajuste"; valor: number; motivo: string; por?: string | null }
+): Promise<{ id: string }> {
+  if (!(input.valor > 0)) throw new ErroKds("VALOR_INVALIDO", "O valor tem que ser maior que zero.");
+  if (!input.motivo.trim()) throw new ErroKds("MOTIVO_OBRIGATORIO", "Diga o motivo da movimentacao.");
+  const caixa = (await query<{ id: string }>(
+    "SELECT id FROM food_caixas WHERE id = $1 AND negocio_id = $2 AND status = 'aberto'",
+    [input.caixaId, negocioId]
+  )).rows[0];
+  if (!caixa) throw new ErroKds("CAIXA_FECHADO", "Este caixa nao esta aberto.");
+  return (await query<{ id: string }>(
+    `INSERT INTO food_caixa_mov (negocio_id, caixa_id, tipo, valor, motivo, por)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+    [negocioId, input.caixaId, input.tipo, brl(input.valor), input.motivo.slice(0, 200), input.por ?? null]
+  )).rows[0];
+}
+
+/** O que saiu e entrou da gaveta, para a tela do caixa conferir na hora de fechar. */
+export async function movimentosDoCaixa(negocioId: string, caixaId: string) {
+  return (await query<{
+    id: string; tipo: string; valor: string; motivo: string | null; criado_em: string;
+  }>(
+    `SELECT id, tipo, valor, motivo, criado_em FROM food_caixa_mov
+      WHERE negocio_id = $1 AND caixa_id = $2 ORDER BY criado_em DESC`,
+    [negocioId, caixaId]
+  )).rows;
+}
+
 export async function proximoJob(chave: string): Promise<{ id: string; conteudo: string } | null> {
   const c = await pool.connect();
   try {

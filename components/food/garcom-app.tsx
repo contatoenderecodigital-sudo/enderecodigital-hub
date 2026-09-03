@@ -216,6 +216,14 @@ export default function GarcomApp({ token }: { token: string }) {
                 <span>Já recebido</span><span>- {money(comanda.sessao.pago)}</span>
               </div>
             )}
+            <button className="fc-btn fc-btn-2" style={{ marginTop: 8 }}
+                    onClick={async () => {
+                      const r = await acao({ acao: "imprimir_conta", mesaId: mesa.id });
+                      if (r.ok) setErro(null);
+                    }}>
+              Imprimir a conta
+            </button>
+
             {garcom.papel === "gerente" && (
               <button className="fc-btn fc-btn-3" style={{ marginTop: 8 }}
                       onClick={async () => {

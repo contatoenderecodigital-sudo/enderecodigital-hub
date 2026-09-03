@@ -10,7 +10,8 @@ import {
   criarLoja, criarMesa, criarMesas, criarMembroEquipe, entradaEstoque, fecharCaixa,
   fecharSessao, getLoja, listAreas, listChamados, listDispositivos, listImpressoras,
   listEquipe, listInsumos, listMesas, listPedidos, lojaPrincipal, mapaMesas, marcarCartaoGravado,
-  montarCardapio, mudarStatusPedido, regravarMesa, reimprimir,
+  imprimirConta, montarCardapio, movimentarCaixa, movimentosDoCaixa,
+  mudarStatusPedido, regravarMesa, reimprimir,
   registrarPagamento, resumoDoDia, resumoSessao, setEsgotado, atualizarLoja,
   upsertCategoria, upsertGrupoOpcao, upsertOpcao, upsertProduto, upsertVariacao, criarPedido,
 } from "@/lib/food";
@@ -208,7 +209,8 @@ export async function GET(req: NextRequest) {
       Promise.resolve(null),
     ]);
     void cardapio;
-    return NextResponse.json({ loja, caixa, pagamentos, dia });
+    const movimentos = caixa ? await movimentosDoCaixa(neg, caixa.id) : [];
+    return NextResponse.json({ loja, caixa, pagamentos, dia, movimentos });
   }
   if (vista === "relatorio") {
     // O periodo vem no fuso da CASA. Sem isso, "hoje" as 21h de Xanxere ja e
@@ -332,6 +334,22 @@ export async function POST(req: NextRequest) {
       case "atender_chamado":
         await atenderChamado(neg, String(body.chamadoId));
         return NextResponse.json({ ok: true });
+      // ---------- a conta que o garcom leva na mesa
+      case "imprimir_conta": {
+        const r = await imprimirConta(neg, uuid(body.sessaoId, "comanda"));
+        return NextResponse.json({ ok: r.ok, impressoras: r.impressoras, texto: r.texto });
+      }
+
+      // ---------- gaveta: sangria e suprimento
+      case "caixa_mov":
+        return NextResponse.json(await movimentarCaixa(neg, {
+          caixaId: uuid(body.caixaId, "caixa"),
+          tipo: opcao(body.tipo, "tipo", ["sangria", "suprimento", "ajuste"] as const),
+          valor: dinheiro(body.valor, "valor"),
+          motivo: texto(body.motivo, "motivo", 200),
+          por: textoOpcional(body.por, 80),
+        }));
+
       case "reimprimir":
         await reimprimir(neg, String(body.pedidoId));
         return NextResponse.json({ ok: true });
