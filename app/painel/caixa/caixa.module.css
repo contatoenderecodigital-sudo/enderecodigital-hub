@@ -1,0 +1,44 @@
+.pagina { display: flex; flex-direction: column; gap: 26px; }
+.cabecalho, .tituloLinha { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.pagina h1 { font-size: 30px; font-weight: 700; }
+.pagina h2 { margin: 0; font-size: 18px; }
+.descricao { margin: 8px 0 0; color: var(--muted-2); font-size: 14px; max-width: 70ch; }
+.filtro { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.filtro label { display: grid; gap: 6px; font-size: 13px; color: var(--muted-2); }
+.entrada { min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--navy-d); color: var(--text); font: inherit; }
+.botao, .primario { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; background: transparent; color: var(--text); }
+.primario { background: var(--gold); color: var(--navy-dd); font-weight: 700; border-color: var(--gold); }
+.botao:hover { background: var(--navy); }
+.primario:hover { background: var(--gold-l); }
+.botao:focus-visible, .primario:focus-visible, .entrada:focus-visible, .rolagem:focus-visible { outline: 2px solid var(--gold-l); outline-offset: 3px; }
+.botao:active, .primario:active { opacity: .8; }
+.secao { border-top: 1px solid var(--line); padding-top: 22px; }
+.resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 24px 0 20px; }
+.resumo dt { color: var(--muted-2); font-size: 13px; }
+.resumo dd { margin: 7px 0; font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.resumo small, .dica, .nota { font-size: 12px; color: var(--muted-2); line-height: 1.6; }
+.dica { max-width: 75ch; }
+.filtro > .dica { padding-bottom: 10px; }
+.aviso { margin: 0; padding: 16px 18px; border: 1px solid var(--warn); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; line-height: 1.6; }
+.aviso strong { color: var(--warn); }
+.aviso p { margin: 7px 0 0; max-width: 75ch; }
+.rolagem { max-width: 100%; overflow-x: auto; margin-top: 16px; }
+.tabela { width: 100%; min-width: 650px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tabela th, .tabela td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: top; }
+.tabela th:first-child { padding-left: 0; text-align: left; }
+.tabela th:last-child, .tabela td:last-child { padding-right: 0; }
+.tabela thead th { color: var(--muted-2); font-size: 12px; font-weight: 500; }
+.tabela tbody th { font-weight: 500; }
+.tabela small { display: block; margin-top: 3px; color: var(--muted-2); font-size: 11px; font-weight: 400; }
+.tabela tfoot { font-weight: 700; }
+.tabela tfoot td, .tabela tfoot th { border-bottom: 0; }
+.vazio { padding: 28px 0 8px; font-size: 14px; }
+.vazio p { max-width: 70ch; color: var(--muted-2); line-height: 1.6; }
+.nota { margin: 0; max-width: 75ch; }
+@media (max-width: 650px) {
+  .resumo { grid-template-columns: 1fr; gap: 18px; }
+  .resumo > div { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; align-items: baseline; }
+  .resumo dd { margin: 0; font-size: 21px; }
+  .resumo small { grid-column: 1 / -1; }
+  .pagina { gap: 22px; }
+}

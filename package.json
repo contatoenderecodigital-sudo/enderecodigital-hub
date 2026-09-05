@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+    "test": "node --test testes/agenda.test.mjs testes/meubarbeiro-financeiro.test.cjs testes/agenda-produtos.test.mjs testes/agenda-caixa.test.mjs testes/agenda-comissoes.test.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

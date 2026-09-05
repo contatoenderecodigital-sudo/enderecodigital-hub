@@ -66,7 +66,15 @@ export default async function PainelLayout({ children }: { children: React.React
 
   const modulos: Modulo[] = [
     { chave: "geral", rotulo: "Visão geral", href: "/painel", ligado: true, pronto: true },
+    { chave: "agenda", rotulo: "Agenda", href: "/painel/agenda", ligado: !!mods?.agenda, pronto: true },
+    { chave: "caixa", rotulo: "Caixa do dia", href: "/painel/caixa", ligado: !!mods?.agenda, pronto: true },
+    { chave: "equipe", rotulo: "Equipe", href: "/painel/equipe", ligado: !!mods?.agenda, pronto: true },
+    { chave: "comissoes", rotulo: "Comissões", href: "/painel/comissoes", ligado: !!mods?.agenda && (s.papel === "dono" || s.papel === "owner_plataforma"), pronto: true },
+    { chave: "servicos", rotulo: "Serviços", href: "/painel/servicos", ligado: !!mods?.agenda, pronto: true },
+    { chave: "produtos", rotulo: "Produtos", href: "/painel/produtos", ligado: !!mods?.agenda, pronto: true },
+    { chave: "vendas", rotulo: "Venda avulsa", href: "/painel/vendas", ligado: !!mods?.agenda, pronto: true },
     { chave: "veiculos", rotulo: "Veículos", href: "/painel/veiculos", ligado: !!mods?.veiculos, pronto: true },
+    { chave: "lojas", rotulo: "Lojas", href: "/painel/lojas", ligado: !!mods?.veiculos, pronto: true },
     { chave: "crm", rotulo: "Funil", href: "/painel/funil", ligado: !!mods?.crm, pronto: false },
     { chave: "site", rotulo: "Meu site", href: "/painel/site", ligado: !!mods?.site, pronto: false },
     { chave: "financeiro", rotulo: "Financeiro", href: "/painel/financeiro", ligado: !!mods?.financeiro, pronto: false },
@@ -94,8 +102,9 @@ export default async function PainelLayout({ children }: { children: React.React
         </div>
       ) : null}
 
-      <div style={{ flex: 1, display: "flex", alignItems: "stretch" }}>
+      <div className="painel-casca" style={{ flex: 1, display: "flex", alignItems: "stretch" }}>
         <aside
+          className="painel-lateral"
           style={{
             width: 236, flexShrink: 0, padding: "22px 14px",
             borderRight: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 22,
@@ -112,12 +121,12 @@ export default async function PainelLayout({ children }: { children: React.React
 
           <PainelNav itens={modulos.map(({ chave, rotulo, href }) => ({ chave, rotulo, href }))} />
 
-          <div style={{ marginTop: "auto", padding: "0 10px" }}>
+          <div className="painel-rodape" style={{ marginTop: "auto", padding: "0 10px" }}>
             <Link href="/logout" style={{ fontSize: 13, color: "var(--muted)" }}>Sair</Link>
           </div>
         </aside>
 
-        <main style={{ flex: 1, minWidth: 0, padding: "28px 32px" }}>{children}</main>
+        <main className="painel-conteudo" style={{ flex: 1, minWidth: 0, padding: "28px 32px" }}>{children}</main>
       </div>
     </div>
   );

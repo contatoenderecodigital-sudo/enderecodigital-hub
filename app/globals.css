@@ -483,3 +483,64 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .chat-input { display: flex; align-items: center; gap: 10px; margin-top: 16px; max-width: 720px; margin-left: auto;
   margin-right: auto; background: rgba(0,0,0,0.28); border: 1px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 16px; }
 .chat-input input { flex: 1; background: none; border: none; color: var(--text); font-size: 14px; outline: none; }
+
+/* ---------------------------------------------------------------------------
+   PAINEL DO CLIENTE · casca responsiva
+
+   A barra lateral era largura fixa de 236px sem nenhuma regra de tela estreita:
+   no celular ela continuava lá, o conteúdo sobrava uns 150px e a página inteira
+   rolava de lado. Passou despercebido porque o módulo de Veículos se opera
+   sentado; o de Agenda não, o dono de barbearia olha a agenda em pé, entre um
+   corte e outro, no telefone.
+
+   Abaixo de 860px a lateral vira uma faixa no topo que rola na horizontal.
+   Nada de menu sanfona: são quatro itens, e esconder quatro itens atrás de um
+   botão custa um toque a mais toda vez pra não economizar nada.
+   --------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .painel-casca { flex-direction: column; }
+  .painel-lateral {
+    width: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--line);
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+  .painel-lateral nav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    gap: 6px !important;
+    /* A faixa rola de lado sem mostrar barra, que em telefone só ocupa altura. */
+    scrollbar-width: none;
+  }
+  .painel-lateral nav::-webkit-scrollbar { display: none; }
+  .painel-lateral nav a { white-space: nowrap; }
+  /* O "Sair" volta pra linha da marca em vez de empurrar a faixa pra baixo. */
+  .painel-rodape { margin-top: 0 !important; }
+  .painel-conteudo { padding: 20px 16px !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   Caixa de seleção e botão de opção fora da regra geral de input
+
+   A regra `input, select, textarea { width: 100% }` lá em cima vale para campo
+   de texto, e vazava para checkbox e radio: a caixinha esticava até 155px, o
+   rótulo era empurrado para a direita e o texto quebrava em três linhas. É o
+   tipo de coisa que parece descuido de quem fez a tela, e não regra global
+   antiga cobrando o preço.
+   --------------------------------------------------------------------------- */
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  flex: none;
+  margin: 0;
+  accent-color: var(--gold);
+}
+
+/* Campo de cor também não é campo de texto: 100% de largura vira uma faixa
+   colorida atravessando o formulário. */
+input[type="color"] {
+  width: 56px;
+  padding: 3px;
+  cursor: pointer;
+}

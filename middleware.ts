@@ -9,6 +9,10 @@ const PUBLIC = [
   "/api/health",
   "/api/lead-capture",
   "/api/whatsapp/webhook",
+  // Landing e APIs de reserva do MeuBarbeiro. O tenant e sempre resolvido no
+  // servidor pelo slug publicado; a pagina nunca recebe um negocio_id.
+  "/agendar",
+  "/api/agendar",
   // Landing de indicacao do parceiro. O teste abaixo e por igualdade ou
   // prefixo "/p/", entao isto NAO libera "/parceiro".
   "/p",
